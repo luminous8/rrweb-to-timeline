@@ -3,20 +3,7 @@ import { homedir, platform } from "node:os";
 import path from "node:path";
 import { BROWSER_CONFIGS } from "../constants.js";
 import type { BrowserInfo, BrowserProfile, LocalStateProfile } from "../types.js";
-
-const extractNumber = (value: string): number => {
-  const match = value.match(/\d+/);
-  return match ? parseInt(match[0], 10) : 0;
-};
-
-const naturalLess = (left: string, right: string): number => {
-  const leftNum = extractNumber(left);
-  const rightNum = extractNumber(right);
-  if (leftNum !== rightNum) {
-    return leftNum - rightNum;
-  }
-  return left.localeCompare(right);
-};
+import { naturalCompare } from "../utils/natural-sort.js";
 
 const loadProfileNamesFromLocalState = (userDataDir: string): Record<string, LocalStateProfile> => {
   const localStatePath = path.join(userDataDir, "Local State");
@@ -52,7 +39,7 @@ const isValidProfile = (profilePath: string): boolean => {
   }
 };
 
-const getUserDataDirMacOS = (darwinPath: string): string =>
+const getUserDataDirDarwin = (darwinPath: string): string =>
   path.join(homedir(), "Library", "Application Support", darwinPath);
 
 const getUserDataDirLinux = (linuxPath: string): string =>
@@ -71,7 +58,7 @@ const getUserDataDir = (config: {
   const currentPlatform = platform();
   switch (currentPlatform) {
     case "darwin":
-      return getUserDataDirMacOS(config.darwinUserDataPath);
+      return getUserDataDirDarwin(config.darwinUserDataPath);
     case "linux":
       return getUserDataDirLinux(config.linuxUserDataPath);
     case "win32":
@@ -108,11 +95,11 @@ const detectProfilesForBrowser = (browser: BrowserInfo, userDataDir: string): Br
     return [];
   }
 
-  profiles.sort((left, right) => naturalLess(left.profileName, right.profileName));
+  profiles.sort((left, right) => naturalCompare(left.profileName, right.profileName));
   return profiles;
 };
 
-const detectBrowsersMacOS = (): BrowserInfo[] =>
+const detectBrowsersDarwin = (): BrowserInfo[] =>
   BROWSER_CONFIGS.filter((config) => existsSync(config.info.executablePath)).map(
     (config) => config.info,
   );
@@ -121,14 +108,14 @@ const detectBrowsersLinux = (): BrowserInfo[] => {
   const browsers: BrowserInfo[] = [];
   for (const config of BROWSER_CONFIGS) {
     const binaryName = config.linuxUserDataPath.split("/").pop() ?? config.linuxUserDataPath;
-    const commonPaths = [
+    const searchPaths = [
       `/usr/bin/${binaryName}`,
       `/usr/local/bin/${binaryName}`,
       `/snap/bin/${binaryName}`,
     ];
-    for (const execPath of commonPaths) {
-      if (existsSync(execPath)) {
-        browsers.push({ name: config.info.name, executablePath: execPath });
+    for (const executablePath of searchPaths) {
+      if (existsSync(executablePath)) {
+        browsers.push({ name: config.info.name, executablePath });
         break;
       }
     }
@@ -142,7 +129,7 @@ export const detectBrowserProfiles = (): BrowserProfile[] => {
 
   const installedBrowsers =
     currentPlatform === "darwin"
-      ? detectBrowsersMacOS()
+      ? detectBrowsersDarwin()
       : currentPlatform === "linux"
         ? detectBrowsersLinux()
         : [];

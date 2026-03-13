@@ -62,9 +62,13 @@ const main = async () => {
   console.log(`\nSample cookies (first 5):\n`);
 
   for (const cookie of cookies.slice(0, 5)) {
-    console.log(`  ${cookie.name}=${cookie.value.slice(0, 40)}${cookie.value.length > 40 ? "..." : ""}`);
+    console.log(
+      `  ${cookie.name}=${cookie.value.slice(0, 40)}${cookie.value.length > 40 ? "..." : ""}`,
+    );
     console.log(`    domain: ${cookie.domain}, path: ${cookie.path}`);
-    console.log(`    secure: ${cookie.secure}, httpOnly: ${cookie.httpOnly}, sameSite: ${cookie.sameSite ?? "unset"}\n`);
+    console.log(
+      `    secure: ${cookie.secure}, httpOnly: ${cookie.httpOnly}, sameSite: ${cookie.sameSite ?? "unset"}\n`,
+    );
   }
 };
 

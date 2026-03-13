@@ -1,52 +1,26 @@
 import { type ChildProcess, spawn } from "node:child_process";
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  rmSync,
-  statSync,
-  unlinkSync,
-} from "node:fs";
+import { existsSync, mkdtempSync, rmSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { getCookiesFromBrowser } from "./cdp/cdp.js";
-import { BROWSER_STARTUP_DELAY_MS, CDP_LOCAL_PORT, HEADLESS_CHROME_ARGS } from "./constants.js";
+import {
+  BROWSER_KILL_DELAY_MS,
+  BROWSER_STARTUP_DELAY_MS,
+  CDP_LOCAL_PORT,
+  HEADLESS_CHROME_ARGS,
+  TEMP_DIR_CLEANUP_RETRIES,
+  TEMP_DIR_RETRY_DELAY_MS,
+} from "./constants.js";
 import type {
   BrowserProfile,
   CdpRawCookie,
   ExtractProfileOptions,
   ExtractProfileResult,
   ProfileCookie,
-  SameSitePolicy,
 } from "./types.js";
-
-const sleep = (milliseconds: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, milliseconds));
-
-const copyDir = (source: string, destination: string): void => {
-  mkdirSync(destination, { recursive: true });
-
-  const entries = readdirSync(source);
-
-  for (const entry of entries) {
-    const sourcePath = path.join(source, entry);
-    const destinationPath = path.join(destination, entry);
-
-    try {
-      const stats = statSync(sourcePath);
-
-      if (stats.isDirectory()) {
-        copyDir(sourcePath, destinationPath);
-      } else {
-        copyFileSync(sourcePath, destinationPath);
-      }
-    } catch {
-      // HACK: some files may be locked or inaccessible while Chrome is running, skip them
-    }
-  }
-};
+import { copyDir } from "./utils/copy-dir.js";
+import { normalizeSameSite } from "./utils/normalize-same-site.js";
+import { sleep } from "./utils/sleep.js";
 
 const startHeadlessBrowser = (
   executablePath: string,
@@ -68,13 +42,15 @@ const startHeadlessBrowser = (
   return childProcess;
 };
 
-const VALID_SAME_SITE_POLICIES = new Set<string>(["Strict", "Lax", "None"]);
+const SINGLETON_LOCK_FILES = ["SingletonLock", "SingletonSocket", "SingletonCookie"];
 
-const normalizeSameSite = (value: string): SameSitePolicy | undefined => {
-  if (VALID_SAME_SITE_POLICIES.has(value)) {
-    return value as SameSitePolicy;
+const removeSingletonLocks = (profileDir: string): void => {
+  for (const lockFile of SINGLETON_LOCK_FILES) {
+    const lockPath = path.join(profileDir, lockFile);
+    if (existsSync(lockPath)) {
+      unlinkSync(lockPath);
+    }
   }
-  return undefined;
 };
 
 const toProfileCookie = (raw: CdpRawCookie): ProfileCookie => ({
@@ -87,16 +63,6 @@ const toProfileCookie = (raw: CdpRawCookie): ProfileCookie => ({
   httpOnly: raw.httpOnly,
   sameSite: normalizeSameSite(raw.sameSite),
 });
-
-const removeSingletonLocks = (profileDir: string): void => {
-  const lockFiles = ["SingletonLock", "SingletonSocket", "SingletonCookie"];
-  for (const lockFile of lockFiles) {
-    const lockPath = path.join(profileDir, lockFile);
-    if (existsSync(lockPath)) {
-      unlinkSync(lockPath);
-    }
-  }
-};
 
 export const extractProfileCookies = async (
   options: ExtractProfileOptions,
@@ -114,7 +80,6 @@ export const extractProfileCookies = async (
     removeSingletonLocks(profileCopyPath);
 
     browser = startHeadlessBrowser(profile.browser.executablePath, profileCopyPath, port);
-
     await sleep(BROWSER_STARTUP_DELAY_MS);
 
     const rawCookies = await getCookiesFromBrowser(port);
@@ -124,8 +89,7 @@ export const extractProfileCookies = async (
       return { cookies: [], warnings };
     }
 
-    const cookies = rawCookies.map(toProfileCookie);
-    return { cookies, warnings };
+    return { cookies: rawCookies.map(toProfileCookie), warnings };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     warnings.push(`failed to extract cookies from ${profile.displayName}: ${message}`);
@@ -137,11 +101,16 @@ export const extractProfileCookies = async (
       } catch {
         // HACK: process may have already exited
       }
-      await sleep(500);
+      await sleep(BROWSER_KILL_DELAY_MS);
     }
 
     try {
-      rmSync(tempDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
+      rmSync(tempDir, {
+        recursive: true,
+        force: true,
+        maxRetries: TEMP_DIR_CLEANUP_RETRIES,
+        retryDelay: TEMP_DIR_RETRY_DELAY_MS,
+      });
     } catch {
       // HACK: temp dir cleanup failure is non-fatal
     }

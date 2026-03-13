@@ -3,7 +3,10 @@ import type { BrowserInfo } from "./types.js";
 export const CDP_RETRY_COUNT = 10;
 export const CDP_RETRY_DELAY_MS = 1_000;
 export const CDP_LOCAL_PORT = 9222;
-export const BROWSER_STARTUP_DELAY_MS = 2_000;
+export const BROWSER_STARTUP_DELAY_MS = 3_000;
+export const BROWSER_KILL_DELAY_MS = 500;
+export const TEMP_DIR_CLEANUP_RETRIES = 3;
+export const TEMP_DIR_RETRY_DELAY_MS = 200;
 
 export const HEADLESS_CHROME_ARGS = [
   "--headless=new",
