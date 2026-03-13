@@ -6,4 +6,5 @@ export default defineConfig({
   dts: true,
   clean: true,
   banner: { js: "#!/usr/bin/env node" },
+  noExternal: [/^@browser-tester\//],
 });
