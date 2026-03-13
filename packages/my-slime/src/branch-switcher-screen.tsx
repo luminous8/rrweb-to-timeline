@@ -41,28 +41,23 @@ export const BranchSwitcherScreen = ({ onSelect }: BranchSwitcherScreenProps) =>
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [activeFilter, setActiveFilter] = useState<PrFilter>("all");
 
-  const [localBranches, setLocalBranches] = useState<string[]>([]);
-  const [isLoadingLocal, setIsLoadingLocal] = useState(true);
+  const [localBranches] = useState(() => fetchLocalBranches());
   const [remoteBranches, setRemoteBranches] = useState<RemoteBranch[]>([]);
   const [isLoadingRemote, setIsLoadingRemote] = useState(true);
+  const [hasLoadedRemote, setHasLoadedRemote] = useState(false);
 
   useEffect(() => {
-    setLocalBranches(fetchLocalBranches());
-    setIsLoadingLocal(false);
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const run = async () => {
-      const branches = fetchRemoteBranches();
-      if (!controller.signal.aborted) {
+    if (activeTab !== "remote" || hasLoadedRemote) return;
+    setHasLoadedRemote(true);
+    let cancelled = false;
+    fetchRemoteBranches().then((branches) => {
+      if (!cancelled) {
         setRemoteBranches(branches);
         setIsLoadingRemote(false);
       }
-    };
-    run();
-    return () => controller.abort();
-  }, []);
+    });
+    return () => { cancelled = true; };
+  }, [activeTab, hasLoadedRemote]);
 
   const filteredLocalBranches = useMemo(() => {
     if (!searchQuery) return localBranches;
@@ -136,8 +131,7 @@ export const BranchSwitcherScreen = ({ onSelect }: BranchSwitcherScreenProps) =>
     }
   });
 
-  const isCurrentTabLoading =
-    (activeTab === "local" && isLoadingLocal) || (activeTab === "remote" && isLoadingRemote);
+  const isCurrentTabLoading = activeTab === "remote" && isLoadingRemote;
 
   return (
     <Box flexDirection="column" width="100%" paddingX={2} paddingY={1}>
@@ -148,7 +142,7 @@ export const BranchSwitcherScreen = ({ onSelect }: BranchSwitcherScreenProps) =>
         <Text color={activeTab === "remote" ? COLORS.SELECTION : COLORS.DIM} bold={activeTab === "remote"}>
           {activeTab === "remote" ? "[Remote]" : " Remote "}
         </Text>
-        {activeTab === "local" && !isLoadingLocal && (
+        {activeTab === "local" && (
           <Text color={COLORS.DIM}>({filteredLocalBranches.length})</Text>
         )}
       </Box>
@@ -165,13 +159,7 @@ export const BranchSwitcherScreen = ({ onSelect }: BranchSwitcherScreenProps) =>
 
       {isCurrentTabLoading ? (
         <Box marginTop={1}>
-          <Spinner
-            message={
-              activeTab === "local"
-                ? "Loading local branches..."
-                : "Fetching remote branches..."
-            }
-          />
+          <Spinner message="Fetching remote branches..." />
         </Box>
       ) : (
         <Box flexDirection="column" marginTop={1}>

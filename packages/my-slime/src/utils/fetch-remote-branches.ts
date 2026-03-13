@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+import { exec } from "child_process";
 
 export interface RemoteBranch {
   name: string;
@@ -26,11 +26,18 @@ interface GhPr {
   isDraft: boolean;
 }
 
-const fetchPrs = (state: string): GhPr[] => {
+const execAsync = (command: string): Promise<string> =>
+  new Promise((resolve, reject) => {
+    exec(command, { encoding: "utf-8", timeout: GH_TIMEOUT_MS }, (error, stdout) => {
+      if (error) reject(error);
+      else resolve(stdout.trim());
+    });
+  });
+
+const fetchPrs = async (state: string): Promise<GhPr[]> => {
   try {
-    const output = execSync(
+    const output = await execAsync(
       `gh pr list --state ${state} --limit 100 --json headRefName,author,number,state,isDraft`,
-      { encoding: "utf-8", timeout: GH_TIMEOUT_MS },
     );
     return JSON.parse(output);
   } catch {
@@ -38,9 +45,8 @@ const fetchPrs = (state: string): GhPr[] => {
   }
 };
 
-export const fetchRemoteBranches = (): RemoteBranch[] => {
-  const openPrs = fetchPrs("open");
-  const mergedPrs = fetchPrs("merged");
+export const fetchRemoteBranches = async (): Promise<RemoteBranch[]> => {
+  const [openPrs, mergedPrs] = await Promise.all([fetchPrs("open"), fetchPrs("merged")]);
   const allPrs = [...openPrs, ...mergedPrs];
 
   const prByBranch = new Map<string, GhPr>();
@@ -51,10 +57,9 @@ export const fetchRemoteBranches = (): RemoteBranch[] => {
   }
 
   try {
-    const refOutput = execSync(
+    const refOutput = await execAsync(
       "git branch -r --format='%(refname:short)' | grep -v HEAD",
-      { encoding: "utf-8", timeout: 5000 },
-    ).trim();
+    );
 
     if (!refOutput) return [];
 
