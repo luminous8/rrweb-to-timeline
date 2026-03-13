@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { BRANCH_COUNT, COLORS, FETCH_DELAY_MS, REMOTE_NAME, SEARCH_PLACEHOLDER } from "./constants.js";
-import { generateBranches } from "./utils/generate-branches.js";
-import { generateRemoteBranches, type RemoteBranch } from "./utils/generate-remote-branches.js";
+import { COLORS, SEARCH_PLACEHOLDER } from "./constants.js";
+import { fetchLocalBranches } from "./utils/fetch-local-branches.js";
+import { fetchRemoteBranches, type RemoteBranch } from "./utils/fetch-remote-branches.js";
 import { Spinner } from "./spinner.js";
 import { PrFilterBar, PR_FILTERS, type PrFilter } from "./pr-filter.js";
 
@@ -41,16 +41,27 @@ export const BranchSwitcherScreen = ({ onSelect }: BranchSwitcherScreenProps) =>
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [activeFilter, setActiveFilter] = useState<PrFilter>("all");
 
-  const [localBranches] = useState(() => generateBranches(BRANCH_COUNT));
+  const [localBranches, setLocalBranches] = useState<string[]>([]);
+  const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   const [remoteBranches, setRemoteBranches] = useState<RemoteBranch[]>([]);
   const [isLoadingRemote, setIsLoadingRemote] = useState(true);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setRemoteBranches(generateRemoteBranches(BRANCH_COUNT));
-      setIsLoadingRemote(false);
-    }, FETCH_DELAY_MS);
-    return () => clearTimeout(timeout);
+    setLocalBranches(fetchLocalBranches());
+    setIsLoadingLocal(false);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const run = async () => {
+      const branches = fetchRemoteBranches();
+      if (!controller.signal.aborted) {
+        setRemoteBranches(branches);
+        setIsLoadingRemote(false);
+      }
+    };
+    run();
+    return () => controller.abort();
   }, []);
 
   const filteredLocalBranches = useMemo(() => {
@@ -125,7 +136,8 @@ export const BranchSwitcherScreen = ({ onSelect }: BranchSwitcherScreenProps) =>
     }
   });
 
-  const isRemoteLoading = activeTab === "remote" && isLoadingRemote;
+  const isCurrentTabLoading =
+    (activeTab === "local" && isLoadingLocal) || (activeTab === "remote" && isLoadingRemote);
 
   return (
     <Box flexDirection="column" width="100%" paddingX={2} paddingY={1}>
@@ -136,10 +148,7 @@ export const BranchSwitcherScreen = ({ onSelect }: BranchSwitcherScreenProps) =>
         <Text color={activeTab === "remote" ? COLORS.SELECTION : COLORS.DIM} bold={activeTab === "remote"}>
           {activeTab === "remote" ? "[Remote]" : " Remote "}
         </Text>
-        {activeTab === "remote" && (
-          <Text color={COLORS.DIM}>{REMOTE_NAME}</Text>
-        )}
-        {activeTab === "local" && (
+        {activeTab === "local" && !isLoadingLocal && (
           <Text color={COLORS.DIM}>({filteredLocalBranches.length})</Text>
         )}
       </Box>
@@ -154,9 +163,15 @@ export const BranchSwitcherScreen = ({ onSelect }: BranchSwitcherScreenProps) =>
         borderColor={COLORS.DIVIDER}
       />
 
-      {isRemoteLoading ? (
+      {isCurrentTabLoading ? (
         <Box marginTop={1}>
-          <Spinner message={`fetching remote branches from ${REMOTE_NAME}`} />
+          <Spinner
+            message={
+              activeTab === "local"
+                ? "Loading local branches..."
+                : "Fetching remote branches..."
+            }
+          />
         </Box>
       ) : (
         <Box flexDirection="column" marginTop={1}>
@@ -165,17 +180,19 @@ export const BranchSwitcherScreen = ({ onSelect }: BranchSwitcherScreenProps) =>
           <Box flexDirection="column" marginTop={activeTab === "remote" ? 1 : 0}>
             {activeTab === "local" &&
               filteredLocalBranches.map((branch, index) => (
-                <Text key={index} color={index === highlightedIndex ? COLORS.SELECTION : COLORS.TEXT}>
+                <Text key={branch} color={index === highlightedIndex ? COLORS.SELECTION : COLORS.TEXT}>
                   {index === highlightedIndex ? `➤ ${branch}` : `  ${branch}`}
                 </Text>
               ))}
 
             {activeTab === "remote" &&
               filteredRemoteBranches.map((branch, index) => (
-                <Text key={index} color={index === highlightedIndex ? COLORS.SELECTION : COLORS.TEXT}>
+                <Text key={branch.name} color={index === highlightedIndex ? COLORS.SELECTION : COLORS.TEXT}>
                   {index === highlightedIndex ? "➤ " : "  "}
                   {branch.name.padEnd(maxBranchWidth + 2)}
-                  <Text color={COLORS.YELLOW}>{branch.author.padEnd(maxAuthorWidth + 2)}</Text>
+                  {branch.author && (
+                    <Text color={COLORS.YELLOW}>{branch.author.padEnd(maxAuthorWidth + 2)}</Text>
+                  )}
                   <PrBadge branch={branch} />
                 </Text>
               ))}
@@ -188,7 +205,7 @@ export const BranchSwitcherScreen = ({ onSelect }: BranchSwitcherScreenProps) =>
         </Box>
       )}
 
-      {!isRemoteLoading && (
+      {!isCurrentTabLoading && (
         <Box marginTop={2} borderStyle="round" borderColor={COLORS.BORDER} paddingX={2}>
           <TextInput
             focus
@@ -200,7 +217,7 @@ export const BranchSwitcherScreen = ({ onSelect }: BranchSwitcherScreenProps) =>
       )}
 
       <Text color={COLORS.DIM}>
-        {isRemoteLoading
+        {isCurrentTabLoading
           ? "Tab to switch · Esc to go back"
           : activeTab === "remote"
             ? "↑/↓ navigate · ←/→ filter · Tab to switch · Enter select · Esc back"

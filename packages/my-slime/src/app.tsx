@@ -12,6 +12,7 @@ import {
   type TestScope,
   type DiffStats,
 } from "./utils/get-git-state.js";
+import { switchBranch } from "./utils/switch-branch.js";
 
 type Screen = "main" | "switch-branch";
 
@@ -28,16 +29,16 @@ const buildMenuOptions = (scope: TestScope, gitState: GitState): ScopeMenuOption
     case "unstaged-changes": {
       const options: ScopeMenuOption[] = [
         {
-          label: "Unstaged changes",
+          label: "Test unstaged changes",
           detail: "",
           diffStats: gitState.diffStats ?? undefined,
         },
       ];
       if (gitState.isOnMain) {
-        options.push({ label: "Select commit", detail: "" });
+        options.push({ label: "Select a commit to test", detail: "" });
       } else if (gitState.hasBranchCommits) {
         options.push({
-          label: "Entire branch",
+          label: "Test entire branch",
           detail: `(${gitState.currentBranch})`,
           diffStats: gitState.branchDiffStats ?? undefined,
         });
@@ -45,17 +46,17 @@ const buildMenuOptions = (scope: TestScope, gitState: GitState): ScopeMenuOption
       return options;
     }
     case "select-commit":
-      return [{ label: "Select commit", detail: "" }];
+      return [{ label: "Select a commit to test", detail: "" }];
     case "select-branch":
-      return [{ label: "Select branch", detail: "" }];
+      return [{ label: "Select a branch to test", detail: "" }];
     case "entire-branch":
       return [
         {
-          label: "Entire branch",
+          label: "Test entire branch",
           detail: `(${gitState.currentBranch})`,
           diffStats: gitState.branchDiffStats ?? undefined,
         },
-        { label: "Select commit", detail: "" },
+        { label: "Select a commit to test", detail: "" },
       ];
   }
 };
@@ -97,7 +98,13 @@ export const App = () => {
     }
   });
 
-  const handleBranchSwitch = (_branch: string) => {
+  const handleBranchSwitch = (branch: string) => {
+    const success = switchBranch(branch);
+    if (success) {
+      const newState = getGitState();
+      setGitState(newState);
+      setSelectedIndex(0);
+    }
     setScreen("main");
   };
 
@@ -133,7 +140,7 @@ export const App = () => {
             label={option.label}
             detail={option.detail}
             isSelected={index === selectedIndex}
-            recommended={index === 0}
+            recommended={index === 0 && menuOptions.length > 1}
             diffStats={option.diffStats}
           />
         ))}
