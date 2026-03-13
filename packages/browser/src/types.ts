@@ -1,0 +1,41 @@
+import type { Browser } from "@browser-tester/extract-cookie";
+import type { ElementInfo as BaseElementInfo } from "element-source";
+import type { Locator, Page } from "playwright";
+
+export interface ElementInfo extends BaseElementInfo {
+  selector: string;
+}
+
+export type AriaRole = Parameters<Page["getByRole"]>[0];
+
+export interface SnapshotOptions {
+  timeout?: number;
+}
+
+export interface RefEntry {
+  role: AriaRole;
+  name: string;
+  nth?: number;
+}
+
+export interface RefMap {
+  [ref: string]: RefEntry;
+}
+
+export interface SnapshotResult {
+  tree: string;
+  refs: RefMap;
+  locator: (ref: string) => Locator;
+  inspect: (refOrLocator: string | Locator) => Promise<ElementInfo>;
+}
+
+export interface ParsedAriaLine {
+  role: AriaRole;
+  name: string;
+}
+
+export interface InjectCookiesOptions {
+  url: string;
+  browsers?: Browser[];
+  names?: string[];
+}
