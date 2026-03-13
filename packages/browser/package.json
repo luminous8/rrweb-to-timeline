@@ -29,6 +29,14 @@
         "types": "./dist/mcp.d.cts",
         "default": "./dist/mcp.cjs"
       }
+    },
+    "./mcp-start": {
+      "import": {
+        "default": "./dist/mcp-start.js"
+      },
+      "require": {
+        "default": "./dist/mcp-start.cjs"
+      }
     }
   },
   "scripts": {

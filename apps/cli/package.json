@@ -5,6 +5,9 @@
     "dist"
   ],
   "type": "module",
+  "bin": {
+    "testie": "./dist/index.js"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -22,8 +25,10 @@
   },
   "dependencies": {
     "@browser-tester/agent": "workspace:*",
+    "@browser-tester/browser": "workspace:*",
     "@types/react": "^19.2.14",
     "ai": "^6.0.116",
+    "commander": "^13.1.0",
     "ink": "^6.0.0",
     "ink-text-input": "^6.0.0",
     "react": "^19.2.4",

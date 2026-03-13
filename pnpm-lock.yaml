@@ -29,12 +29,18 @@ importers:
       '@browser-tester/agent':
         specifier: workspace:*
         version: link:../../packages/agent
+      '@browser-tester/browser':
+        specifier: workspace:*
+        version: link:../../packages/browser
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
       ai:
         specifier: ^6.0.116
         version: 6.0.116(zod@4.3.6)
+      commander:
+        specifier: ^13.1.0
+        version: 13.1.0
       ink:
         specifier: ^6.0.0
         version: 6.8.0(@types/react@19.2.14)(react@19.2.4)

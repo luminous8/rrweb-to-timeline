@@ -1,5 +1,15 @@
 export const VERSION = "0.0.1";
 
+export const AUTOMATED_ENVIRONMENT_VARIABLES = [
+  "CI",
+  "CLAUDECODE",
+  "CURSOR_AGENT",
+  "CODEX_CI",
+  "OPENCODE",
+  "AMP_HOME",
+  "AMI",
+];
+
 export const SELECTED_INDICATOR = "➤";
 
 export const SEARCH_PLACEHOLDER = "Search ...";
