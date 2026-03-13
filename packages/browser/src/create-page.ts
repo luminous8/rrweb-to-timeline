@@ -4,11 +4,12 @@ import {
   extractAllProfileCookies,
   extractCookies,
 } from "@browser-tester/cookies";
+import { tmpdir } from "node:os";
 import type { Browser as BrowserKey, Cookie } from "@browser-tester/cookies";
 import { chromium } from "playwright";
 import { HEADLESS_CHROMIUM_ARGS } from "./constants";
 import { injectCookies } from "./inject-cookies";
-import type { CreatePageOptions, CreatePageResult } from "./types";
+import type { CreatePageOptions, CreatePageResult, VideoOptions } from "./types";
 
 const extractDefaultBrowserCookies = async (
   url: string,
@@ -28,6 +29,14 @@ const extractDefaultBrowserCookies = async (
   return result.cookies;
 };
 
+const resolveVideoOptions = (
+  video: boolean | VideoOptions | undefined,
+): { dir: string; size?: { width: number; height: number } } | undefined => {
+  if (!video) return undefined;
+  if (video === true) return { dir: tmpdir() };
+  return video;
+};
+
 export const createPage = async (
   url: string,
   options: CreatePageOptions = {},
@@ -39,7 +48,8 @@ export const createPage = async (
   });
 
   try {
-    const context = await browser.newContext();
+    const recordVideo = resolveVideoOptions(options.video);
+    const context = await browser.newContext(recordVideo ? { recordVideo } : undefined);
 
     if (options.cookies) {
       const cookies = Array.isArray(options.cookies)

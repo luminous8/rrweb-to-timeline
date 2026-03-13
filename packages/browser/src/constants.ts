@@ -28,6 +28,19 @@ export const INTERACTIVE_ROLES = new Set([
   "treeitem",
 ]);
 
+export const CONTENT_ROLES = new Set([
+  "heading",
+  "cell",
+  "gridcell",
+  "columnheader",
+  "rowheader",
+  "listitem",
+  "article",
+  "region",
+  "main",
+  "navigation",
+]);
+
 export const STRUCTURAL_ROLES = new Set([
   "generic",
   "group",
@@ -47,3 +60,6 @@ export const STRUCTURAL_ROLES = new Set([
   "presentation",
   "none",
 ]);
+
+export const ESTIMATED_CHARS_PER_TOKEN = 4;
+export const MAX_ELEMENT_TEXT_LENGTH = 100;

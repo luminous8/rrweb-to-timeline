@@ -2,6 +2,9 @@ export { createPage } from "./create-page";
 export { injectCookies } from "./inject-cookies";
 export { act } from "./act";
 export { snapshot } from "./snapshot";
+export { annotatedScreenshot } from "./annotated-screenshot";
+export { diffSnapshots } from "./diff";
+export { saveVideo } from "./save-video";
 export {
   CookieJar,
   detectBrowserProfiles,
@@ -21,6 +24,12 @@ export type {
   ExtractResult,
 } from "@browser-tester/cookies";
 export type {
+  AnnotatedScreenshotOptions,
+  AnnotatedScreenshotResult,
+  Annotation,
+} from "./annotated-screenshot";
+export type { SnapshotDiff } from "./diff";
+export type {
   AriaRole,
   CreatePageOptions,
   CreatePageResult,
@@ -28,4 +37,6 @@ export type {
   RefMap,
   SnapshotOptions,
   SnapshotResult,
+  SnapshotStats,
+  VideoOptions,
 } from "./types";

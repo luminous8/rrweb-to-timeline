@@ -411,7 +411,7 @@ describe("snapshot", () => {
     it("should apply compact and maxDepth together", async () => {
       await page.setContent(`
         <html><body>
-          <nav>
+          <nav aria-label="Main">
             <ul>
               <li><a href="/a">A</a></li>
               <li><a href="/b">B</a></li>
