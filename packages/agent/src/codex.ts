@@ -7,12 +7,7 @@ import type {
   LanguageModelV3StreamPart,
 } from "@ai-sdk/provider";
 import { convertPrompt } from "./convert-prompt.js";
-import {
-  EMPTY_USAGE,
-  PROVIDER_ID,
-  STOP_REASON,
-  collectUnsupportedWarnings,
-} from "./provider-shared.js";
+import { EMPTY_USAGE, PROVIDER_ID, STOP_REASON } from "./provider-shared.js";
 import type { AgentProviderSettings } from "./types.js";
 
 export const createCodexModel = (settings: AgentProviderSettings = {}): LanguageModelV3 => ({
@@ -23,7 +18,6 @@ export const createCodexModel = (settings: AgentProviderSettings = {}): Language
 
   async doGenerate(options: LanguageModelV3CallOptions) {
     const { userPrompt, systemPrompt } = convertPrompt(options.prompt);
-    const warnings = collectUnsupportedWarnings(options, "Codex SDK");
     const thread = createThread(settings);
     const input = buildInput(userPrompt, systemPrompt);
 
@@ -41,7 +35,7 @@ export const createCodexModel = (settings: AgentProviderSettings = {}): Language
       content,
       finishReason: STOP_REASON,
       usage,
-      warnings,
+      warnings: [],
       request: { body: userPrompt },
       response: { id: thread.id ?? crypto.randomUUID(), timestamp: new Date(), modelId: "codex" },
       providerMetadata: thread.id ? { [PROVIDER_ID]: { sessionId: thread.id } } : undefined,
@@ -50,7 +44,6 @@ export const createCodexModel = (settings: AgentProviderSettings = {}): Language
 
   async doStream(options: LanguageModelV3CallOptions) {
     const { userPrompt, systemPrompt } = convertPrompt(options.prompt);
-    const warnings = collectUnsupportedWarnings(options, "Codex SDK");
     const thread = createThread(settings);
     const input = buildInput(userPrompt, systemPrompt);
     let sessionId: string | undefined;
@@ -58,7 +51,7 @@ export const createCodexModel = (settings: AgentProviderSettings = {}): Language
     const stream = new ReadableStream<LanguageModelV3StreamPart>({
       async start(controller) {
         try {
-          controller.enqueue({ type: "stream-start", warnings });
+          controller.enqueue({ type: "stream-start", warnings: [] });
           const { events } = await thread.runStreamed(input, { signal: options.abortSignal });
 
           for await (const event of events) {

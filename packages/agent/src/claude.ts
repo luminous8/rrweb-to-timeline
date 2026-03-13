@@ -11,7 +11,6 @@ import {
   EMPTY_USAGE,
   PROVIDER_ID,
   STOP_REASON,
-  collectUnsupportedWarnings,
   createLinkedAbortController,
 } from "./provider-shared.js";
 import type { AgentProviderSettings } from "./types.js";
@@ -27,8 +26,6 @@ export const createClaudeModel = (settings: AgentProviderSettings = {}): Languag
   async doGenerate(options: LanguageModelV3CallOptions) {
     const { userPrompt, systemPrompt } = convertPrompt(options.prompt);
     const abortController = createLinkedAbortController(options.abortSignal);
-    const warnings = collectUnsupportedWarnings(options, "Claude Agent SDK");
-
     const content: LanguageModelV3Content[] = [];
     let sessionId: string | undefined;
 
@@ -42,7 +39,7 @@ export const createClaudeModel = (settings: AgentProviderSettings = {}): Languag
       content,
       finishReason: STOP_REASON,
       usage: EMPTY_USAGE,
-      warnings,
+      warnings: [],
       request: { body: userPrompt },
       response: { id: sessionId ?? crypto.randomUUID(), timestamp: new Date(), modelId: "claude-opus-4-6" },
       providerMetadata: sessionId ? { [PROVIDER_ID]: { sessionId } } : undefined,
@@ -52,14 +49,13 @@ export const createClaudeModel = (settings: AgentProviderSettings = {}): Languag
   async doStream(options: LanguageModelV3CallOptions) {
     const { userPrompt, systemPrompt } = convertPrompt(options.prompt);
     const abortController = createLinkedAbortController(options.abortSignal);
-    const warnings = collectUnsupportedWarnings(options, "Claude Agent SDK");
     let sessionId: string | undefined;
     let blockCounter = 0;
 
     const stream = new ReadableStream<LanguageModelV3StreamPart>({
       async start(controller) {
         try {
-          controller.enqueue({ type: "stream-start", warnings });
+          controller.enqueue({ type: "stream-start", warnings: [] });
 
           for await (const event of query({ prompt: userPrompt, options: buildQueryOptions(settings, abortController, systemPrompt) })) {
             const eventSessionId = extractSessionId(event);
