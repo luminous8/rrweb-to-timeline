@@ -1,67 +1,62 @@
-import { claudeAgent } from "../src/claude.js";
-import { codexAgent } from "../src/codex.js";
-import { LOG_PREVIEW_LENGTH } from "../src/constants.js";
-import { runAgent } from "../src/run-agent.js";
-import { isRecord } from "@browser-tester/utils";
-import type { AgentConfig, ModelMessage } from "../src/types.js";
+import { generateText, streamText } from "ai";
+import { createClaudeModel } from "../src/claude.js";
+import { createCodexModel } from "../src/codex.js";
 
-const SEPARATOR_LENGTH = 60;
+const SEPARATOR = "=".repeat(60);
 
-const truncate = (text: string): string =>
-  text.length > LOG_PREVIEW_LENGTH ? `${text.slice(0, LOG_PREVIEW_LENGTH)}...` : text;
+const testGenerate = async (name: string, model: ReturnType<typeof createClaudeModel>) => {
+  console.log(`\n${SEPARATOR}`);
+  console.log(`generateText: ${name}`);
+  console.log(SEPARATOR);
 
-const logContentPart = (part: unknown): void => {
-  if (!isRecord(part)) return;
+  const startTime = Date.now();
+  try {
+    const result = await generateText({
+      model,
+      prompt: "List the files in the current directory",
+    });
 
-  if (part.type === "text" && typeof part.text === "string") {
-    console.log(`       text: ${truncate(part.text)}`);
-  } else if (part.type === "reasoning" && typeof part.text === "string") {
-    console.log(`       reasoning: ${truncate(part.text)}`);
-  } else if (part.type === "tool-call") {
-    console.log(`       tool-call: ${part.toolName}(${truncate(JSON.stringify(part.input))})`);
-  } else if (part.type === "tool-result" && isRecord(part.output)) {
-    console.log(`       tool-result: [${part.output.type}] ${truncate(String(part.output.value))}`);
+    console.log(`  text: ${result.text.slice(0, 300)}${result.text.length > 300 ? "..." : ""}`);
+    console.log(`  toolCalls: ${result.toolCalls.length}`);
+    console.log(`  toolResults: ${result.toolResults.length}`);
+    console.log(`  finishReason: ${result.finishReason}`);
+    console.log(`  completed in ${Date.now() - startTime}ms`);
+  } catch (error) {
+    console.error(`  failed after ${Date.now() - startTime}ms: ${error}`);
   }
 };
 
-const logMessage = (index: number, message: ModelMessage): void => {
-  const contentParts = Array.isArray(message.content) ? message.content : [];
-  const types = contentParts
-    .filter(isRecord)
-    .map((part) => part.type);
-
-  console.log(`  [${index}] role=${message.role} parts=[${types.join(", ")}]`);
-  for (const part of contentParts) logContentPart(part);
-};
-
-const testAgent = async (name: string, agent: AgentConfig) => {
-  console.log(`\n${"=".repeat(SEPARATOR_LENGTH)}`);
-  console.log(`Testing ${name} agent`);
-  console.log("=".repeat(SEPARATOR_LENGTH));
+const testStream = async (name: string, model: ReturnType<typeof createClaudeModel>) => {
+  console.log(`\n${SEPARATOR}`);
+  console.log(`streamText: ${name}`);
+  console.log(SEPARATOR);
 
   const startTime = Date.now();
-  let messageCount = 0;
-
   try {
-    for await (const message of runAgent(agent, "List the files in the current directory", {
-      cwd: process.cwd(),
-    })) {
-      messageCount++;
-      logMessage(messageCount, message);
-    }
+    const result = streamText({
+      model,
+      prompt: "What is 2 + 2?",
+    });
 
-    const elapsed = Date.now() - startTime;
-    console.log(`\n  ${name} completed: ${messageCount} messages in ${elapsed}ms`);
+    for await (const chunk of result.textStream) {
+      process.stdout.write(chunk);
+    }
+    console.log();
+    console.log(`  completed in ${Date.now() - startTime}ms`);
   } catch (error) {
-    const elapsed = Date.now() - startTime;
-    console.error(`\n  ${name} failed after ${elapsed}ms with ${messageCount} messages:`);
-    console.error(`  ${error}`);
+    console.error(`  failed after ${Date.now() - startTime}ms: ${error}`);
   }
 };
 
 const main = async () => {
-  await testAgent("Claude", claudeAgent);
-  await testAgent("Codex", codexAgent);
+  const claudeModel = createClaudeModel({ cwd: process.cwd() });
+  const codexModel = createCodexModel({ cwd: process.cwd() });
+
+  await testGenerate("Claude", claudeModel);
+  await testStream("Claude", claudeModel);
+  await testGenerate("Codex", codexModel);
+  await testStream("Codex", codexModel);
+
   console.log("\nDone.");
 };
 

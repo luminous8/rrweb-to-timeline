@@ -13,10 +13,12 @@ import {
   type TestScope,
   type DiffStats,
 } from "./utils/get-git-state.js";
+import { TestingScreen } from "./testing-screen.js";
 import { switchBranch } from "./utils/switch-branch.js";
 import type { Commit } from "./utils/fetch-commits.js";
+import type { TestAction } from "./utils/mock-agent-stream.js";
 
-type Screen = "main" | "switch-branch" | "select-commit";
+type Screen = "main" | "switch-branch" | "select-commit" | "testing";
 
 type MenuAction = "test-unstaged" | "test-branch" | "select-commit" | "select-branch";
 
@@ -71,6 +73,8 @@ export const App = () => {
   const [gitState, setGitState] = useState<GitState | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [screen, setScreen] = useState<Screen>("main");
+  const [testAction, setTestAction] = useState<TestAction | null>(null);
+  const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
   const [reviewPlan, setReviewPlan] = useState(false);
 
   useEffect(() => {
@@ -110,14 +114,25 @@ export const App = () => {
       const selected = menuOptions[selectedIndex];
       if (selected.action === "select-commit") {
         setScreen("select-commit");
-      }
-      if (selected.action === "select-branch") {
+      } else if (selected.action === "select-branch") {
         setScreen("switch-branch");
+      } else if (selected.action === "test-unstaged" || selected.action === "test-branch") {
+        setTestAction(selected.action);
+        setSelectedCommit(null);
+        setScreen("testing");
       }
     }
   });
 
-  const handleCommitSelect = (_commit: Commit) => {
+  const handleCommitSelect = (commit: Commit) => {
+    setTestAction("select-commit");
+    setSelectedCommit(commit);
+    setScreen("testing");
+  };
+
+  const handleTestingExit = () => {
+    setTestAction(null);
+    setSelectedCommit(null);
     setScreen("main");
   };
 
@@ -136,6 +151,17 @@ export const App = () => {
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         <Spinner message="Checking git state..." />
       </Box>
+    );
+  }
+
+  if (screen === "testing" && testAction) {
+    return (
+      <TestingScreen
+        action={testAction}
+        commit={selectedCommit ?? undefined}
+        gitState={gitState}
+        onExit={handleTestingExit}
+      />
     );
   }
 
@@ -185,9 +211,7 @@ export const App = () => {
       />
 
       <Box flexDirection="row" justifyContent="space-between" width="100%">
-        <Text color={COLORS.DIM}>
-          ↑/↓ to navigate · Enter to select · [b] switch branch
-        </Text>
+        <Text color={COLORS.DIM}>↑/↓ to navigate · Enter to select · [b] switch branch</Text>
         <Text color={reviewPlan ? COLORS.DIM : COLORS.SELECTION}>
           {reviewPlan ? "○" : "◉"} Automatically begin testing after planning
           <Text color={COLORS.DIM}> (tab)</Text>

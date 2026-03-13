@@ -10,6 +10,8 @@ export const PR_LIMIT = 100;
 export const COLUMN_PADDING = 2;
 export const SPINNER_INTERVAL_MS = 80;
 export const LOGO_ANIMATION_INTERVAL_MS = 400;
+export const MOCK_STREAM_MIN_DELAY_MS = 500;
+export const MOCK_STREAM_MAX_DELAY_MS = 1500;
 
 export const COLORS = {
   TEXT: "#cccccc",

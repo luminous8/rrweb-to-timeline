@@ -1,11 +1,3 @@
-export type {
-  AgentConfig,
-  AgentFormat,
-  AgentRunOptions,
-  AgentLogEntry,
-  ModelMessage,
-} from "./types.js";
-
-export { claudeAgent } from "./claude.js";
-export { codexAgent } from "./codex.js";
-export { runAgent } from "./run-agent.js";
+export type { AgentProviderSettings } from "./types.js";
+export { createClaudeModel } from "./claude.js";
+export { createCodexModel } from "./codex.js";

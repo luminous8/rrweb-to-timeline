@@ -29,6 +29,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@ai-sdk/provider": "^3.0.8",
     "@anthropic-ai/claude-agent-sdk": "^0.2.74",
     "@browser-tester/utils": "workspace:*",
     "@openai/codex-sdk": "^0.114.0",
