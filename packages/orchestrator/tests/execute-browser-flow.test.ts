@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { LanguageModelV3, LanguageModelV3CallOptions, LanguageModelV3StreamPart } from "@ai-sdk/provider";
+import type {
+  LanguageModelV3,
+  LanguageModelV3CallOptions,
+  LanguageModelV3StreamPart,
+} from "@ai-sdk/provider";
 import { executeBrowserFlow } from "../src/execute-browser-flow.js";
 import type { BrowserFlowPlan, BrowserRunEvent, TestTarget } from "../src/types.js";
 
@@ -28,7 +32,7 @@ const createExecutionModel = (
         type: "tool-call",
         toolCallId: "tool-1",
         toolName: "mcp__browser__open",
-        input: "{\"url\":\"http://localhost:3000/onboarding\"}",
+        input: '{"url":"http://localhost:3000/onboarding"}',
         providerExecuted: true,
       },
       {
@@ -50,7 +54,12 @@ const createExecutionModel = (
         type: "finish",
         finishReason: { unified: "stop", raw: undefined },
         usage: {
-          inputTokens: { total: undefined, noCache: undefined, cacheRead: undefined, cacheWrite: undefined },
+          inputTokens: {
+            total: undefined,
+            noCache: undefined,
+            cacheRead: undefined,
+            cacheWrite: undefined,
+          },
           outputTokens: { total: undefined, text: undefined, reasoning: undefined },
         },
         providerMetadata: {
@@ -153,6 +162,42 @@ describe("executeBrowserFlow", () => {
       type: "run-completed",
       status: "passed",
       videoPath: videoOutputPath,
+    });
+  });
+
+  it("disables video output and instructs the agent to attach in live Chrome mode", async () => {
+    let promptText = "";
+    const events: BrowserRunEvent[] = [];
+
+    for await (const event of executeBrowserFlow({
+      target: testTarget,
+      plan: testPlan,
+      environment: {
+        baseUrl: "http://localhost:3000",
+        liveChrome: true,
+        liveChromeCdpEndpoint: "http://127.0.0.1:9222",
+        liveChromeTabMode: "attach",
+        liveChromeTabUrlMatch: "/onboarding",
+      },
+      model: createExecutionModel((options) => {
+        promptText =
+          options.prompt[0].role === "user" && options.prompt[0].content[0].type === "text"
+            ? options.prompt[0].content[0].text
+            : "";
+      }),
+    })) {
+      events.push(event);
+    }
+
+    expect(promptText).toContain("This run is attached to a live Chrome session");
+    expect(promptText).toContain(
+      "already configured to reuse the live Chrome session in attach mode",
+    );
+    expect(promptText).toContain("Live Chrome tab mode: attach");
+    expect(events.find((event) => event.type === "run-completed")).toMatchObject({
+      type: "run-completed",
+      status: "passed",
+      videoPath: undefined,
     });
   });
 });

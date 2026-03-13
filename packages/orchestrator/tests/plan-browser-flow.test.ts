@@ -101,6 +101,10 @@ describe("planBrowserFlow", () => {
         baseUrl: "http://localhost:3000",
         cookies: true,
         headed: true,
+        liveChrome: true,
+        liveChromeCdpEndpoint: "http://127.0.0.1:9222",
+        liveChromeTabMode: "attach",
+        liveChromeTabUrlMatch: "/onboarding",
       },
       model: createPlannerModel((options) => {
         promptText =
@@ -114,6 +118,9 @@ describe("planBrowserFlow", () => {
     expect(promptText).toContain("Go through onboarding at /onboarding");
     expect(promptText).toContain("src/onboarding.tsx");
     expect(promptText).toContain("Base URL: http://localhost:3000");
+    expect(promptText).toContain("Live Chrome mode: yes");
+    expect(promptText).toContain("Live Chrome tab mode: attach");
+    expect(promptText).toContain("continuing the relevant in-progress user workflow");
     expect(promptText).toContain("...truncated...");
     expect(promptText).toContain("cookieSync.required");
     expect(plan.steps[0].id).toBe("step-01");

@@ -54,10 +54,18 @@ export interface CreatePageOptions {
   cookies?: boolean | Cookie[];
   waitUntil?: "load" | "domcontentloaded" | "networkidle" | "commit";
   video?: boolean | VideoOptions;
+  liveChrome?: boolean;
+  cdpEndpoint?: string;
+  tabMode?: "attach" | "new";
+  tabUrlMatch?: string;
+  tabTitleMatch?: string;
+  tabIndex?: number;
 }
 
 export interface CreatePageResult {
   browser: PlaywrightBrowser;
   context: BrowserContext;
   page: Page;
+  ownsBrowser: boolean;
+  ownsPage: boolean;
 }

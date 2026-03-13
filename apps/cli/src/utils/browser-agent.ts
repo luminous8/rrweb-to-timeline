@@ -15,6 +15,7 @@ interface GenerateBrowserPlanOptions {
   action: TestAction;
   commit?: Commit;
   userInstruction: string;
+  environmentOverrides?: BrowserEnvironmentHints;
 }
 
 interface GenerateBrowserPlanResult {
@@ -39,6 +40,14 @@ const parseBooleanEnvironmentValue = (value: string | undefined): boolean | unde
     return false;
   return undefined;
 };
+
+const mergeBrowserEnvironment = (
+  baseEnvironment: BrowserEnvironmentHints,
+  environmentOverrides: BrowserEnvironmentHints | undefined,
+): BrowserEnvironmentHints => ({
+  ...baseEnvironment,
+  ...(environmentOverrides ?? {}),
+});
 
 export const getBrowserEnvironment = (): BrowserEnvironmentHints => ({
   baseUrl: process.env.BROWSER_TESTER_BASE_URL,
@@ -65,7 +74,10 @@ export const generateBrowserPlan = async (
   const target = resolveTestTarget({
     selection: createSelection(options.action, options.commit),
   });
-  const environment = getBrowserEnvironment();
+  const environment = mergeBrowserEnvironment(
+    getBrowserEnvironment(),
+    options.environmentOverrides,
+  );
   const plan = await planBrowserFlow({
     target,
     userInstruction: options.userInstruction,

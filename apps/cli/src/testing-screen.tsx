@@ -69,6 +69,8 @@ const formatBrowserToolCall = (toolName: string, input: string): string | null =
   switch (action) {
     case "open":
       return `Open ${readPathOrUrl(parsedInput, "url") ?? "page"}`;
+    case "attach":
+      return "Attach live Chrome tab";
     case "snapshot":
       return "Capture page snapshot";
     case "click":

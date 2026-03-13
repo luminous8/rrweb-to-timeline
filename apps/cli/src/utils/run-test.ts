@@ -1,12 +1,8 @@
-import type { BrowserRunEvent } from "@browser-tester/orchestrator";
+import type { BrowserEnvironmentHints, BrowserRunEvent } from "@browser-tester/orchestrator";
 import { VERSION } from "../constants.js";
 import { fetchCommits } from "./fetch-commits.js";
 import { getGitState, getRecommendedScope } from "./get-git-state.js";
-import {
-  executeApprovedPlan,
-  generateBrowserPlan,
-  type TestAction,
-} from "./browser-agent.js";
+import { executeApprovedPlan, generateBrowserPlan, type TestAction } from "./browser-agent.js";
 
 const ACTION_LABELS: Record<TestAction, string> = {
   "test-unstaged": "unstaged changes",
@@ -17,7 +13,28 @@ const ACTION_LABELS: Record<TestAction, string> = {
 const DEFAULT_INSTRUCTIONS: Record<TestAction, string> = {
   "test-unstaged": "Test all unstaged changes in the browser and verify they work correctly.",
   "test-branch": "Test all branch changes in the browser and verify they work correctly.",
-  "select-commit": "Test the selected commit's changes in the browser and verify they work correctly.",
+  "select-commit":
+    "Test the selected commit's changes in the browser and verify they work correctly.",
+};
+
+const formatLiveChromeMode = (environment: BrowserEnvironmentHints): string | null => {
+  if (environment.liveChrome !== true) return null;
+
+  const tabMode =
+    environment.liveChromeTabMode === "attach" ? "attach existing tab" : "open new tab";
+  const selectionHints = [
+    environment.liveChromeTabUrlMatch
+      ? `url contains "${environment.liveChromeTabUrlMatch}"`
+      : null,
+    environment.liveChromeTabTitleMatch
+      ? `title contains "${environment.liveChromeTabTitleMatch}"`
+      : null,
+    typeof environment.liveChromeTabIndex === "number"
+      ? `tab index ${environment.liveChromeTabIndex}`
+      : null,
+  ].filter((value): value is string => value !== null);
+
+  return `Live Chrome mode: ${tabMode} via ${environment.liveChromeCdpEndpoint ?? "auto-detect from your Chrome profile"}${selectionHints.length > 0 ? ` (${selectionHints.join(", ")})` : ""}`;
 };
 
 const formatRunEvent = (event: BrowserRunEvent): string | null => {
@@ -43,7 +60,15 @@ const formatRunEvent = (event: BrowserRunEvent): string | null => {
   }
 };
 
-export const runTest = async (action: TestAction, commitHash?: string): Promise<void> => {
+interface RunTestOptions {
+  environmentOverrides?: BrowserEnvironmentHints;
+}
+
+export const runTest = async (
+  action: TestAction,
+  commitHash?: string,
+  options: RunTestOptions = {},
+): Promise<void> => {
   const gitState = getGitState();
 
   let commit;
@@ -51,8 +76,7 @@ export const runTest = async (action: TestAction, commitHash?: string): Promise<
     if (commitHash) {
       const commits = fetchCommits();
       commit = commits.find(
-        (candidate) =>
-          candidate.shortHash === commitHash || candidate.hash.startsWith(commitHash),
+        (candidate) => candidate.shortHash === commitHash || candidate.hash.startsWith(commitHash),
       );
       if (!commit) {
         console.error(`Commit "${commitHash}" not found in recent history.`);
@@ -69,7 +93,16 @@ export const runTest = async (action: TestAction, commitHash?: string): Promise<
     action,
     commit,
     userInstruction: DEFAULT_INSTRUCTIONS[action],
+    environmentOverrides: options.environmentOverrides,
   });
+
+  const liveChromeMode = formatLiveChromeMode(environment);
+  if (liveChromeMode) {
+    console.error(`${liveChromeMode}`);
+    console.error(
+      "Chrome remote debugging must already be enabled in chrome://inspect/#remote-debugging.\n",
+    );
+  }
 
   console.error(`Plan: ${plan.title} (${plan.steps.length} steps)\n`);
 
@@ -81,9 +114,9 @@ export const runTest = async (action: TestAction, commitHash?: string): Promise<
   }
 };
 
-export const autoDetectAndTest = async (): Promise<void> => {
+export const autoDetectAndTest = async (options: RunTestOptions = {}): Promise<void> => {
   const gitState = getGitState();
   const scope = getRecommendedScope(gitState);
   const action: TestAction = scope === "unstaged-changes" ? "test-unstaged" : "test-branch";
-  await runTest(action);
+  await runTest(action, undefined, options);
 };
