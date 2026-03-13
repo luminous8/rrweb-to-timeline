@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.74",
+    "@browser-tester/utils": "workspace:*",
     "@openai/codex-sdk": "^0.114.0",
     "ai": "^6.0.116"
   },
