@@ -12,15 +12,11 @@ export const snapshot = addSharedOptions(
     .option("--json", "output as JSON")
     .option("-i, --interactive", "only include interactive elements")
     .option("-c, --compact", "remove empty structural elements")
-    .option("-d, --depth <n>", "limit tree depth", parseInt),
+    .option("-d, --max-depth <n>", "limit tree depth", parseInt),
 ).action(async (url: string, options) => {
   await withPage(url, options, async (page) => {
-    const result = await takeSnapshot(page, {
-      timeout: options.timeout,
-      interactive: options.interactive,
-      compact: options.compact,
-      maxDepth: options.depth,
-    });
+    const { timeout, interactive, compact, maxDepth } = options;
+    const result = await takeSnapshot(page, { timeout, interactive, compact, maxDepth });
 
     if (options.json) {
       logger.log(JSON.stringify({ tree: result.tree, refs: result.refs }, null, 2));
