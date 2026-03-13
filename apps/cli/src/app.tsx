@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, Text, useInput, useStdout } from "ink";
 import type { BrowserEnvironmentHints, BrowserFlowPlan, TestTarget } from "@browser-tester/orchestrator";
-import { Avatar } from "./avatar.js";
 import { COLORS } from "./constants.js";
 import { MenuItem } from "./menu-item.js";
 import { BranchSwitcherScreen } from "./branch-switcher-screen.js";
@@ -77,6 +76,7 @@ const buildMenuOptions = (scope: TestScope, gitState: GitState): ScopeMenuOption
 };
 
 export const App = () => {
+  const { stdout } = useStdout();
   const [gitState, setGitState] = useState<GitState | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [screen, setScreen] = useState<Screen>("main");
@@ -291,19 +291,13 @@ export const App = () => {
 
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
-      <Box flexDirection="row" gap={2}>
-        <Avatar />
-        <Box flexDirection="column">
-          <Text bold color={COLORS.TEXT}>browser-tester</Text>
-          <Text color={COLORS.DIM}>AI-powered browser testing</Text>
-        </Box>
-      </Box>
+      <Text color={COLORS.ORANGE}>{"─".repeat(stdout.columns - 2)}</Text>
+      <Text bold color={COLORS.TEXT}>browser-tester</Text>
+      <Text color={COLORS.DIM}>AI-powered browser testing</Text>
 
-      <Text color={COLORS.DIVIDER}>────────────────────────────────────────</Text>
-
-      <Box marginTop={1} flexDirection="column">
+      <Box marginTop={2} flexDirection="column">
         <Text bold color={COLORS.TEXT}>Actions</Text>
-        <Box flexDirection="column" marginTop={0}>
+        <Box flexDirection="column">
           {menuOptions.map((option, index) => (
             <MenuItem
               key={option.label}
@@ -316,26 +310,18 @@ export const App = () => {
         </Box>
       </Box>
 
-      <Text color={COLORS.DIVIDER}>────────────────────────────────────────</Text>
-
-      <Box marginTop={1} flexDirection="column">
+      <Box marginTop={2} flexDirection="column">
         <Text bold color={COLORS.TEXT}>Options</Text>
         <Text color={COLORS.DIM}>
-          auto-run after planning (<Text color={COLORS.PURPLE}>tab</Text>):{" "}
-          <Text color={autoRunAfterPlanning ? COLORS.GREEN : COLORS.DIM}>
+          auto-run tests after planning (<Text color={COLORS.TEXT}>⇥ tab</Text>):{" "}
+          <Text color={autoRunAfterPlanning ? COLORS.ORANGE : COLORS.DIM}>
             {autoRunAfterPlanning ? "yes" : "no"}
           </Text>
         </Text>
       </Box>
 
-      <Text color={COLORS.DIVIDER}>────────────────────────────────────────</Text>
-
-      <Box marginTop={1}>
-        <Text color={COLORS.DIM}>
-          (<Text color={COLORS.PURPLE}>b</Text>) switch branch <Text color={COLORS.DIM}>({gitState.currentBranch})</Text>{" "}
-          (<Text color={COLORS.PURPLE}>j/k</Text>) navigate{" "}
-          (<Text color={COLORS.PURPLE}>RET</Text>) select
-        </Text>
+      <Box marginTop={2}>
+        <Text backgroundColor="white" color="black">{` b switch branch · ↑↓ nav · current branch: ${gitState.currentBranch}`.padEnd(stdout.columns - 2)}</Text>
       </Box>
     </Box>
   );

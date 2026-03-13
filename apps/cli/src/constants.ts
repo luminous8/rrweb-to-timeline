@@ -30,8 +30,9 @@ export const FLOW_DESCRIPTION_CHAR_LIMIT = 120;
 
 export const COLORS = {
   TEXT: "white",
-  DIM: "#888888",
+  DIM: "#999999",
   GREEN: "greenBright",
+  ORANGE: "#ff8c00",
   SELECTION: "cyanBright",
   RED: "redBright",
   BORDER: "gray",

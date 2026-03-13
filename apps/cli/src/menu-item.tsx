@@ -11,10 +11,10 @@ interface MenuItemProps {
 export const MenuItem = ({ label, detail, isSelected, recommended }: MenuItemProps) => {
   return (
     <Text>
-      <Text color={isSelected ? COLORS.PURPLE : COLORS.DIM}>{isSelected ? "> " : "  "}</Text>
-      <Text color={isSelected ? COLORS.TEXT : COLORS.DIM} bold={isSelected}>{label}</Text>
+      <Text color={isSelected ? COLORS.ORANGE : COLORS.DIM}>{isSelected ? "▶ " : "  "}</Text>
+      <Text color={isSelected ? "whiteBright" : COLORS.DIM} bold={isSelected}>{label}</Text>
       {detail ? <Text color={COLORS.DIM}> {detail}</Text> : null}
-      {recommended && <Text color={COLORS.YELLOW}> (recommended)</Text>}
+      {recommended && <Text color={COLORS.DIM}> (recommended)</Text>}
     </Text>
   );
 };
