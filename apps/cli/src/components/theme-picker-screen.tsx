@@ -86,7 +86,7 @@ export const ThemePickerScreen = () => {
         title="Select theme"
         subtitle={`${filteredThemeNames.length} themes · ${filterLabel}`}
       />
-      <Box>
+      <Box marginTop={1}>
         <Clickable
           fullWidth={false}
           onClick={() => setVariantFilter((previous) => (previous === "light" ? "dark" : "light"))}

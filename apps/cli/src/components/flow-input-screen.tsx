@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, useInput } from "ink";
+import { Box, Text, useInput } from "ink";
 import { Input } from "./ui/input.js";
 import { useColors } from "./theme-context.js";
 import { stripMouseSequences } from "../hooks/mouse-context.js";
@@ -42,6 +42,7 @@ export const FlowInputScreen = () => {
       />
 
       <Box marginTop={1} borderStyle="round" borderColor={COLORS.BORDER} paddingX={2}>
+        <Text color={COLORS.ORANGE}>{"❯ "}</Text>
         <Input
           focus
           multiline

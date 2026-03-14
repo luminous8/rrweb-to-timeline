@@ -146,7 +146,7 @@ export const BranchSwitcherScreen = () => {
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingTop={2} paddingBottom={1}>
       <ScreenHeading title="Switch branch" />
-      <Box>
+      <Box marginTop={1}>
         <Clickable
           fullWidth={false}
           onClick={() => {
