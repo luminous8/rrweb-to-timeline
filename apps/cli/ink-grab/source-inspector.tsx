@@ -126,7 +126,7 @@ export const SourceInspector = ({ children }: SourceInspectorProps) => {
             const componentName = entry.tagName !== "ink-text" ? getTagName(entry.node) : null;
 
             return (
-              <Text key={index} dimColor={!isSelected}>
+              <Text key={`${entry.depth}-${entry.tagName}-${index}`} dimColor={!isSelected}>
                 {isSelected ? "> " : "  "}
                 {indent}
                 <Text bold={isSelected}>{entry.tagName}</Text>

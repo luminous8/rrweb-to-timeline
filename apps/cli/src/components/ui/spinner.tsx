@@ -1,9 +1,6 @@
-import { useEffect, useState } from "react";
 import { Text } from "ink";
-import { SPINNER_INTERVAL_MS } from "../../constants.js";
+import InkSpinner from "ink-spinner";
 import { useColors } from "../theme-context.js";
-
-const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
 interface SpinnerProps {
   message: string;
@@ -11,18 +8,12 @@ interface SpinnerProps {
 
 export const Spinner = ({ message }: SpinnerProps) => {
   const COLORS = useColors();
-  const [frameIndex, setFrameIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFrameIndex((previous) => (previous + 1) % SPINNER_FRAMES.length);
-    }, SPINNER_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <Text color={COLORS.DIM}>
-      <Text color={COLORS.SELECTION}>{SPINNER_FRAMES[frameIndex]}</Text>
+      <Text color={COLORS.SELECTION}>
+        <InkSpinner type="dots" />
+      </Text>
       <Text> {message}</Text>
     </Text>
   );

@@ -1,4 +1,5 @@
-import { Box, Text, useStdout } from "ink";
+import { Box, Text } from "ink";
+import useStdoutDimensions from "ink-use-stdout-dimensions";
 import { useThemeContext } from "./theme-context.js";
 import { STATUSBAR_BRANCH_PADDING, STATUSBAR_TRAILING_PADDING } from "../constants.js";
 import { useAppStore, type Screen } from "../store.js";
@@ -15,7 +16,7 @@ const SCREEN_HINTS: Record<Screen, string> = {
 };
 
 export const Modeline = () => {
-  const { stdout } = useStdout();
+  const [columns] = useStdoutDimensions();
   const { theme } = useThemeContext();
   const gitState = useAppStore((state) => state.gitState);
   const screen = useAppStore((state) => state.screen);
@@ -24,7 +25,7 @@ export const Modeline = () => {
 
   const hints = SCREEN_HINTS[screen] ?? "";
   const remaining =
-    stdout.columns -
+    columns -
     STATUSBAR_BRANCH_PADDING -
     gitState.currentBranch.length -
     STATUSBAR_TRAILING_PADDING;

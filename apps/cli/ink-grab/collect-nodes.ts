@@ -6,6 +6,13 @@ export interface CollectedNode {
   tagName: string;
 }
 
+const isDOMElement = (node: unknown): node is DOMElement =>
+  node !== null &&
+  typeof node === "object" &&
+  "nodeName" in node &&
+  "childNodes" in node &&
+  Array.isArray((node as DOMElement).childNodes);
+
 const walkTree = (node: DOMElement, depth: number, result: CollectedNode[]): void => {
   const tagName = node.nodeName ?? "";
   if (tagName && tagName !== "ink-root") {
@@ -13,8 +20,8 @@ const walkTree = (node: DOMElement, depth: number, result: CollectedNode[]): voi
   }
 
   for (const child of node.childNodes) {
-    if ("nodeName" in child && typeof child.nodeName === "string") {
-      walkTree(child as DOMElement, depth + 1, result);
+    if (isDOMElement(child)) {
+      walkTree(child, depth + 1, result);
     }
   }
 };

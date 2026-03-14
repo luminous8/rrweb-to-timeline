@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Text, useInput, useStdout } from "ink";
+import { Box, Text, useInput } from "ink";
+import useStdoutDimensions from "ink-use-stdout-dimensions";
 import TextInput from "ink-text-input";
 import {
   BRANCH_NAME_COLUMN_WIDTH,
@@ -21,7 +22,7 @@ const PR_FILTERS: PrFilter[] = ["all", "open", "draft", "merged", "no-pr"];
 type Tab = "local" | "remote";
 
 export const BranchSwitcherScreen = () => {
-  const { stdout } = useStdout();
+  const [columns] = useStdoutDimensions();
   const storeSwitchBranch = useAppStore((state) => state.switchBranch);
   const COLORS = useColors();
   const [activeTab, setActiveTab] = useState<Tab>("local");
@@ -67,7 +68,7 @@ export const BranchSwitcherScreen = () => {
   const currentCount = currentList.length;
 
   const prColumnWidth =
-    stdout.columns -
+    columns -
     COMMIT_SELECTOR_WIDTH -
     BRANCH_NAME_COLUMN_WIDTH -
     BRANCH_AUTHOR_COLUMN_WIDTH -

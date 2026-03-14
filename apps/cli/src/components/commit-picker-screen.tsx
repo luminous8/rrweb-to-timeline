@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
-import { Box, Text, useInput, useStdout } from "ink";
+import { Box, Text, useInput } from "ink";
+import useStdoutDimensions from "ink-use-stdout-dimensions";
 import TextInput from "ink-text-input";
 import { execSync } from "child_process";
 import { GIT_TIMEOUT_MS, type CommitSummary } from "@browser-tester/supervisor";
@@ -45,7 +46,7 @@ const fetchCommitsWithMeta = (limit: number = COMMIT_LIMIT): CommitWithMeta[] =>
 };
 
 export const CommitPickerScreen = () => {
-  const { stdout } = useStdout();
+  const [columns] = useStdoutDimensions();
   const selectCommit = useAppStore((state) => state.selectCommit);
   const COLORS = useColors();
   const [commits] = useState(() => fetchCommitsWithMeta());
@@ -65,7 +66,7 @@ export const CommitPickerScreen = () => {
   }, [commits, searchQuery]);
 
   const subjectColumnWidth =
-    stdout.columns -
+    columns -
     COMMIT_SELECTOR_WIDTH -
     COMMIT_HASH_COLUMN_WIDTH -
     COMMIT_AUTHOR_COLUMN_WIDTH -
