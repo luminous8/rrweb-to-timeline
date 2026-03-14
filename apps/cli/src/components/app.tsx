@@ -137,9 +137,7 @@ export const App = () => {
       <MouseProvider>
         <Box flexDirection="column" width="100%">
           <Box flexGrow={1}>{renderScreen()}</Box>
-          <Box paddingX={1}>
-            <Modeline />
-          </Box>
+          <Modeline />
         </Box>
       </MouseProvider>
     </InkGrab>

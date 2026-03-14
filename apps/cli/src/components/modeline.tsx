@@ -2,7 +2,7 @@ import { Box, Text } from "ink";
 import { useStdoutDimensions } from "../hooks/use-stdout-dimensions.js";
 import stringWidth from "string-width";
 import { useThemeContext } from "./theme-context.js";
-import { STATUSBAR_BRANCH_PADDING, STATUSBAR_TRAILING_PADDING } from "../constants.js";
+import { STATUSBAR_TRAILING_PADDING } from "../constants.js";
 import { HintBar, HINT_SEPARATOR, type HintSegment } from "./ui/hint-bar.js";
 import { useAppStore, type Screen } from "../store.js";
 
@@ -17,7 +17,11 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
     case "main": {
       const hints: HintSegment[] = [
         { key: "t", label: "theme", onClick: () => navigateTo("theme") },
-        { key: "b", label: "branch", onClick: () => navigateTo("switch-branch") },
+        {
+          key: "b",
+          label: "branch",
+          onClick: () => navigateTo("switch-branch"),
+        },
       ];
       if (savedFlowSummaries.length > 0) {
         hints.push({
@@ -88,7 +92,9 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
 
 const getHintText = (segments: HintSegment[]): string =>
   segments.length > 0
-    ? ` ${segments.map((segment) => `${segment.key} ${segment.label}`).join(HINT_SEPARATOR)}`
+    ? ` ${segments
+        .map((segment) => `${segment.key} ${segment.label}`)
+        .join(HINT_SEPARATOR)}`
     : "";
 
 export const Modeline = () => {
@@ -100,32 +106,28 @@ export const Modeline = () => {
 
   if (!gitState) return null;
 
-  const remaining =
-    columns -
-    STATUSBAR_BRANCH_PADDING -
-    stringWidth(gitState.currentBranch) -
-    STATUSBAR_TRAILING_PADDING;
-
   const hintText = getHintText(segments);
-  const padding = remaining - stringWidth(hintText);
+  const branchLabel = ` ${gitState.currentBranch} `;
+  const contentWidth =
+    stringWidth(branchLabel) +
+    stringWidth(hintText) +
+    STATUSBAR_TRAILING_PADDING;
+  const borderFill = Math.max(0, columns - contentWidth);
 
   return (
-    <Box>
-      <Text backgroundColor={theme.primary} color="#000000" bold>
-        {" "}
-        {gitState.currentBranch}{" "}
-      </Text>
-      {segments.length > 0 ? (
-        <HintBar
-          segments={segments}
-          backgroundColor={theme.border}
-          color={theme.text}
-          mutedColor={theme.textMuted}
-        />
-      ) : null}
-      <Text backgroundColor={theme.border} color={theme.text}>
-        {" ".repeat(Math.max(0, padding))}
-      </Text>
+    <Box flexDirection="column">
+      <Text color={theme.border}>{"─".repeat(columns)}</Text>
+      <Box paddingX={1}>
+        <Text color={theme.textMuted}>{branchLabel}</Text>
+        {segments.length > 0 ? (
+          <HintBar
+            segments={segments}
+            color={theme.primary}
+            mutedColor={theme.textMuted}
+          />
+        ) : null}
+        <Text>{" ".repeat(borderFill)}</Text>
+      </Box>
     </Box>
   );
 };
