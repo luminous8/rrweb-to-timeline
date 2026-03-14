@@ -5,6 +5,8 @@ export interface HintSegment {
   key: string;
   label: string;
   onClick?: () => void;
+  color?: string;
+  cta?: boolean;
 }
 
 export const HINT_SEPARATOR = "   ";
@@ -25,10 +27,10 @@ const HintContent = ({
   mutedColor: string;
 }) => (
   <>
-    <Text color={color} bold>
+    <Text color={segment.color ?? color} bold>
       {segment.key}
     </Text>
-    <Text color={mutedColor}> {segment.label}</Text>
+    <Text color={segment.color ?? mutedColor}> {segment.label}</Text>
   </>
 );
 

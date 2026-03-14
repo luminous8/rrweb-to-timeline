@@ -1,12 +1,13 @@
 import { Box, Text } from "ink";
 import { useStdoutDimensions } from "../hooks/use-stdout-dimensions.js";
 import stringWidth from "string-width";
-import { useThemeContext } from "./theme-context.js";
+import { useColors, useThemeContext } from "./theme-context.js";
 import { STATUSBAR_TRAILING_PADDING } from "../constants.js";
 import { HintBar, HINT_SEPARATOR, type HintSegment } from "./ui/hint-bar.js";
 import { useAppStore, type Screen } from "../store.js";
 
 const useHintSegments = (screen: Screen): HintSegment[] => {
+  const COLORS = useColors();
   const navigateTo = useAppStore((state) => state.navigateTo);
   const goBack = useAppStore((state) => state.goBack);
   const approvePlan = useAppStore((state) => state.approvePlan);
@@ -38,29 +39,29 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
         { key: "↑↓", label: "nav" },
         { key: "tab", label: "local/remote" },
         { key: "/", label: "search" },
-        { key: "enter", label: "select" },
-        { key: "esc", label: "back", onClick: goBack },
+        { key: "enter", label: "select", cta: true },
+        { key: "esc", label: "back", cta: true, onClick: goBack },
       ];
     case "select-commit":
       return [
         { key: "↑↓", label: "nav" },
-        { key: "enter", label: "select" },
         { key: "/", label: "search" },
-        { key: "esc", label: "back", onClick: goBack },
+        { key: "enter", label: "select", cta: true },
+        { key: "esc", label: "back", cta: true, onClick: goBack },
       ];
     case "saved-flow-picker":
       return [
         { key: "↑↓", label: "nav" },
-        { key: "enter", label: "select" },
-        { key: "esc", label: "back", onClick: goBack },
+        { key: "enter", label: "select", cta: true },
+        { key: "esc", label: "back", cta: true, onClick: goBack },
       ];
     case "flow-input":
       return [
-        { key: "enter", label: "submit" },
-        { key: "esc", label: "back", onClick: goBack },
+        { key: "enter", label: "submit", cta: true },
+        { key: "esc", label: "back", cta: true, onClick: goBack },
       ];
     case "planning":
-      return [{ key: "esc", label: "cancel", onClick: goBack }];
+      return [{ key: "esc", label: "cancel", cta: true, onClick: goBack }];
     case "review-plan":
       return [
         { key: "↑↓", label: "nav" },
@@ -70,11 +71,13 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
         {
           key: "a",
           label: "approve",
+          color: COLORS.GREEN,
+          cta: true,
           onClick: () => {
             if (generatedPlan) approvePlan(generatedPlan);
           },
         },
-        { key: "esc", label: "back", onClick: goBack },
+        { key: "esc", label: "back", color: COLORS.RED, cta: true, onClick: goBack },
       ];
     case "testing":
       return [];
@@ -82,8 +85,8 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
       return [
         { key: "↑↓", label: "nav" },
         { key: "tab", label: "light/dark" },
-        { key: "enter", label: "select" },
-        { key: "esc", label: "cancel", onClick: goBack },
+        { key: "enter", label: "select", cta: true },
+        { key: "esc", label: "cancel", cta: true, onClick: goBack },
       ];
     default:
       return [];
@@ -106,27 +109,46 @@ export const Modeline = () => {
 
   if (!gitState) return null;
 
-  const hintText = getHintText(segments);
+  const keybinds = segments.filter((segment) => !segment.cta);
+  const actions = segments.filter((segment) => segment.cta);
+
   const branchLabel = ` ${gitState.currentBranch} `;
-  const contentWidth =
-    stringWidth(branchLabel) +
-    stringWidth(hintText) +
-    STATUSBAR_TRAILING_PADDING;
-  const borderFill = Math.max(0, columns - contentWidth);
+  const keybindText = getHintText(keybinds);
+  const actionPills = actions
+    .map((action) => `[${action.key} ${action.label}]`)
+    .join("  ");
+  const actionWidth = actions.length > 0 ? stringWidth(actionPills) + 2 : 0;
+  const leftWidth = stringWidth(branchLabel) + stringWidth(keybindText);
+  const totalUsed = leftWidth + actionWidth + STATUSBAR_TRAILING_PADDING;
+  const remainingSpace = Math.max(0, columns - totalUsed);
+  const leftGap = Math.ceil(remainingSpace / 2);
+  const rightGap = remainingSpace - leftGap;
 
   return (
     <Box flexDirection="column">
       <Text color={theme.border}>{"─".repeat(columns)}</Text>
       <Box paddingX={1}>
         <Text color={theme.textMuted}>{branchLabel}</Text>
-        {segments.length > 0 ? (
+        {keybinds.length > 0 ? (
           <HintBar
-            segments={segments}
+            segments={keybinds}
             color={theme.primary}
             mutedColor={theme.textMuted}
           />
         ) : null}
-        <Text>{" ".repeat(borderFill)}</Text>
+        <Text>{" ".repeat(leftGap)}</Text>
+        {actions.map((action, index) => (
+          <Text key={action.key + action.label}>
+            {index > 0 ? "  " : ""}
+            <Text color={action.color ?? theme.border}>{"["}</Text>
+            <Text color={action.color ?? theme.primary} bold>
+              {action.key}
+            </Text>
+            <Text color={action.color ?? theme.textMuted}> {action.label}</Text>
+            <Text color={action.color ?? theme.border}>{"]"}</Text>
+          </Text>
+        ))}
+        <Text>{" ".repeat(rightGap)}</Text>
       </Box>
     </Box>
   );
