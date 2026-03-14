@@ -1,6 +1,6 @@
 // HACK: esbuild injects this before all imports so react-reconciler detects the hook on load.
 import { existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolve, dirname } from "node:path";
 
 process.setSourceMapsEnabled(true);
@@ -33,7 +33,7 @@ let directory = dirname(fileURLToPath(import.meta.url));
 for (let depth = 0; depth < 10; depth++) {
   const candidate = resolve(directory, "node_modules", "ink", "build", "reconciler.js");
   if (existsSync(candidate)) {
-    import(candidate).then((module) => {
+    import(pathToFileURL(candidate).href).then((module) => {
       const reconciler = module.default ?? module;
       reconciler?.injectIntoDevTools?.({});
     });

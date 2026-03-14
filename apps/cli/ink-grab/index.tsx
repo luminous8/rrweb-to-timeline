@@ -22,6 +22,7 @@ const MOUSE_DISABLE = "\x1b[?1003l\x1b[?1006l";
 const CURSOR_QUERY = "\x1b[6n";
 const CALIBRATION_DELAY_MS = 100;
 const TEXT_PREVIEW_MAX_CHARS = 50;
+const OVERLAY_MAX_WIDTH = 60;
 
 const INK_INTERNAL_NAMES = new Set([
   "Box", "Text", "Static", "Transform", "Newline", "Spacer",
@@ -163,23 +164,34 @@ const formatSource = (frame: StackFrame): string => {
   return parts.join(":");
 };
 
-const resolveInkElement = async (node: DOMElement): Promise<string> => {
-  const tagName = node.nodeName ?? "";
-  const textPreview = truncatePreview(collectTextContent(node), TEXT_PREVIEW_MAX_CHARS);
-  const previewSuffix = textPreview ? ` "${textPreview}"` : "";
+interface ResolvedElement {
+  component: string;
+  tag: string;
+  preview: string | null;
+  source: string | null;
+  clipboardText: string;
+}
+
+const resolveInkElement = async (node: DOMElement): Promise<ResolvedElement> => {
+  const tag = node.nodeName ?? "";
+  const preview = truncatePreview(collectTextContent(node), TEXT_PREVIEW_MAX_CHARS) || null;
   for (const root of getFiberRoots()) {
     const fiber = findFiberForNode(root.current, node);
     if (!fiber) continue;
     const component = findNearestUserComponent(fiber);
-    if (!component) return `<${tagName}>${previewSuffix}`;
+    if (!component) {
+      const clipboardText = `<${tag}>${preview ? ` "${preview}"` : ""}`;
+      return { component: tag, tag, preview, source: null, clipboardText };
+    }
     const rawStack = await getOwnerStack(component.fiber, true, localFetch);
     const symbolicated = await symbolicateStack(stripFileProtocol(rawStack), true, localFetch);
     const sourceFrame = symbolicated.find((frame) => frame.fileName && isSourceFile(frame.fileName));
-    return sourceFrame
-      ? `<${component.name}>${previewSuffix} ${formatSource(sourceFrame)}`
-      : `<${component.name}>${previewSuffix} (${tagName})`;
+    const source = sourceFrame ? formatSource(sourceFrame) : null;
+    const clipboardText = `<${component.name}>${preview ? ` "${preview}"` : ""}${source ? ` ${source}` : ""}`;
+    return { component: component.name, tag, preview, source, clipboardText };
   }
-  return `<${tagName}>${previewSuffix}`;
+  const clipboardText = `<${tag}>${preview ? ` "${preview}"` : ""}`;
+  return { component: tag, tag, preview, source: null, clipboardText };
 };
 
 const copyToClipboard = (text: string): void => {
@@ -201,7 +213,7 @@ export const InkGrab = ({ children }: InkGrabProps) => {
 
   const rootRef = useRef<DOMElement>(null);
   const verticalOffsetRef = useRef<number | null>(null);
-  const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
+  const [hoveredElement, setHoveredElement] = useState<ResolvedElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -228,19 +240,19 @@ export const InkGrab = ({ children }: InkGrabProps) => {
 
         const element = hitTest(rootRef.current, mouseEvent.x - 1, mouseEvent.y - 1, verticalOffsetRef.current);
         if (!element) {
-          if (mouseEvent.isMove) setHoveredLabel(null);
+          if (mouseEvent.isMove) setHoveredElement(null);
           return;
         }
 
-        void resolveInkElement(element).then((label) => {
+        void resolveInkElement(element).then((resolved) => {
           if (cancelled) return;
-          setHoveredLabel(label);
-          if (!mouseEvent.isMove) copyToClipboard(label);
+          setHoveredElement(resolved);
+          if (!mouseEvent.isMove) copyToClipboard(resolved.clipboardText);
         });
         return;
       }
 
-      if (mouseEvent.isMove) setHoveredLabel(null);
+      if (mouseEvent.isMove) setHoveredElement(null);
     };
 
     internalEmitter.on("input", handleInput);
@@ -253,12 +265,23 @@ export const InkGrab = ({ children }: InkGrabProps) => {
     };
   }, [stdout, internalEmitter]);
 
+  const overlayWidth = Math.min(OVERLAY_MAX_WIDTH, stdout.columns);
+
   return (
-    <Box flexDirection="column" ref={rootRef}>
+    <Box ref={rootRef}>
       {children}
-      {hoveredLabel ? (
-        <Box justifyContent="flex-end" paddingX={1}>
-          <Text dimColor>{hoveredLabel}</Text>
+      {hoveredElement ? (
+        <Box position="absolute" marginLeft={stdout.columns - overlayWidth} flexDirection="column" borderStyle="round" borderColor="magenta" paddingX={1} width={overlayWidth}>
+          <Text color="magenta" bold wrap="truncate-end">{"<"}{hoveredElement.component}{">"}</Text>
+          {hoveredElement.component !== hoveredElement.tag ? (
+            <Text dimColor wrap="truncate-end">{hoveredElement.tag}</Text>
+          ) : null}
+          {hoveredElement.preview ? (
+            <Text color="gray" wrap="truncate-end">{"\""}{hoveredElement.preview}{"\""}</Text>
+          ) : null}
+          {hoveredElement.source ? (
+            <Text color="cyan" wrap="truncate-end">{hoveredElement.source}</Text>
+          ) : null}
         </Box>
       ) : null}
     </Box>
