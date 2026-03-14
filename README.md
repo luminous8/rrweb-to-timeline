@@ -14,6 +14,7 @@ nisarg:
 
 rasmus:
 
+- `CLAUDECODE=1 testie` is not steerable
 - doesn't work using `CLAUDECODE=1`
 - editing plan doesn't work
 - prompts / nothing is saved
