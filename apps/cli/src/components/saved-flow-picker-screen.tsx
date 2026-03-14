@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Box, Text, useInput } from "ink";
+import figures from "figures";
 import { SAVED_FLOW_PICKER_VISIBLE_COUNT } from "../constants.js";
 import { useColors } from "./theme-context.js";
 import { useAppStore } from "../store.js";
@@ -84,13 +85,23 @@ export const SavedFlowPickerScreen = () => {
 
           return (
             <Box key={savedFlow.filePath} flexDirection="column" marginBottom={1}>
-              <Text color={isSelected ? COLORS.SELECTION : COLORS.TEXT}>
-                {isSelected ? "➤ " : "  "}
-                {savedFlow.title}
-                {isLoading ? " (loading...)" : ""}
+              <Text>
+                <Text color={isSelected ? COLORS.ORANGE : COLORS.DIM}>
+                  {isSelected ? `${figures.pointer} ` : "  "}
+                </Text>
+                {isSelected ? (
+                  <Text backgroundColor={COLORS.ORANGE} color="#000000" bold>
+                    {" "}{savedFlow.title}{isLoading ? " (loading...)" : ""}{" "}
+                  </Text>
+                ) : (
+                  <Text color={COLORS.TEXT}>
+                    {savedFlow.title}
+                    {isLoading ? " (loading...)" : ""}
+                  </Text>
+                )}
               </Text>
               <Text color={COLORS.DIM}>
-                {savedFlow.description}
+                {"  "}{savedFlow.description}
                 {savedFlow.savedTargetDisplayName
                   ? ` · saved for ${savedFlow.savedTargetDisplayName}`
                   : ""}

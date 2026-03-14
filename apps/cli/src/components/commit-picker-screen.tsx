@@ -143,11 +143,17 @@ export const CommitPickerScreen = () => {
               <Text color={COLORS.PURPLE}>
                 {visualPadEnd(commit.shortHash, COMMIT_HASH_COLUMN_WIDTH)}
               </Text>
-              <Text color={isSelected ? COLORS.TEXT : COLORS.DIM} bold={isSelected}>
+              <Text
+                color={isSelected ? "#000000" : COLORS.DIM}
+                backgroundColor={isSelected ? COLORS.ORANGE : undefined}
+                bold={isSelected}
+              >
+                {isSelected ? " " : ""}
                 {visualPadEnd(
-                  truncateText(commit.subject, subjectColumnWidth - 1),
-                  subjectColumnWidth,
+                  truncateText(commit.subject, subjectColumnWidth - (isSelected ? 3 : 1)),
+                  subjectColumnWidth - (isSelected ? 2 : 0),
                 )}
+                {isSelected ? " " : ""}
               </Text>
               <Text color={COLORS.CYAN}>
                 {visualPadEnd(

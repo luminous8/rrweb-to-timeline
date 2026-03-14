@@ -112,14 +112,23 @@ export const ThemePickerScreen = () => {
           const isSelected = actualIndex === selectedIndex;
           return (
             <Clickable key={name} onClick={() => setSelectedIndex(actualIndex)}>
-              <Text color={isSelected ? COLORS.ORANGE : COLORS.DIM}>
-                {isSelected ? `${figures.pointer} ` : "  "}
-              </Text>
-              <ThemeSwatch theme={theme} />
-              <Text> </Text>
-              <Text color={isSelected ? undefined : COLORS.DIM} bold={isSelected}>
-                {theme.name}
-              </Text>
+              {isSelected ? (
+                <Text>
+                  <Text color={COLORS.ORANGE}>{figures.pointer} </Text>
+                  <ThemeSwatch theme={theme} />
+                  <Text> </Text>
+                  <Text backgroundColor={COLORS.ORANGE} color="#000000" bold>
+                    {" "}{theme.name}{" "}
+                  </Text>
+                </Text>
+              ) : (
+                <Text>
+                  <Text color={COLORS.DIM}>{"  "}</Text>
+                  <ThemeSwatch theme={theme} />
+                  <Text> </Text>
+                  <Text color={COLORS.DIM}>{theme.name}</Text>
+                </Text>
+              )}
             </Clickable>
           );
         })}

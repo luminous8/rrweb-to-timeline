@@ -241,11 +241,17 @@ export const BranchSwitcherScreen = () => {
                   <Text color={isSelected ? COLORS.ORANGE : COLORS.DIM}>
                     {isSelected ? `${figures.pointer} ` : "  "}
                   </Text>
-                  <Text color={isSelected ? COLORS.TEXT : COLORS.DIM} bold={isSelected}>
+                  <Text
+                    color={isSelected ? "#000000" : COLORS.DIM}
+                    backgroundColor={isSelected ? COLORS.ORANGE : undefined}
+                    bold={isSelected}
+                  >
+                    {isSelected ? " " : ""}
                     {visualPadEnd(
-                      truncateText(branchName, BRANCH_NAME_COLUMN_WIDTH - 1),
-                      BRANCH_NAME_COLUMN_WIDTH,
+                      truncateText(branchName, BRANCH_NAME_COLUMN_WIDTH - (isSelected ? 3 : 1)),
+                      BRANCH_NAME_COLUMN_WIDTH - (isSelected ? 2 : 0),
                     )}
+                    {isSelected ? " " : ""}
                   </Text>
                   {remoteBranch && (
                     <>
