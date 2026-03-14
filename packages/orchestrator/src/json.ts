@@ -19,8 +19,8 @@ const normalizeJsonCandidate = (input: string): string => {
   return trimmedInput.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\").trim();
 };
 
-const extractBalancedJsonObject = (input: string): string | null => {
-  const firstBraceIndex = input.indexOf("{");
+const extractBalancedJsonObjectAt = (input: string, startIndex: number): string | null => {
+  const firstBraceIndex = input.indexOf("{", startIndex);
   if (firstBraceIndex === -1) return null;
 
   let depth = 0;
@@ -58,12 +58,32 @@ const extractBalancedJsonObject = (input: string): string | null => {
   return null;
 };
 
+const findLargestJsonObject = (input: string): string | null => {
+  let largest: string | null = null;
+  let searchFrom = 0;
+
+  for (;;) {
+    const candidate = extractBalancedJsonObjectAt(input, searchFrom);
+    if (!candidate) break;
+
+    if (!largest || candidate.length > largest.length) {
+      largest = candidate;
+    }
+
+    searchFrom = input.indexOf(candidate, searchFrom) + candidate.length;
+  }
+
+  return largest;
+};
+
 export const extractJsonObject = (input: string): string => {
   const codeBlockJson = extractFromCodeBlock(input);
   if (codeBlockJson) return normalizeJsonCandidate(codeBlockJson);
 
-  const balancedJsonObject = extractBalancedJsonObject(input);
-  if (balancedJsonObject) return normalizeJsonCandidate(balancedJsonObject);
+  const largest = findLargestJsonObject(input);
+  if (!largest) {
+    throw new Error("The model did not return a JSON object.");
+  }
 
-  throw new Error("The model did not return a JSON object.");
+  return normalizeJsonCandidate(largest);
 };

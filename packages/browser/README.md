@@ -116,6 +116,6 @@ interface RefMap {
 
 Cookie utilities are re-exported from `@browser-tester/cookies` for convenience:
 
-`extractCookies` `extractProfileCookies` `extractAllProfileCookies` `detectBrowserProfiles` `CookieJar` `toCookieHeader`
+`extractCookies` `extractProfileCookies` `extractAllProfileCookies` `detectBrowserProfiles` `matchCookies` `matchCookieHeader` `toCookieHeader` `toPlaywrightCookies` `toPuppeteerCookies`
 
 See [@browser-tester/cookies](../cookies/README.md) for full cookie API docs.

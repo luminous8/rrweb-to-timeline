@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { CookieJar } from "../src/jar.js";
+import {
+  matchCookieHeader,
+  matchCookies,
+  toPlaywrightCookies,
+  toPuppeteerCookies,
+} from "../src/jar.js";
 import type { Cookie } from "../src/types.js";
 
 const cookie = (overrides: Partial<Cookie> = {}): Cookie => ({
@@ -15,131 +20,111 @@ const cookie = (overrides: Partial<Cookie> = {}): Cookie => ({
   ...overrides,
 });
 
-describe("CookieJar", () => {
-  describe("match", () => {
-    it("matches cookie by domain", () => {
-      const jar = new CookieJar([cookie()]);
-      expect(jar.match("https://example.com/")).toHaveLength(1);
-    });
-
-    it("matches subdomain against parent domain", () => {
-      const jar = new CookieJar([cookie()]);
-      expect(jar.match("https://sub.example.com/")).toHaveLength(1);
-    });
-
-    it("rejects unrelated domain", () => {
-      const jar = new CookieJar([cookie()]);
-      expect(jar.match("https://other.com/")).toHaveLength(0);
-    });
-
-    it("rejects path mismatch", () => {
-      const jar = new CookieJar([cookie({ path: "/api" })]);
-      expect(jar.match("https://example.com/")).toHaveLength(0);
-    });
-
-    it("matches path prefix", () => {
-      const jar = new CookieJar([cookie({ path: "/api" })]);
-      expect(jar.match("https://example.com/api/users")).toHaveLength(1);
-    });
-
-    it("rejects secure cookie on http", () => {
-      const jar = new CookieJar([cookie({ secure: true })]);
-      expect(jar.match("http://example.com/")).toHaveLength(0);
-    });
-
-    it("allows non-secure cookie on http", () => {
-      const jar = new CookieJar([cookie({ secure: false })]);
-      expect(jar.match("http://example.com/")).toHaveLength(1);
-    });
-
-    it("excludes expired cookies", () => {
-      const jar = new CookieJar([cookie({ expires: 1 })]);
-      expect(jar.match("https://example.com/")).toHaveLength(0);
-    });
-
-    it("includes session cookies (no expires)", () => {
-      const jar = new CookieJar([cookie({ expires: undefined })]);
-      expect(jar.match("https://example.com/")).toHaveLength(1);
-    });
+describe("matchCookies", () => {
+  it("matches cookie by domain", () => {
+    expect(matchCookies([cookie()], "https://example.com/")).toHaveLength(1);
   });
 
-  describe("toCookieHeader", () => {
-    it("formats matching cookies as header", () => {
-      const jar = new CookieJar([
-        cookie({ name: "a", value: "1" }),
-        cookie({ name: "b", value: "2" }),
-      ]);
-      expect(jar.toCookieHeader("https://example.com/")).toBe("a=1; b=2");
-    });
-
-    it("returns empty string for no matches", () => {
-      const jar = new CookieJar([cookie()]);
-      expect(jar.toCookieHeader("https://other.com/")).toBe("");
-    });
+  it("matches subdomain against parent domain", () => {
+    expect(matchCookies([cookie()], "https://sub.example.com/")).toHaveLength(1);
   });
 
-  describe("toPlaywright", () => {
-    it("maps all fields", () => {
-      const jar = new CookieJar([cookie({ expires: 1700000000 })]);
-      const [pw] = jar.toPlaywright();
-      expect(pw.name).toBe("session");
-      expect(pw.value).toBe("abc123");
-      expect(pw.domain).toBe(".example.com");
-      expect(pw.path).toBe("/");
-      expect(pw.expires).toBe(1700000000);
-      expect(pw.secure).toBe(true);
-      expect(pw.httpOnly).toBe(true);
-      expect(pw.sameSite).toBe("Lax");
-    });
-
-    it("defaults sameSite to Lax", () => {
-      const jar = new CookieJar([cookie({ sameSite: undefined })]);
-      expect(jar.toPlaywright()[0].sameSite).toBe("Lax");
-    });
-
-    it("uses -1 for session cookies", () => {
-      const jar = new CookieJar([cookie({ expires: undefined })]);
-      expect(jar.toPlaywright()[0].expires).toBe(-1);
-    });
-
-    it("prefixes domain with dot", () => {
-      const jar = new CookieJar([cookie({ domain: "example.com" })]);
-      expect(jar.toPlaywright()[0].domain).toBe(".example.com");
-    });
-
-    it("does not double-dot domain", () => {
-      const jar = new CookieJar([cookie({ domain: ".example.com" })]);
-      expect(jar.toPlaywright()[0].domain).toBe(".example.com");
-    });
+  it("rejects unrelated domain", () => {
+    expect(matchCookies([cookie()], "https://other.com/")).toHaveLength(0);
   });
 
-  describe("toPuppeteer", () => {
-    it("maps all fields", () => {
-      const jar = new CookieJar([cookie({ expires: 1700000000, sameSite: "Strict" })]);
-      const [pp] = jar.toPuppeteer();
-      expect(pp.name).toBe("session");
-      expect(pp.expires).toBe(1700000000);
-      expect(pp.sameSite).toBe("Strict");
-    });
-
-    it("preserves undefined sameSite", () => {
-      const jar = new CookieJar([cookie({ sameSite: undefined })]);
-      expect(jar.toPuppeteer()[0].sameSite).toBeUndefined();
-    });
+  it("rejects path mismatch", () => {
+    expect(matchCookies([cookie({ path: "/api" })], "https://example.com/")).toHaveLength(0);
   });
 
-  describe("toJSON / fromJSON", () => {
-    it("round-trips cookies", () => {
-      const original = [cookie({ name: "x", value: "y" })];
-      const jar = new CookieJar(original);
-      const restored = CookieJar.fromJSON(jar.toJSON());
-      expect(restored.cookies).toEqual(original);
-    });
+  it("matches path prefix", () => {
+    expect(
+      matchCookies([cookie({ path: "/api" })], "https://example.com/api/users"),
+    ).toHaveLength(1);
+  });
 
-    it("round-trips empty jar", () => {
-      const jar = new CookieJar([]);
-      const restored = CookieJar.fromJSON(jar.toJSON());
-      expect(restored.cookies).toEqual([]);
-    });
+  it("rejects secure cookie on http", () => {
+    expect(matchCookies([cookie({ secure: true })], "http://example.com/")).toHaveLength(0);
+  });
+
+  it("allows non-secure cookie on http", () => {
+    expect(matchCookies([cookie({ secure: false })], "http://example.com/")).toHaveLength(1);
+  });
+
+  it("excludes expired cookies", () => {
+    expect(matchCookies([cookie({ expires: 1 })], "https://example.com/")).toHaveLength(0);
+  });
+
+  it("includes session cookies (no expires)", () => {
+    expect(matchCookies([cookie({ expires: undefined })], "https://example.com/")).toHaveLength(1);
+  });
+});
+
+describe("matchCookieHeader", () => {
+  it("formats matching cookies as header", () => {
+    const cookies = [cookie({ name: "a", value: "1" }), cookie({ name: "b", value: "2" })];
+    expect(matchCookieHeader(cookies, "https://example.com/")).toBe("a=1; b=2");
+  });
+
+  it("returns empty string for no matches", () => {
+    expect(matchCookieHeader([cookie()], "https://other.com/")).toBe("");
+  });
+});
+
+describe("toPlaywrightCookies", () => {
+  it("maps all fields", () => {
+    const [pw] = toPlaywrightCookies([cookie({ expires: 1700000000 })]);
+    expect(pw.name).toBe("session");
+    expect(pw.value).toBe("abc123");
+    expect(pw.domain).toBe(".example.com");
+    expect(pw.path).toBe("/");
+    expect(pw.expires).toBe(1700000000);
+    expect(pw.secure).toBe(true);
+    expect(pw.httpOnly).toBe(true);
+    expect(pw.sameSite).toBe("Lax");
+  });
+
+  it("defaults sameSite to Lax", () => {
+    expect(toPlaywrightCookies([cookie({ sameSite: undefined })])[0].sameSite).toBe("Lax");
+  });
+
+  it("uses -1 for session cookies", () => {
+    expect(toPlaywrightCookies([cookie({ expires: undefined })])[0].expires).toBe(-1);
+  });
+
+  it("prefixes domain with dot", () => {
+    expect(toPlaywrightCookies([cookie({ domain: "example.com" })])[0].domain).toBe(".example.com");
+  });
+
+  it("does not double-dot domain", () => {
+    expect(toPlaywrightCookies([cookie({ domain: ".example.com" })])[0].domain).toBe(
+      ".example.com",
+    );
+  });
+});
+
+describe("toPuppeteerCookies", () => {
+  it("maps all fields", () => {
+    const [pp] = toPuppeteerCookies([cookie({ expires: 1700000000, sameSite: "Strict" })]);
+    expect(pp.name).toBe("session");
+    expect(pp.expires).toBe(1700000000);
+    expect(pp.sameSite).toBe("Strict");
+  });
+
+  it("preserves undefined sameSite", () => {
+    expect(toPuppeteerCookies([cookie({ sameSite: undefined })])[0].sameSite).toBeUndefined();
+  });
+});
+
+describe("JSON round-trip", () => {
+  it("round-trips cookies", () => {
+    const original = [cookie({ name: "x", value: "y" })];
+    const restored = JSON.parse(JSON.stringify(original)) as Cookie[];
+    expect(restored).toEqual(original);
+  });
+
+  it("round-trips empty array", () => {
+    const restored = JSON.parse(JSON.stringify([])) as Cookie[];
+    expect(restored).toEqual([]);
   });
 });

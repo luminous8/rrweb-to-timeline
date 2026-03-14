@@ -96,7 +96,7 @@ when `createPage` is called with `cookies: true`:
 
 1. detect the user's default browser
 2. extract cookies for the target url from that browser
-3. build a `CookieJar` and call `jar.toPlaywright()` to convert to playwright's format
+3. call `toPlaywrightCookies(cookies)` to convert to playwright's format
 4. call `context.addCookies(...)` before navigating
 
 this lets the agent browse authenticated pages without manual login.

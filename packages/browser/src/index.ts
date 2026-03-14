@@ -7,13 +7,16 @@ export { diffSnapshots } from "./diff";
 export { saveVideo } from "./save-video";
 export { waitForNavigationSettle } from "./utils/wait-for-settle";
 export {
-  CookieJar,
   detectBrowserProfiles,
   detectDefaultBrowser,
   extractAllProfileCookies,
   extractCookies,
   extractProfileCookies,
+  matchCookieHeader,
+  matchCookies,
   toCookieHeader,
+  toPlaywrightCookies,
+  toPuppeteerCookies,
 } from "@browser-tester/cookies";
 export type {
   Browser,
@@ -23,6 +26,8 @@ export type {
   ExtractOptions,
   ExtractProfileOptions,
   ExtractResult,
+  PlaywrightCookie,
+  PuppeteerCookie,
 } from "@browser-tester/cookies";
 export type {
   AnnotatedScreenshotOptions,

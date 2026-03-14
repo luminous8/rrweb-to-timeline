@@ -39,51 +39,32 @@ const toBaseCookie = (cookie: Cookie) => ({
   httpOnly: cookie.httpOnly,
 });
 
-export class CookieJar {
-  readonly cookies: Cookie[];
+export const matchCookies = (cookies: Cookie[], url: string): Cookie[] => {
+  const parsed = new URL(url);
+  const host = parsed.hostname;
+  const pathname = parsed.pathname || "/";
+  const currentTime = getEpochSeconds();
 
-  constructor(cookies: Cookie[]) {
-    this.cookies = cookies;
-  }
+  return cookies.filter((cookie) => {
+    if (!hostMatchesCookieDomain(host, cookie.domain)) return false;
+    if (!pathname.startsWith(cookie.path)) return false;
+    if (cookie.secure && parsed.protocol !== "https:") return false;
+    if (cookie.expires && cookie.expires < currentTime) return false;
+    return true;
+  });
+};
 
-  match(url: string): Cookie[] {
-    const parsed = new URL(url);
-    const host = parsed.hostname;
-    const pathname = parsed.pathname || "/";
-    const currentTime = getEpochSeconds();
+export const matchCookieHeader = (cookies: Cookie[], url: string): string =>
+  toCookieHeader(matchCookies(cookies, url));
 
-    return this.cookies.filter((cookie) => {
-      if (!hostMatchesCookieDomain(host, cookie.domain)) return false;
-      if (!pathname.startsWith(cookie.path)) return false;
-      if (cookie.secure && parsed.protocol !== "https:") return false;
-      if (cookie.expires && cookie.expires < currentTime) return false;
-      return true;
-    });
-  }
+export const toPlaywrightCookies = (cookies: Cookie[]): PlaywrightCookie[] =>
+  cookies.map((cookie) => ({
+    ...toBaseCookie(cookie),
+    sameSite: cookie.sameSite ?? "Lax",
+  }));
 
-  toCookieHeader(url: string): string {
-    return toCookieHeader(this.match(url));
-  }
-
-  toPlaywright(): PlaywrightCookie[] {
-    return this.cookies.map((cookie) => ({
-      ...toBaseCookie(cookie),
-      sameSite: cookie.sameSite ?? "Lax",
-    }));
-  }
-
-  toPuppeteer(): PuppeteerCookie[] {
-    return this.cookies.map((cookie) => ({
-      ...toBaseCookie(cookie),
-      sameSite: cookie.sameSite,
-    }));
-  }
-
-  toJSON(): string {
-    return JSON.stringify(this.cookies);
-  }
-
-  static fromJSON(json: string): CookieJar {
-    return new CookieJar(JSON.parse(json) as Cookie[]);
-  }
-}
+export const toPuppeteerCookies = (cookies: Cookie[]): PuppeteerCookie[] =>
+  cookies.map((cookie) => ({
+    ...toBaseCookie(cookie),
+    sameSite: cookie.sameSite,
+  }));

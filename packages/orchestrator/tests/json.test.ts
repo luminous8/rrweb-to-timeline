@@ -14,13 +14,21 @@ describe("extractJsonObject", () => {
     expect(extractJsonObject(input)).toBe('{"title":"Plan","steps":[]}');
   });
 
-  it("extracts the first balanced object when trailing text includes braces", () => {
+  it("extracts the largest balanced object when multiple exist", () => {
     const input =
       '{"title":"Plan","message":"Use {braces} safely","steps":[]}\nAdditional notes {ignored}';
 
     expect(extractJsonObject(input)).toBe(
       '{"title":"Plan","message":"Use {braces} safely","steps":[]}',
     );
+  });
+
+  it("picks the plan over a small preceding json object", () => {
+    const small = '{"type":"thinking"}';
+    const large = '{"title":"Plan","rationale":"reason","steps":[{"id":"1"}]}';
+    const input = `Here is my analysis: ${small}\n${large}`;
+
+    expect(extractJsonObject(input)).toBe(large);
   });
 
   it("normalizes escaped json extracted from a fenced block", () => {

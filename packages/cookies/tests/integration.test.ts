@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { extractCookies } from "../src/sqlite/extract.js";
-import { CookieJar } from "../src/jar.js";
+import {
+  matchCookieHeader,
+  matchCookies,
+  toPlaywrightCookies,
+  toPuppeteerCookies,
+} from "../src/jar.js";
 import { toCookieHeader } from "../src/utils/format-cookie-header.js";
+import type { Cookie } from "../src/types.js";
 
 const GOOGLE_URL = "https://google.com";
 
@@ -140,31 +146,31 @@ describe("toCookieHeader", () => {
   });
 });
 
-describe("CookieJar with real cookies", () => {
-  const getJar = async (): Promise<CookieJar> => {
+describe("cookie helpers with real cookies", () => {
+  const getCookies = async (): Promise<Cookie[]> => {
     const result = await extractCookies({ url: GOOGLE_URL });
-    return new CookieJar(result.cookies);
+    return result.cookies;
   };
 
-  it("match returns only cookies whose domain matches the URL", async () => {
-    const jar = await getJar();
-    const matched = jar.match("https://google.com/");
+  it("matchCookies returns only cookies whose domain matches the URL", async () => {
+    const cookies = await getCookies();
+    const matched = matchCookies(cookies, "https://google.com/");
     for (const cookie of matched) {
       expect(cookie.domain === "google.com" || cookie.domain.endsWith(".google.com")).toBe(true);
     }
   });
 
-  it("match includes parent-domain cookies for subdomains", async () => {
-    const jar = await getJar();
-    const rootMatched = jar.match("https://google.com/");
-    const subMatched = jar.match("https://mail.google.com/");
+  it("matchCookies includes parent-domain cookies for subdomains", async () => {
+    const cookies = await getCookies();
+    const rootMatched = matchCookies(cookies, "https://google.com/");
+    const subMatched = matchCookies(cookies, "https://mail.google.com/");
     expect(subMatched.length).toBeGreaterThanOrEqual(rootMatched.length);
   });
 
-  it("match filters secure cookies on http", async () => {
-    const jar = await getJar();
-    const httpsMatched = jar.match("https://google.com/");
-    const httpMatched = jar.match("http://google.com/");
+  it("matchCookies filters secure cookies on http", async () => {
+    const cookies = await getCookies();
+    const httpsMatched = matchCookies(cookies, "https://google.com/");
+    const httpMatched = matchCookies(cookies, "http://google.com/");
     const secureCount = httpsMatched.filter((cookie) => cookie.secure).length;
     if (secureCount > 0) {
       expect(httpMatched.length).toBeLessThan(httpsMatched.length);
@@ -174,28 +180,28 @@ describe("CookieJar with real cookies", () => {
     }
   });
 
-  it("match handles path-scoped cookies", async () => {
-    const jar = await getJar();
-    const rootMatched = jar.match("https://mail.google.com/");
-    const pathMatched = jar.match("https://mail.google.com/mail/u/0");
+  it("matchCookies handles path-scoped cookies", async () => {
+    const cookies = await getCookies();
+    const rootMatched = matchCookies(cookies, "https://mail.google.com/");
+    const pathMatched = matchCookies(cookies, "https://mail.google.com/mail/u/0");
     expect(pathMatched.length).toBeGreaterThanOrEqual(rootMatched.length);
   });
 
-  it("match returns empty for unrelated domain", async () => {
-    const jar = await getJar();
-    expect(jar.match("https://notgoogle.com/")).toHaveLength(0);
+  it("matchCookies returns empty for unrelated domain", async () => {
+    const cookies = await getCookies();
+    expect(matchCookies(cookies, "https://notgoogle.com/")).toHaveLength(0);
   });
 
-  it("toCookieHeader returns empty for unrelated URL", async () => {
-    const jar = await getJar();
-    expect(jar.toCookieHeader("https://notgoogle.com/")).toBe("");
+  it("matchCookieHeader returns empty for unrelated URL", async () => {
+    const cookies = await getCookies();
+    expect(matchCookieHeader(cookies, "https://notgoogle.com/")).toBe("");
   });
 
-  it("toPlaywright produces valid entries", async () => {
-    const jar = await getJar();
-    if (jar.cookies.length === 0) return;
+  it("toPlaywrightCookies produces valid entries", async () => {
+    const cookies = await getCookies();
+    if (cookies.length === 0) return;
 
-    for (const cookie of jar.toPlaywright()) {
+    for (const cookie of toPlaywrightCookies(cookies)) {
       expect(cookie.domain.startsWith(".")).toBe(true);
       expect(typeof cookie.sameSite).toBe("string");
       expect(["Strict", "Lax", "None"]).toContain(cookie.sameSite);
@@ -203,42 +209,44 @@ describe("CookieJar with real cookies", () => {
     }
   });
 
-  it("toPlaywright uses -1 for session cookies", async () => {
-    const jar = await getJar();
-    const sessionCookies = jar.cookies.filter((cookie) => !cookie.expires);
+  it("toPlaywrightCookies uses -1 for session cookies", async () => {
+    const cookies = await getCookies();
+    const sessionCookies = cookies.filter((cookie) => !cookie.expires);
     if (sessionCookies.length === 0) return;
 
-    const pw = jar.toPlaywright();
-    const pwSession = pw.filter((cookie) => cookie.expires === -1);
-    expect(pwSession.length).toBe(sessionCookies.length);
+    const playwrightSession = toPlaywrightCookies(cookies).filter(
+      (cookie) => cookie.expires === -1,
+    );
+    expect(playwrightSession.length).toBe(sessionCookies.length);
   });
 
-  it("toPuppeteer preserves undefined sameSite", async () => {
-    const jar = await getJar();
-    const noSameSite = jar.cookies.filter((cookie) => !cookie.sameSite);
+  it("toPuppeteerCookies preserves undefined sameSite", async () => {
+    const cookies = await getCookies();
+    const noSameSite = cookies.filter((cookie) => !cookie.sameSite);
     if (noSameSite.length === 0) return;
 
-    const pp = jar.toPuppeteer();
-    const ppNoSameSite = pp.filter((cookie) => cookie.sameSite === undefined);
-    expect(ppNoSameSite.length).toBe(noSameSite.length);
+    const puppeteerNoSameSite = toPuppeteerCookies(cookies).filter(
+      (cookie) => cookie.sameSite === undefined,
+    );
+    expect(puppeteerNoSameSite.length).toBe(noSameSite.length);
   });
 
   it("JSON round-trip preserves match behavior", async () => {
-    const jar = await getJar();
-    const restored = CookieJar.fromJSON(jar.toJSON());
+    const cookies = await getCookies();
+    const restored = JSON.parse(JSON.stringify(cookies)) as Cookie[];
 
-    expect(restored.cookies).toEqual(jar.cookies);
-    expect(jar.toCookieHeader("https://google.com/")).toBe(
-      restored.toCookieHeader("https://google.com/"),
+    expect(restored).toEqual(cookies);
+    expect(matchCookieHeader(cookies, "https://google.com/")).toBe(
+      matchCookieHeader(restored, "https://google.com/"),
     );
-    expect(jar.toCookieHeader("https://mail.google.com/")).toBe(
-      restored.toCookieHeader("https://mail.google.com/"),
+    expect(matchCookieHeader(cookies, "https://mail.google.com/")).toBe(
+      matchCookieHeader(restored, "https://mail.google.com/"),
     );
   });
 
   it("JSON round-trip preserves playwright format", async () => {
-    const jar = await getJar();
-    const restored = CookieJar.fromJSON(jar.toJSON());
-    expect(jar.toPlaywright()).toEqual(restored.toPlaywright());
+    const cookies = await getCookies();
+    const restored = JSON.parse(JSON.stringify(cookies)) as Cookie[];
+    expect(toPlaywrightCookies(cookies)).toEqual(toPlaywrightCookies(restored));
   });
 });

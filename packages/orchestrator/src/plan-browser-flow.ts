@@ -127,6 +127,21 @@ const normalizeSteps = (steps: z.infer<typeof planStepSchema>[]): PlanStep[] =>
     id: step.id || `step-${String(index + 1).padStart(STEP_ID_PAD_LENGTH, "0")}`,
   }));
 
+const parsePlanJson = (parsedJson: unknown): z.infer<typeof browserFlowPlanSchema> => {
+  const directResult = browserFlowPlanSchema.safeParse(parsedJson);
+  if (directResult.success) return directResult.data;
+
+  if (parsedJson && typeof parsedJson === "object" && !Array.isArray(parsedJson)) {
+    for (const value of Object.values(parsedJson)) {
+      if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+      const nestedResult = browserFlowPlanSchema.safeParse(value);
+      if (nestedResult.success) return nestedResult.data;
+    }
+  }
+
+  return browserFlowPlanSchema.parse(parsedJson);
+};
+
 export const planBrowserFlow = async (
   options: PlanBrowserFlowOptions,
 ): Promise<BrowserFlowPlan> => {
@@ -140,7 +155,7 @@ export const planBrowserFlow = async (
     .filter((part) => part.type === "text")
     .map((part) => part.text)
     .join("\n");
-  const parsedPlan = browserFlowPlanSchema.parse(JSON.parse(extractJsonObject(text)));
+  const parsedPlan = parsePlanJson(JSON.parse(extractJsonObject(text)));
 
   return {
     ...parsedPlan,
