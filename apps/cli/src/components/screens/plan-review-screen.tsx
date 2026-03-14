@@ -230,11 +230,11 @@ export const PlanReviewScreen = () => {
           <Box flexDirection="column" marginLeft={SECTION_INDENT}>
             <Text color={COLORS.DIM}>
               {"rationale  "}
-              <Text color={COLORS.TEXT}>{plan.rationale}</Text>
+              {plan.rationale}
             </Text>
             <Text color={COLORS.DIM}>
               {"target     "}
-              <Text color={COLORS.TEXT}>{plan.targetSummary}</Text>
+              {plan.targetSummary}
             </Text>
           </Box>
         </Collapsible>
