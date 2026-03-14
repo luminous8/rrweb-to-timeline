@@ -27,7 +27,10 @@ export const Modeline = () => {
 
   const hints = SCREEN_HINTS[screen] ?? "";
   const remaining =
-    columns - STATUSBAR_BRANCH_PADDING - stringWidth(gitState.currentBranch) - STATUSBAR_TRAILING_PADDING;
+    columns -
+    STATUSBAR_BRANCH_PADDING -
+    stringWidth(gitState.currentBranch) -
+    STATUSBAR_TRAILING_PADDING;
 
   return (
     <Box>

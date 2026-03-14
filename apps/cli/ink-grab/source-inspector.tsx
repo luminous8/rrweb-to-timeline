@@ -35,28 +35,38 @@ export const SourceInspector = ({ children }: SourceInspectorProps) => {
   useEffect(() => {
     if (mode !== "picking") return;
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const termMouse = require("term-mouse");
-    const mouse = termMouse();
-
-    mouse.start();
+    let cancelled = false;
+    interface MouseInstance {
+      start: () => void;
+      stop: () => void;
+      on: (event: string, handler: (event: { x: number; y: number }) => void) => void;
+      removeListener: (event: string, handler: (event: { x: number; y: number }) => void) => void;
+    }
+    let mouseInstance: MouseInstance | null = null;
 
     const handleClick = (event: { x: number; y: number }) => {
       if (!rootRef.current) return;
-
       const element = hitTest(rootRef.current, event.x - 1, event.y - 1);
       if (!element) return;
-
       void resolveElementInfo(element).then((info) => {
-        setElementInfo(info);
+        if (!cancelled) setElementInfo(info);
       });
     };
 
-    mouse.on("click", handleClick);
+    void import("term-mouse").then((mod) => {
+      if (cancelled) return;
+      const createMouse = (mod.default ?? mod) as () => MouseInstance;
+      mouseInstance = createMouse();
+      mouseInstance.start();
+      mouseInstance.on("click", handleClick);
+    });
 
     return () => {
-      mouse.stop();
-      mouse.removeListener("click", handleClick);
+      cancelled = true;
+      if (mouseInstance) {
+        mouseInstance.stop();
+        mouseInstance.removeListener("click", handleClick);
+      }
     };
   }, [mode]);
 
