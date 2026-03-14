@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BROWSER_TESTER_VIDEO_OUTPUT_ENV_NAME,
   buildBrowserMcpServerEnv,
+  buildBrowserMcpSettings,
 } from "../src/browser-mcp-config.js";
 
 describe("buildBrowserMcpServerEnv", () => {
@@ -16,6 +17,36 @@ describe("buildBrowserMcpServerEnv", () => {
       }),
     ).toEqual({
       [BROWSER_TESTER_VIDEO_OUTPUT_ENV_NAME]: "/tmp/browser-flow.webm",
+    });
+  });
+
+  it("keeps only the configured browser MCP server", () => {
+    const settings = buildBrowserMcpSettings({
+      browserMcpServerName: "browser",
+      providerSettings: {
+        mcpServers: {
+          browser: {
+            command: "custom-browser",
+            args: ["--flag"],
+            env: { EXISTING_BROWSER_ENV: "1" },
+          },
+          slack: {
+            command: "slack-mcp",
+          },
+        },
+      },
+      videoOutputPath: "/tmp/browser-flow.webm",
+    });
+
+    expect(settings.mcpServers).toEqual({
+      browser: {
+        command: process.execPath,
+        args: expect.any(Array),
+        env: {
+          EXISTING_BROWSER_ENV: "1",
+          [BROWSER_TESTER_VIDEO_OUTPUT_ENV_NAME]: "/tmp/browser-flow.webm",
+        },
+      },
     });
   });
 });

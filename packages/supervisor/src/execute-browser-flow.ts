@@ -2,10 +2,12 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { LanguageModelV3 } from "@ai-sdk/provider";
+import type { AgentProviderSettings } from "@browser-tester/agent";
 import {
   BROWSER_TEST_MODEL,
   DEFAULT_AGENT_PROVIDER,
   DEFAULT_BROWSER_MCP_SERVER_NAME,
+  EXECUTION_MODEL_EFFORT,
   VIDEO_DIRECTORY_PREFIX,
   VIDEO_FILE_NAME,
 } from "./constants.js";
@@ -23,6 +25,62 @@ import type { ExecutionStreamContext, ExecutionStreamState } from "./parse-execu
 import type { ExecuteBrowserFlowOptions, PlanStep } from "./types.js";
 import { saveBrowserImageResult } from "./utils/save-browser-image-result.js";
 
+const BROWSER_EXECUTION_TOOL_NAMES = [
+  "open",
+  "snapshot",
+  "click",
+  "fill",
+  "type",
+  "select",
+  "hover",
+  "screenshot",
+  "annotated_screenshot",
+  "diff",
+  "save_video",
+  "navigate",
+  "get_page_text",
+  "javascript",
+  "read_console_messages",
+  "read_network_requests",
+  "scroll",
+  "drag",
+  "upload",
+  "resize_window",
+  "tab_list",
+  "tab_create",
+  "tab_switch",
+  "tab_close",
+  "find",
+  "wait",
+  "press_key",
+  "close",
+];
+
+const buildExecutionToolAllowlist = (browserMcpServerName: string): string[] =>
+  BROWSER_EXECUTION_TOOL_NAMES.map((toolName) => `mcp__${browserMcpServerName}__${toolName}`);
+
+export const buildExecutionModelSettings = (
+  options: Pick<
+    ExecuteBrowserFlowOptions,
+    "provider" | "providerSettings" | "target" | "browserMcpServerName" | "videoOutputPath"
+  >,
+): AgentProviderSettings => {
+  const provider = options.provider ?? DEFAULT_AGENT_PROVIDER;
+  const browserMcpServerName = options.browserMcpServerName ?? DEFAULT_BROWSER_MCP_SERVER_NAME;
+
+  return buildBrowserMcpSettings({
+    providerSettings: {
+      cwd: options.target.cwd,
+      ...(provider === "claude" ? { model: BROWSER_TEST_MODEL } : {}),
+      ...(options.providerSettings ?? {}),
+      effort: EXECUTION_MODEL_EFFORT,
+      tools: buildExecutionToolAllowlist(browserMcpServerName),
+    },
+    browserMcpServerName,
+    videoOutputPath: options.videoOutputPath,
+  });
+};
+
 const createExecutionModel = (
   options: Pick<
     ExecuteBrowserFlowOptions,
@@ -37,15 +95,7 @@ const createExecutionModel = (
   if (options.model) return options.model;
 
   const provider = options.provider ?? DEFAULT_AGENT_PROVIDER;
-  const settings = buildBrowserMcpSettings({
-    providerSettings: {
-      cwd: options.target.cwd,
-      ...(provider === "claude" ? { model: BROWSER_TEST_MODEL } : {}),
-      ...(options.providerSettings ?? {}),
-    },
-    browserMcpServerName: options.browserMcpServerName,
-    videoOutputPath: options.videoOutputPath,
-  });
+  const settings = buildExecutionModelSettings(options);
 
   return createAgentModel(provider, settings);
 };

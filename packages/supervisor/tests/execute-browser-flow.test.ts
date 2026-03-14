@@ -7,7 +7,7 @@ import type {
   LanguageModelV3StreamPart,
 } from "@ai-sdk/provider";
 import type { BrowserRunEvent } from "../src/events.js";
-import { executeBrowserFlow } from "../src/execute-browser-flow.js";
+import { buildExecutionModelSettings, executeBrowserFlow } from "../src/execute-browser-flow.js";
 import type { BrowserFlowPlan, TestTarget } from "../src/types.js";
 
 const createStreamModel = (
@@ -138,6 +138,44 @@ const testPlan: BrowserFlowPlan = {
 };
 
 describe("executeBrowserFlow", () => {
+  it("limits execution to browser tools and medium effort", () => {
+    const settings = buildExecutionModelSettings({
+      target: testTarget,
+      browserMcpServerName: "browser",
+      provider: "claude",
+      providerSettings: {
+        tools: ["Bash"],
+        effort: "high",
+        mcpServers: {
+          browser: {
+            command: "custom-browser",
+            env: { EXISTING_BROWSER_ENV: "1" },
+          },
+          slack: {
+            command: "slack-mcp",
+          },
+        },
+      },
+      videoOutputPath: "/tmp/browser-tester-run-test/browser-flow.webm",
+    });
+
+    expect(settings.effort).toBe("medium");
+    expect(settings.tools).toContain("mcp__browser__open");
+    expect(settings.tools).toContain("mcp__browser__click");
+    expect(settings.tools).not.toContain("Bash");
+    expect(settings.tools?.every((toolName) => toolName.startsWith("mcp__browser__"))).toBe(true);
+    expect(settings.mcpServers).toEqual({
+      browser: {
+        command: process.execPath,
+        args: expect.any(Array),
+        env: {
+          EXISTING_BROWSER_ENV: "1",
+          BROWSER_TESTER_VIDEO_OUTPUT_PATH: "/tmp/browser-tester-run-test/browser-flow.webm",
+        },
+      },
+    });
+  });
+
   it("streams structured events from model output and browser tool usage", async () => {
     let promptText = "";
     const events: BrowserRunEvent[] = [];

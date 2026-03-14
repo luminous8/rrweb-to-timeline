@@ -42,7 +42,6 @@ export const buildBrowserMcpSettings = (options: {
   return {
     ...(options.providerSettings ?? {}),
     mcpServers: {
-      ...(options.providerSettings?.mcpServers ?? {}),
       [browserMcpServerName]: {
         ...(existingBrowserServerConfig ?? {}),
         ...resolvedBrowserServerConfig,

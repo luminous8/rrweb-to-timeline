@@ -102,6 +102,7 @@ const closeSession = async (outputPath?: string): Promise<ClosedSessionResult | 
   session = null;
   const savedVideoPath = await saveSessionVideo(activeSession, outputPath);
   await activeSession.browser.close();
+
   return { savedVideoPath };
 };
 

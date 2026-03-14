@@ -2,12 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import figures from "figures";
 import { executeBrowserFlow, type BrowserRunEvent } from "@browser-tester/supervisor";
-import { TESTING_TOOL_TEXT_CHAR_LIMIT, TESTING_VISIBLE_LOG_COUNT } from "../constants.js";
+import {
+  TESTING_TIMER_UPDATE_INTERVAL_MS,
+  TESTING_TOOL_TEXT_CHAR_LIMIT,
+  TESTING_VISIBLE_LOG_COUNT,
+} from "../constants.js";
 import { useColors, type Colors } from "./theme-context.js";
 import { Spinner } from "./ui/spinner.js";
 import { useAppStore } from "../store.js";
 import { ScreenHeading } from "./ui/screen-heading.js";
 import { truncateText } from "../utils/truncate-text.js";
+import { formatElapsedTime } from "../utils/format-elapsed-time.js";
 import {
   formatBrowserToolCall,
   formatBrowserToolResult,
@@ -18,7 +23,30 @@ interface TestingLine {
   color: string;
 }
 
-const formatRunEvent = (event: BrowserRunEvent, colors: Colors): TestingLine | null => {
+interface FormatRunEventOptions {
+  toolCallDisplayMode: string;
+}
+
+const TOOL_CALL_DISPLAY_MODE_COMPACT = "compact";
+const TOOL_CALL_DISPLAY_MODE_DETAILED = "detailed";
+const TOOL_CALL_DISPLAY_MODE_HIDDEN = "hidden";
+
+const getNextToolCallDisplayMode = (toolCallDisplayMode: string): string => {
+  switch (toolCallDisplayMode) {
+    case TOOL_CALL_DISPLAY_MODE_COMPACT:
+      return TOOL_CALL_DISPLAY_MODE_DETAILED;
+    case TOOL_CALL_DISPLAY_MODE_DETAILED:
+      return TOOL_CALL_DISPLAY_MODE_HIDDEN;
+    default:
+      return TOOL_CALL_DISPLAY_MODE_COMPACT;
+  }
+};
+
+const formatRunEvent = (
+  event: BrowserRunEvent,
+  colors: Colors,
+  options: FormatRunEventOptions,
+): TestingLine | null => {
   switch (event.type) {
     case "run-started":
       return {
@@ -41,10 +69,13 @@ const formatRunEvent = (event: BrowserRunEvent, colors: Colors): TestingLine | n
         color: colors.RED,
       };
     case "tool-call": {
-      const toolCallText = formatBrowserToolCall(event.toolName, event.input);
+      if (options.toolCallDisplayMode === TOOL_CALL_DISPLAY_MODE_HIDDEN) return null;
+      const toolCallText = formatBrowserToolCall(event.toolName, event.input, {
+        includeRelevantInputs: options.toolCallDisplayMode === TOOL_CALL_DISPLAY_MODE_DETAILED,
+      });
       if (!toolCallText) return null;
       return {
-        text: `• ${toolCallText}`,
+        text: `• ${truncateText(toolCallText, TESTING_TOOL_TEXT_CHAR_LIMIT)}`,
         color: colors.DIM,
       };
     }
@@ -83,19 +114,56 @@ export const TestingScreen = () => {
   const COLORS = useColors();
   const colorsRef = useRef(COLORS);
   colorsRef.current = COLORS;
-  const [lines, setLines] = useState<TestingLine[]>([]);
+  const [events, setEvents] = useState<BrowserRunEvent[]>([]);
+  const [statusLines, setStatusLines] = useState<TestingLine[]>([]);
   const [running, setRunning] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [videoPath, setVideoPath] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<string | null>(null);
+  const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
+  const [elapsedTimeMs, setElapsedTimeMs] = useState(0);
+  const [toolCallDisplayMode, setToolCallDisplayMode] = useState(TOOL_CALL_DISPLAY_MODE_COMPACT);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const lines = useMemo(
+    () => [
+      ...events
+        .map((event) => formatRunEvent(event, COLORS, { toolCallDisplayMode }))
+        .filter((line): line is TestingLine => line !== null),
+      ...statusLines,
+    ],
+    [COLORS, events, statusLines, toolCallDisplayMode],
+  );
   const visibleLines = useMemo(() => lines.slice(-TESTING_VISIBLE_LOG_COUNT), [lines]);
+  const elapsedTimeLabel = useMemo(() => formatElapsedTime(elapsedTimeMs), [elapsedTimeMs]);
+
+  useEffect(() => {
+    if (!running || runStartedAt === null) return;
+
+    setElapsedTimeMs(Date.now() - runStartedAt);
+
+    const interval = setInterval(() => {
+      setElapsedTimeMs(Date.now() - runStartedAt);
+    }, TESTING_TIMER_UPDATE_INTERVAL_MS);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [runStartedAt, running]);
 
   useEffect(() => {
     if (!target || !plan || !environment) return;
 
     const abortController = new AbortController();
+    const startedAt = Date.now();
     abortControllerRef.current = abortController;
+    setEvents([]);
+    setStatusLines([]);
+    setRunning(true);
+    setError(null);
+    setVideoPath(null);
+    setCurrentStep(null);
+    setRunStartedAt(startedAt);
+    setElapsedTimeMs(0);
 
     const run = async () => {
       try {
@@ -112,17 +180,14 @@ export const TestingScreen = () => {
           if (event.type === "step-started") {
             setCurrentStep(`${event.stepId} ${event.title}`);
           }
-          const line = formatRunEvent(event, colorsRef.current);
-          if (line) {
-            setLines((previous) => [...previous, line]);
-          }
+          setEvents((previous) => [...previous, event]);
           if (abortController.signal.aborted) {
             break;
           }
         }
       } catch (caughtError) {
         if (caughtError instanceof DOMException && caughtError.name === "AbortError") {
-          setLines((previous) => [
+          setStatusLines((previous) => [
             ...previous,
             { text: "Cancelled.", color: colorsRef.current.YELLOW },
           ]);
@@ -142,7 +207,12 @@ export const TestingScreen = () => {
     };
   }, [environment, plan, target]);
 
-  useInput((_input, key) => {
+  useInput((input, key) => {
+    if (input === "t") {
+      setToolCallDisplayMode((previous) => getNextToolCallDisplayMode(previous));
+      return;
+    }
+
     if (key.escape) {
       abortControllerRef.current?.abort();
       exitTesting();
@@ -162,7 +232,9 @@ export const TestingScreen = () => {
         <Text color={currentStep ? COLORS.SELECTION : COLORS.DIM}>
           {currentStep ? `Current step: ${currentStep}` : "Waiting for first step..."}
         </Text>
-        <Text color={COLORS.DIM}>Browser actions are summarized below to reduce agent noise.</Text>
+        <Text color={COLORS.DIM}>
+          Tool calls: {toolCallDisplayMode}. Press t to cycle compact, detailed, hidden.
+        </Text>
       </Box>
 
       <Box
@@ -182,7 +254,7 @@ export const TestingScreen = () => {
 
       {running && (
         <Box marginTop={1}>
-          <Spinner message="Agent is working..." />
+          <Spinner message={`Agent is working... ${elapsedTimeLabel}`} />
         </Box>
       )}
 
@@ -204,7 +276,9 @@ export const TestingScreen = () => {
       )}
 
       <Box marginTop={1}>
-        <Text color={COLORS.DIM}>Esc to {running ? "cancel" : "go back"}</Text>
+        <Text color={COLORS.DIM}>
+          Esc to {running ? "cancel" : "go back"} t to cycle tool calls
+        </Text>
       </Box>
     </Box>
   );

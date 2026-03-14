@@ -10,6 +10,7 @@ export const PLANNER_CHANGED_FILE_LIMIT = 12;
 export const PLANNER_DIFF_BLOCK_LIMIT = 3;
 export const PLANNER_DIFF_PREVIEW_CHAR_LIMIT = 2500;
 export const PLANNER_MODEL_EFFORT = "medium";
+export const EXECUTION_MODEL_EFFORT = "medium";
 export const PLANNER_RECENT_COMMIT_LIMIT = 5;
 export const PLANNER_MAX_STEP_COUNT = 8;
 export const PLANNER_MAX_TURNS = 1;
