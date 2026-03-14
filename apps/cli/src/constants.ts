@@ -1,15 +1,5 @@
 export const VERSION = "0.0.1";
 
-export const AUTOMATED_ENVIRONMENT_VARIABLES = [
-  "CI",
-  "CLAUDECODE",
-  "CURSOR_AGENT",
-  "CODEX_CI",
-  "OPENCODE",
-  "AMP_HOME",
-  "AMI",
-];
-
 export const SEARCH_PLACEHOLDER = "Search ...";
 
 export const GH_TIMEOUT_MS = 15000;

@@ -4,7 +4,7 @@ import { App } from "./app.js";
 import { VERSION } from "./constants.js";
 import { ThemeProvider } from "./theme-context.js";
 import { loadThemeName } from "./utils/load-theme.js";
-import { isAutomatedEnvironment } from "./utils/is-automated-environment.js";
+import { isRunningInAgent } from "./utils/is-running-in-agent.js";
 import { autoDetectAndTest, runTest } from "./utils/run-test.js";
 import { fetchCommits } from "./utils/fetch-commits.js";
 import { useAppStore } from "./store.js";
@@ -27,7 +27,7 @@ program
   .command("unstaged")
   .description("Test unstaged changes")
   .action(() => {
-    if (isAutomatedEnvironment() || !process.stdin.isTTY) {
+    if (isRunningInAgent() || !process.stdin.isTTY) {
       return runTest("test-unstaged");
     }
     useAppStore.setState({ testAction: "test-unstaged", screen: "flow-input" });
@@ -38,7 +38,7 @@ program
   .command("branch")
   .description("Test entire branch diff against main")
   .action(() => {
-    if (isAutomatedEnvironment() || !process.stdin.isTTY) {
+    if (isRunningInAgent() || !process.stdin.isTTY) {
       return runTest("test-branch");
     }
     useAppStore.setState({ testAction: "test-branch", screen: "flow-input" });
@@ -50,7 +50,7 @@ program
   .description("Test a specific commit")
   .argument("[hash]", "commit hash")
   .action((hash: string | undefined) => {
-    if (isAutomatedEnvironment() || !process.stdin.isTTY) {
+    if (isRunningInAgent() || !process.stdin.isTTY) {
       return runTest("select-commit", hash);
     }
     const initialCommit = hash
@@ -67,7 +67,7 @@ program
   });
 
 program.action(() => {
-  if (isAutomatedEnvironment() || !process.stdin.isTTY) {
+  if (isRunningInAgent() || !process.stdin.isTTY) {
     return autoDetectAndTest();
   }
   renderApp();
