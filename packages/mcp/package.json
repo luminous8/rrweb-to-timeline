@@ -11,10 +11,12 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./start": {
-      "import": "./dist/start.js"
+      "import": "./dist/start.js",
+      "default": "./dist/start.js"
     }
   },
   "scripts": {
