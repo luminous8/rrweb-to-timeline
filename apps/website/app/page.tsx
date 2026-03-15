@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Banner } from "@/components/banner";
 import { ProjectInfo } from "@/components/project-info";
 import { CommandDisplay } from "@/components/command-display";
 import { ActionButtons } from "@/components/action-buttons";
@@ -10,7 +9,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const Home = () => {
   return (
     <div className="flex min-h-svh flex-col items-center">
-      <Banner />
       <main className="flex w-full max-w-lg flex-col items-start gap-10 px-6 py-16">
         <ProjectInfo />
         <DemoContainer>

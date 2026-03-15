@@ -5,20 +5,18 @@ import { ClipboardCopy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { PROJECTS } from "@/lib/projects";
 import { COPY_FEEDBACK_DURATION_MS } from "@/constants";
 
-const TAB_TEXT: Record<string, (project: (typeof PROJECTS)[0]) => string> = {
-  command: (project) => project.command,
-  agent: (project) => project.agentPrompt,
-  skill: (project) => project.skillInstall,
+const TAB_TEXT: Record<string, string> = {
+  command: "npx testie@latest",
+  agent: "npx -y testie@latest -m 'test my current changes' -y",
+  skill: "npx skills add millionco/testie/testie-cli",
 };
 
 export const CommandDisplay = () => {
   const [activeTab, setActiveTab] = useState("command");
   const [copied, setCopied] = useState(false);
-  const project = PROJECTS[0];
-  const commandText = TAB_TEXT[activeTab]?.(project) ?? "";
+  const commandText = TAB_TEXT[activeTab] ?? "";
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);

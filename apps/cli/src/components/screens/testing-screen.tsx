@@ -1,8 +1,12 @@
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Text, useInput } from "ink";
+import Link from "ink-link";
 import figures from "figures";
 import { executeBrowserFlow, type BrowserRunEvent } from "@browser-tester/supervisor";
 import {
+  BROWSER_TOOL_PREFIX,
   TESTING_TIMER_UPDATE_INTERVAL_MS,
   TESTING_TOOL_TEXT_CHAR_LIMIT,
   TESTING_VISIBLE_LOG_COUNT,
@@ -26,6 +30,7 @@ import { Clickable } from "../ui/clickable.js";
 interface TestingLine {
   text: string;
   color: string;
+  filePath?: string;
 }
 
 interface FormatRunEventOptions {
@@ -53,6 +58,35 @@ const isDetailedTraceDisplayMode = (traceDisplayMode: string): boolean =>
 
 const isHiddenTraceDisplayMode = (traceDisplayMode: string): boolean =>
   traceDisplayMode === TOOL_CALL_DISPLAY_MODE_HIDDEN;
+
+const ARTIFACT_ACTIONS = new Set([
+  "screenshot",
+  "take_screenshot",
+  "annotated_screenshot",
+  "save_video",
+]);
+
+const SAVED_TO_PATTERN = /saved to (.+)$/;
+
+const extractArtifactPathFromInput = (toolName: string, input: string): string | undefined => {
+  if (!toolName.startsWith(BROWSER_TOOL_PREFIX)) return undefined;
+  if (!ARTIFACT_ACTIONS.has(toolName.slice(BROWSER_TOOL_PREFIX.length))) return undefined;
+  try {
+    const parsed = JSON.parse(input);
+    const rawPath = parsed?.path ?? parsed?.filename;
+    return typeof rawPath === "string" && rawPath.length > 0 ? rawPath : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const extractArtifactPathFromResult = (
+  event: Extract<BrowserRunEvent, { type: "tool-result" }>,
+): string | undefined => {
+  if (event.isError) return undefined;
+  if (!ARTIFACT_ACTIONS.has(event.toolName.slice(BROWSER_TOOL_PREFIX.length))) return undefined;
+  return SAVED_TO_PATTERN.exec(event.result)?.[1] ?? undefined;
+};
 
 const formatTraceText = (value: string, traceDisplayMode: string): string =>
   isDetailedTraceDisplayMode(traceDisplayMode)
@@ -94,6 +128,7 @@ const formatRunEvent = (
       return {
         text: `• ${formatTraceText(toolCallText, options.traceDisplayMode)}`,
         color: colors.DIM,
+        filePath: extractArtifactPathFromInput(event.toolName, event.input),
       };
     }
     case "tool-result": {
@@ -105,6 +140,7 @@ const formatRunEvent = (
       return {
         text: toolResultText,
         color: event.isError ? colors.RED : colors.DIM,
+        filePath: extractArtifactPathFromResult(event),
       };
     }
     case "text":
@@ -363,11 +399,17 @@ export const TestingScreen = () => {
         borderColor={COLORS.BORDER}
         paddingX={1}
       >
-        {visibleLines.map((line, index) => (
-          <Text key={`${index}-${line.text}`} color={line.color}>
-            {line.text}
-          </Text>
-        ))}
+        {visibleLines.map((line, index) =>
+          line.filePath ? (
+            <Link key={`${index}-${line.text}`} url={pathToFileURL(resolve(line.filePath)).href}>
+              <Text color={line.color}>{line.text}</Text>
+            </Link>
+          ) : (
+            <Text key={`${index}-${line.text}`} color={line.color}>
+              {line.text}
+            </Text>
+          ),
+        )}
         {visibleLines.length === 0 ? <Text color={COLORS.DIM}>No activity yet.</Text> : null}
       </Box>
 
