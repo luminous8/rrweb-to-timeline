@@ -70,7 +70,10 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
           ? [
               {
                 key: "c",
-                label: browserEnvironment?.cookies === true ? "cookies on" : "sync cookies",
+                label:
+                  browserEnvironment?.cookies === true
+                    ? "cookies on"
+                    : "sync cookies",
                 onClick: () =>
                   updateEnvironment({
                     ...(browserEnvironment ?? {}),
@@ -118,7 +121,9 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
     case "results": {
       return [
         { key: "y", label: "copy", color: COLORS.PRIMARY, cta: true },
-        ...(latestRunReport?.pullRequest ? [{ key: "p", label: "post to PR", cta: true }] : []),
+        ...(latestRunReport?.pullRequest
+          ? [{ key: "p", label: "post to PR", cta: true }]
+          : []),
         { key: "esc", label: "main menu", cta: true, onClick: goBack },
       ];
     }
@@ -136,7 +141,9 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
 
 const getHintText = (segments: HintSegment[]): string =>
   segments.length > 0
-    ? ` ${segments.map((segment) => `${segment.label} ${segment.key}`).join(HINT_SEPARATOR)}`
+    ? ` ${segments
+        .map((segment) => `${segment.label} ${segment.key}`)
+        .join(HINT_SEPARATOR)}`
     : "";
 
 export const Modeline = () => {
@@ -154,7 +161,9 @@ export const Modeline = () => {
   const keybindText = getHintText(keybinds);
   const actionPills = actions
     .map((action) =>
-      action.color ? ` ${action.label} │ ${action.key} ` : `${action.label} ${action.key}`,
+      action.color
+        ? ` ${action.label} │ ${action.key} `
+        : `${action.label} ${action.key}`
     )
     .join("   ");
   const actionWidth = actions.length > 0 ? stringWidth(actionPills) : 0;
@@ -163,7 +172,7 @@ export const Modeline = () => {
 
   return (
     <Box flexDirection="column">
-      <Text color={theme.border}>{"═".repeat(columns)}</Text>
+      <Text color={theme.border}>{"─".repeat(columns)}</Text>
       <Box paddingX={1}>
         {actions.map((action, index) => {
           const pill = (
@@ -172,7 +181,8 @@ export const Modeline = () => {
               {action.color ? (
                 <Text backgroundColor={action.color} color="#000000">
                   {" "}
-                  <Text bold>{action.label}</Text> │ <Text bold>{action.key}</Text>{" "}
+                  <Text bold>{action.label}</Text> │{" "}
+                  <Text bold>{action.key}</Text>{" "}
                 </Text>
               ) : (
                 <Text>
@@ -186,7 +196,11 @@ export const Modeline = () => {
           );
 
           return action.onClick ? (
-            <Clickable key={action.key + action.label} onClick={action.onClick} fullWidth={false}>
+            <Clickable
+              key={action.key + action.label}
+              onClick={action.onClick}
+              fullWidth={false}
+            >
               {pill}
             </Clickable>
           ) : (
@@ -195,7 +209,11 @@ export const Modeline = () => {
         })}
         <Text>{" ".repeat(gap)}</Text>
         {keybinds.length > 0 ? (
-          <HintBar segments={keybinds} color={theme.primary} mutedColor={theme.textMuted} />
+          <HintBar
+            segments={keybinds}
+            color={theme.primary}
+            mutedColor={theme.textMuted}
+          />
         ) : null}
       </Box>
     </Box>

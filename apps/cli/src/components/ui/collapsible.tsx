@@ -22,25 +22,22 @@ export const Collapsible = ({
 }: CollapsibleProps) => {
   const COLORS = useColors();
   const contentColor = selected ? COLORS.TEXT : COLORS.DIM;
-  const indicator = open ? "[-]" : "[+]";
+  const arrow = open ? "▾" : "▸";
   const countSuffix = count !== undefined ? ` (${count})` : "";
 
   return (
     <Box flexDirection="column">
       <Clickable onClick={onToggle}>
         <Text>
-          <Text color={selected ? COLORS.PRIMARY : COLORS.DIM}>
-            {selected ? "▸ " : "  "}
-          </Text>
-          <Text color={contentColor}>{indicator} </Text>
+          <Text color={selected ? COLORS.PRIMARY : COLORS.DIM}>{arrow} </Text>
           <Text bold={selected} color={contentColor}>
-            {label.toUpperCase()}
+            {label}
             {countSuffix}
           </Text>
         </Text>
       </Clickable>
       {open ? (
-        <Box flexDirection="column" paddingLeft={6}>
+        <Box flexDirection="column" paddingLeft={2}>
           {children}
         </Box>
       ) : null}

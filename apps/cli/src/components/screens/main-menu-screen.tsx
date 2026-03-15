@@ -3,7 +3,11 @@ import type { DiffStats } from "@browser-tester/supervisor";
 import { Box, Text, useInput } from "ink";
 import { useAppStore } from "../../store.js";
 import type { TestAction } from "../../utils/browser-agent.js";
-import { getRecommendedScope, type GitState, type TestScope } from "../../utils/get-git-state.js";
+import {
+  getRecommendedScope,
+  type GitState,
+  type TestScope,
+} from "../../utils/get-git-state.js";
 import { useColors } from "../theme-context.js";
 import { Clickable } from "../ui/clickable.js";
 import { ChangesWarningPanel } from "../ui/changes-warning-panel.js";
@@ -27,14 +31,17 @@ const getCustomTestAction = (defaultAction: TestAction | null): TestAction =>
 
 const getSavedFlowAction = (
   action: ScopeMenuOption["action"],
-  defaultAction: TestAction | null,
+  defaultAction: TestAction | null
 ): TestAction | null => {
   if (action === "select-pr") return null;
   if (action === "custom-test") return getCustomTestAction(defaultAction);
   return action;
 };
 
-const buildMenuOptions = (scope: TestScope, gitState: GitState): ScopeMenuOption[] => {
+const buildMenuOptions = (
+  scope: TestScope,
+  gitState: GitState
+): ScopeMenuOption[] => {
   const options: ScopeMenuOption[] = [];
 
   if (scope === "unstaged-changes") {
@@ -48,7 +55,9 @@ const buildMenuOptions = (scope: TestScope, gitState: GitState): ScopeMenuOption
 
   if (
     scope === "entire-branch" ||
-    (scope === "unstaged-changes" && !gitState.isOnMain && gitState.hasBranchCommits)
+    (scope === "unstaged-changes" &&
+      !gitState.isOnMain &&
+      gitState.hasBranchCommits)
   ) {
     options.push({
       label: "Test entire branch",
@@ -76,7 +85,9 @@ const buildMenuOptions = (scope: TestScope, gitState: GitState): ScopeMenuOption
 export const MainMenu = () => {
   const COLORS = useColors();
   const gitState = useAppStore((state) => state.gitState);
-  const autoRunAfterPlanning = useAppStore((state) => state.autoRunAfterPlanning);
+  const autoRunAfterPlanning = useAppStore(
+    (state) => state.autoRunAfterPlanning
+  );
   const savedFlowSummaries = useAppStore((state) => state.savedFlowSummaries);
   const selectAction = useAppStore((state) => state.selectAction);
   const beginSavedFlowReuse = useAppStore((state) => state.beginSavedFlowReuse);
@@ -92,13 +103,19 @@ export const MainMenu = () => {
   const recommendedScope = getRecommendedScope(gitState);
   const recommendedAction = getDefaultActionForScope(recommendedScope);
   const warningDiffStats =
-    recommendedScope === "unstaged-changes" ? gitState.diffStats : gitState.branchDiffStats;
+    recommendedScope === "unstaged-changes"
+      ? gitState.diffStats
+      : gitState.branchDiffStats;
   const menuOptions = buildMenuOptions(recommendedScope, gitState);
   const selectedOption = menuOptions[selectedIndex] ?? null;
   const canReuseSavedFlow =
     savedFlowSummaries.length > 0 &&
     Boolean(selectedOption) &&
-    Boolean(selectedOption ? getSavedFlowAction(selectedOption.action, recommendedAction) : null);
+    Boolean(
+      selectedOption
+        ? getSavedFlowAction(selectedOption.action, recommendedAction)
+        : null
+    );
 
   const activateOption = useCallback(
     (option: ScopeMenuOption) => {
@@ -114,7 +131,7 @@ export const MainMenu = () => {
 
       selectAction(option.action);
     },
-    [navigateTo, recommendedAction, selectAction],
+    [navigateTo, recommendedAction, selectAction]
   );
 
   const autoRunIndex = menuOptions.length;
@@ -134,7 +151,10 @@ export const MainMenu = () => {
     }
 
     if (input === "r" && canReuseSavedFlow && selectedOption) {
-      const savedFlowAction = getSavedFlowAction(selectedOption.action, recommendedAction);
+      const savedFlowAction = getSavedFlowAction(
+        selectedOption.action,
+        recommendedAction
+      );
       if (savedFlowAction) beginSavedFlowReuse(savedFlowAction);
     }
 
@@ -152,15 +172,10 @@ export const MainMenu = () => {
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
       <Box flexDirection="column" marginBottom={1}>
-        <Text color={COLORS.DIM}>{"═".repeat(40)}</Text>
-        <Text bold color={COLORS.PRIMARY}>
-          {"  BROWSER-TESTER v0.1"}
+        <Text bold color={COLORS.TEXT}>
+          browser-tester
         </Text>
-        <Text color={COLORS.DIM}>{"═".repeat(40)}</Text>
-        <Text color={COLORS.DIM}>
-          {"  BRANCH "}
-          <Text color={COLORS.TEXT}>{gitState.currentBranch}</Text>
-        </Text>
+        <Text color={COLORS.DIM}>{gitState.currentBranch}</Text>
       </Box>
 
       {warningDiffStats ? (
@@ -175,16 +190,14 @@ export const MainMenu = () => {
       <Box flexDirection="column">
         {menuOptions.map((option, index) => {
           return (
-            <Clickable key={option.label} onClick={() => activateOption(option)}>
+            <Clickable
+              key={option.label}
+              onClick={() => activateOption(option)}
+            >
               <MenuItem
                 label={option.label}
                 detail={option.detail}
                 isSelected={index === selectedIndex}
-                recommended={index === 0 && menuOptions.length > 1}
-                hint={
-                  menuOptions.length === 1 && index === selectedIndex ? "press return" : undefined
-                }
-                diffStats={option.diffStats}
               />
             </Clickable>
           );
@@ -223,7 +236,10 @@ export const MainMenu = () => {
           ) : (
             <Text color={autoSaveFlows ? COLORS.TEXT : COLORS.DIM}>
               {"  "}auto-save flows:{" "}
-              <Text color={autoSaveFlows ? COLORS.GREEN : COLORS.DIM} bold={autoSaveFlows}>
+              <Text
+                color={autoSaveFlows ? COLORS.GREEN : COLORS.DIM}
+                bold={autoSaveFlows}
+              >
                 {autoSaveFlows ? "yes" : "no"}
               </Text>
             </Text>

@@ -1,24 +1,13 @@
 import { Text } from "ink";
 import { useColors } from "../theme-context.js";
-import type { DiffStats } from "@browser-tester/supervisor";
 
 interface MenuItemProps {
   label: string;
   detail: string;
   isSelected: boolean;
-  recommended?: boolean;
-  hint?: string;
-  diffStats?: DiffStats | null;
 }
 
-export const MenuItem = ({
-  label,
-  detail,
-  isSelected,
-  recommended,
-  hint,
-  diffStats,
-}: MenuItemProps) => {
+export const MenuItem = ({ label, detail, isSelected }: MenuItemProps) => {
   const COLORS = useColors();
 
   if (isSelected) {
@@ -28,14 +17,7 @@ export const MenuItem = ({
         <Text color={COLORS.PRIMARY} bold>
           {label}
         </Text>
-        {diffStats ? (
-          <Text color={COLORS.DIM}>
-            {" "}
-            +{diffStats.additions} -{diffStats.deletions}
-          </Text>
-        ) : null}
-        {recommended ? <Text color={COLORS.DIM}> [recommended]</Text> : null}
-        {hint ? <Text color={COLORS.DIM}> [{hint}]</Text> : null}
+        {detail ? <Text color={COLORS.DIM}> {detail}</Text> : null}
       </Text>
     );
   }
