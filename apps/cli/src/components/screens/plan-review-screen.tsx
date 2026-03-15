@@ -352,6 +352,7 @@ export const PlanReviewScreen = () => {
       </Text>
       <Clickable onClick={() => navigateTo("select-pr")}>
         <Box
+          width="100%"
           borderStyle="round"
           borderColor={branchFocused ? COLORS.PRIMARY : COLORS.BORDER}
           paddingX={2}
@@ -367,6 +368,7 @@ export const PlanReviewScreen = () => {
         <Text color={COLORS.DIM}>Describe what to test</Text>
         <Clickable onClick={() => setTopFocus("input")}>
           <Box
+            width="100%"
             borderStyle="round"
             borderColor={inputFocused ? COLORS.PRIMARY : COLORS.BORDER}
             paddingX={2}

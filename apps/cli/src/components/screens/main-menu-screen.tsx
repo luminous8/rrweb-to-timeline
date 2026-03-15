@@ -203,6 +203,7 @@ export const MainMenu = () => {
             }}
           >
             <Box
+              width="100%"
               borderStyle="round"
               borderColor={focus === "branch" ? COLORS.PRIMARY : COLORS.BORDER}
               paddingX={2}
@@ -227,6 +228,7 @@ export const MainMenu = () => {
         <Text color={COLORS.DIM}>Describe what to test</Text>
         <Clickable onClick={() => setFocus("input")}>
           <Box
+            width="100%"
             borderStyle="round"
             borderColor={focus === "input" ? COLORS.PRIMARY : COLORS.BORDER}
             paddingX={2}
