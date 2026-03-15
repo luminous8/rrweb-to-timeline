@@ -169,6 +169,10 @@ export const MainMenu = () => {
         </Box>
       </Box>
 
+      {showSuggestion ? (
+        <Text color={COLORS.DIM}>{"  ←→ cycle suggestions"}</Text>
+      ) : null}
+
       <ErrorMessage message={errorMessage} />
 
       <Box marginTop={1} flexDirection="column">
