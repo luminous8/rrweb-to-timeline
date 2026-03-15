@@ -18,7 +18,7 @@ export const PlanningScreen = () => {
   const COLORS = useColors();
   const flowInstruction = useAppStore((state) => state.flowInstruction);
   const testAction = useAppStore((state) => state.testAction);
-  const toolCalls = useAppStore((state) => state.planningToolCalls);
+  const target = useAppStore((state) => state.resolvedTarget);
   const [startTime] = useState(() => Date.now());
   const [elapsed, setElapsed] = useState(0);
 
@@ -28,6 +28,12 @@ export const PlanningScreen = () => {
     }, TESTING_TIMER_UPDATE_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [startTime]);
+
+  const fileCount = target?.changedFiles.length ?? 0;
+  const commitCount = target?.recentCommits.length ?? 0;
+  const diffInfo = target?.diffStats
+    ? `+${target.diffStats.additions} -${target.diffStats.deletions}`
+    : null;
 
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
@@ -46,21 +52,35 @@ export const PlanningScreen = () => {
         <Text color={COLORS.DIM}>{flowInstruction}</Text>
       </Box>
 
-      <Box marginTop={1} flexDirection="column">
-        <Box>
-          <Spinner message="Waiting for Claude to generate plan..." />
-          <Text color={COLORS.DIM}> {formatElapsedTime(elapsed)}</Text>
-        </Box>
-        {toolCalls.length > 0 ? (
-          <Box marginTop={1} flexDirection="column">
-            {toolCalls.map((toolName, index) => (
-              <Text key={`${toolName}-${index}`} color={COLORS.DIM}>
-                {"  "}
-                <Text color={COLORS.CYAN}>{toolName}</Text>
+      {target ? (
+        <Box marginTop={1} flexDirection="column">
+          <Text color={COLORS.DIM}>
+            {"  scope     "}
+            <Text color={COLORS.TEXT}>{target.displayName}</Text>
+          </Text>
+          <Text color={COLORS.DIM}>
+            {"  files     "}
+            <Text color={COLORS.TEXT}>{fileCount} changed</Text>
+            {diffInfo ? (
+              <Text color={COLORS.DIM}>
+                {" ("}
+                {diffInfo}
+                {")"}
               </Text>
-            ))}
-          </Box>
-        ) : null}
+            ) : null}
+          </Text>
+          {commitCount > 0 ? (
+            <Text color={COLORS.DIM}>
+              {"  commits   "}
+              <Text color={COLORS.TEXT}>{commitCount}</Text>
+            </Text>
+          ) : null}
+        </Box>
+      ) : null}
+
+      <Box marginTop={1}>
+        <Spinner message="Waiting for Claude to generate plan..." />
+        <Text color={COLORS.DIM}> {formatElapsedTime(elapsed)}</Text>
       </Box>
     </Box>
   );

@@ -53,20 +53,11 @@ const usePlanningEffect = () => {
       if (isCancelled) return;
 
       const environment = getBrowserEnvironment(environmentOverrides);
-      useAppStore.setState({ planningToolCalls: [] });
+      useAppStore.setState({ resolvedTarget: target });
       const plan = await planBrowserFlow({
         target,
         userInstruction: flowInstruction,
         environment,
-        onEvent: (event) => {
-          if (isCancelled) return;
-          if (event.type === "tool-call") {
-            const current = useAppStore.getState().planningToolCalls;
-            useAppStore.setState({
-              planningToolCalls: [...current, event.toolName],
-            });
-          }
-        },
       });
       if (isCancelled) return;
 
