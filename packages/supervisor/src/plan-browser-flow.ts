@@ -82,6 +82,36 @@ const formatRecentCommits = (target: TestTarget): string =>
         .join("\n")
     : "- No recent commits available";
 
+const formatScopePlanningStrategy = (target: TestTarget): string => {
+  if (target.scope === "unstaged") {
+    return [
+      "- Target mode: unstaged",
+      "- Bias toward fast smoke coverage of the touched surfaces.",
+      "- Prefer the smallest set of steps that still checks each changed user-facing surface.",
+      "- Cover the direct change and only the most obvious adjacent flow if it materially de-risks the diff.",
+      "- Avoid broad regression sweeps unless the diff preview clearly suggests a cross-cutting change.",
+    ].join("\n");
+  }
+
+  if (target.scope === "commit") {
+    return [
+      "- Target mode: commit",
+      "- Bias toward narrow validation of the specific change in the selected commit.",
+      `- Selected commit: ${target.selectedCommit?.shortHash ?? "unknown"} ${target.selectedCommit?.subject ?? ""}`.trim(),
+      "- Treat the commit subject and diff as the primary testing hypothesis.",
+      "- Prefer a focused before/after validation instead of a broad end-to-end tour.",
+    ].join("\n");
+  }
+
+  return [
+    "- Target mode: branch",
+    "- Bias toward broader regression around neighboring flows touched by the branch diff.",
+    "- Cover the direct journey plus adjacent entry points or follow-up screens that could regress together.",
+    "- Include a wider sanity pass when multiple related product files changed.",
+    "- Still prioritize the highest-risk browser journeys over exhaustive coverage.",
+  ].join("\n");
+};
+
 const buildPlanningPrompt = (options: PlanBrowserFlowOptions): string => {
   const { target, userInstruction, environment } = options;
   const prioritizedFiles = prioritizePlanningFiles(target.changedFiles);
@@ -97,6 +127,9 @@ const buildPlanningPrompt = (options: PlanBrowserFlowOptions): string => {
     `- Current branch: ${target.branch.current}`,
     `- Main branch: ${target.branch.main ?? "unknown"}`,
     `- Diff stats: ${formatDiffStats(target.diffStats)}`,
+    target.selectedCommit
+      ? `- Selected commit: ${target.selectedCommit.shortHash} ${target.selectedCommit.subject}`
+      : null,
     "",
     "Changed files:",
     formatChangedFiles(displayedFiles),
@@ -115,20 +148,28 @@ const buildPlanningPrompt = (options: PlanBrowserFlowOptions): string => {
     `- Headed mode: ${environment?.headed === true ? "yes" : "no or not specified"}`,
     `- Reuse browser cookies: ${environment?.cookies === true ? "yes" : "no or not specified"}`,
     "",
+    "Scope strategy:",
+    formatScopePlanningStrategy(target),
+    "",
     "Requirements:",
     "- Make the plan meaningfully different depending on whether the target is unstaged, branch, or commit.",
     "- Blend the requested journey with code-change-derived risk areas.",
     "- Focus on realistic browser steps that a browser agent can execute.",
+    "- Use each step's expectedOutcome as a concrete browser assertion target, not just a vague goal.",
     "- Include assumptions when the journey depends on unknown data or authentication.",
     "- Decide whether syncing browser cookies is required to execute the flow reliably.",
     "- Set cookieSync.required to true when the flow likely needs an authenticated user session, account state, org access, or non-public app data.",
     "- Set cookieSync.required to false for public or clearly unauthenticated flows, and explain the decision in cookieSync.reason.",
+    "- Before returning, self-check the plan by asking: Which risk area is not covered by any step? Which step is likely to fail due to auth or missing data?",
+    "- Use that self-check to strengthen the steps, assumptions, riskAreas, and cookieSync decision before you return the final JSON.",
     "- Keep the plan concise and high signal.",
     `- Use a maximum of ${PLANNER_MAX_STEP_COUNT} steps.`,
     "",
     "Return a JSON object with this exact shape:",
     '{"title":"string","rationale":"string","targetSummary":"string","assumptions":["string"],"riskAreas":["string"],"targetUrls":["string"],"cookieSync":{"required":true,"reason":"string"},"steps":[{"id":"optional string","title":"string","instruction":"string","expectedOutcome":"string","routeHint":"optional string","changedFileEvidence":["string"]}]}',
-  ].join("\n");
+  ]
+    .filter((line): line is string => Boolean(line))
+    .join("\n");
 };
 
 const normalizeSteps = (steps: z.infer<typeof planStepSchema>[]): PlanStep[] =>

@@ -111,11 +111,13 @@ describe("planBrowserFlow", () => {
     });
 
     expect(promptText).toContain("Scope: branch");
+    expect(promptText).toContain("Bias toward broader regression around neighboring flows");
     expect(promptText).toContain("Go through onboarding at /onboarding");
     expect(promptText).toContain("src/onboarding.tsx");
     expect(promptText).toContain("Base URL: http://localhost:3000");
     expect(promptText).toContain("...truncated...");
     expect(promptText).toContain("cookieSync.required");
+    expect(promptText).toContain("Which risk area is not covered by any step?");
     expect(plan.steps[0].id).toBe("step-01");
     expect(plan.userInstruction).toContain("Import Projects");
     expect(plan.cookieSync.required).toBe(true);

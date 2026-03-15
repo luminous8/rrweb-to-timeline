@@ -202,6 +202,8 @@ describe("executeBrowserFlow", () => {
     expect(promptText).toContain("STEP_START|<step-id>|<step-title>");
     expect(promptText).toContain("Go through onboarding and click Import Projects.");
     expect(promptText).toContain("call the close tool exactly once");
+    expect(promptText).toContain("Execution style: assertion-first");
+    expect(promptText).toContain("Allowed failure categories: app-bug");
     expect(promptText).toContain(videoOutputPath);
     expect(events.some((event) => event.type === "step-started")).toBe(true);
     expect(events.some((event) => event.type === "browser-log")).toBe(true);
