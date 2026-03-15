@@ -79,7 +79,7 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
         { key: "esc", label: "leave" },
         { key: "e", label: "edit", cta: true },
         {
-          key: "a",
+          key: "a/enter",
           label: "approve",
           color: COLORS.PRIMARY,
           cta: true,
