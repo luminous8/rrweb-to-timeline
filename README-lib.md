@@ -3,21 +3,12 @@
 [![version](https://img.shields.io/npm/v/@browser-tester/cli?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@browser-tester/cli)
 [![downloads](https://img.shields.io/npm/dt/@browser-tester/cli.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@browser-tester/cli)
 
-Let coding agents test your code in a real browser.
-
-One command scans your unstaged changes or branch diff, generates a test plan, and runs it against a live browser — no test files to write.
-
-<!-- ### [See it in action →](https://testie.dev) -->
-
-## How it works
-
-Testie detects your code changes (unstaged files or branch diff), then:
+Let coding agents test your code in a real browser. One command scans your unstaged changes or branch diff, generates a test plan, and runs it against a live browser.
 
 1. **Plan**: Generates a test plan based on your changes and a natural language instruction.
-2. **Run**: Opens a real browser (headed or headless) and executes each step — clicking, typing, navigating, and asserting.
+2. **Run**: Opens a real browser (headed or headless) and executes each step—clicking, typing, navigating, and asserting.
 3. **Report**: Surfaces pass/fail results with browser recordings so you can see exactly what happened.
 
-When run inside a coding agent (Claude Code, Cursor, Codex, etc.), testie skips the interactive TUI and runs headlessly.
 
 ## Install
 
