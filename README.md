@@ -1,199 +1,126 @@
-## todo
+# testie
 
-ben:
+[![version](https://img.shields.io/npm/v/@browser-tester/cli?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@browser-tester/cli)
+[![downloads](https://img.shields.io/npm/dt/@browser-tester/cli.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@browser-tester/cli)
 
-- plan review UX
-- surface tool calls from Claude Code during plan creation
-- images/videos screenshots in CLI
-- create final output report UI
+Let coding agents test your code in a real browser. One command scans your unstaged changes or branch diff, generates a test plan, and runs it against a live browser.
 
-nisarg:
+1. **Plan**: Generates a test plan based on your changes and a natural language instruction.
+2. **Run**: Opens a real browser (headed or headless) and executes each step—clicking, typing, navigating, and asserting.
+3. **Report**: Surfaces pass/fail results with browser recordings so you can see exactly what happened.
 
-- fixing agent/browser latency
-- product nits
-
-rasmus:
-
-- `CLAUDECODE=1 testie` is not steerable
-- doesn't work using `CLAUDECODE=1`
-- editing plan doesn't work
-- prompts / nothing is saved
-  - when user goes through the flow of writing tasks to try out, nothing is saved, not the prompt, not the tests results, nothing.
-- test out alternatives to get intuition (agent-browser)
-- make packages/cookies and packages/browser robust
-  - error states are surfaced up correctly instead of randomly swallowed
-  - need to be efficient (study different approaches to how to manage browser stuff good)
-    - https://github.com/pasky/chrome-cdp-skill/tree/main?tab=readme-ov-file#why-not-chrome-devtools-mcp
-    - browser benchmarking (latency, memory, cpu, etc.)
-  - investigate cookies and prevent keychain prompt spamming
-  - your discretion: migrate the package code to someting more elegant (Effect)
-- Browser video zooming / show cursor (UX / UI kinda low prio)
-
-aiden:
-
-- [x] fix clicking states
-- [x] refactor our frontend stuff to have reusable components
-- [ ]add onboarding stuff (website, helptext)
-
----
-
-names:
-
-- browser-control
-- testie
-- control-freak
-- browser-doctor
-- tests.dev
-- repair.dev
-- validate.dev
-- gem.dev
-
-## CLI Development
-
-### Link globally
+## Install
 
 ```bash
+npx @browser-tester/cli@latest
+```
+
+Or install globally:
+
+```bash
+npm install -g @browser-tester/cli
+```
+
+Then run from your project root:
+
+```bash
+testie
+```
+
+## Usage with coding agents
+
+Point your agent at testie and let it test your changes:
+
+```bash
+BROWSER_TESTER_BASE_URL=http://localhost:3000 testie -m "Test the signup flow" -y
+```
+
+The `-y` flag skips plan review so agents can run non-interactively.
+
+Testie auto-detects agent environments (`CLAUDECODE`, `CURSOR_AGENT`, `CODEX_CI`, `CI`, etc.) and switches to headless mode.
+
+## Commands
+
+```
+Usage: testie [command] [options]
+
+Commands:
+  unstaged          test current unstaged changes (default)
+  branch            test full branch diff vs main
+```
+
+## Options
+
+```
+Options:
+  -m, --message <instruction>   natural language instruction for what to test
+  -f, --flow <slug>             reuse a saved flow by slug
+  -y, --yes                     skip plan review, run immediately
+  --base-url <url>              browser base URL
+  --headed                      run browser visibly instead of headless
+  --cookies                     sync cookies from your browser profile
+  --no-cookies                  disable cookie sync
+  -v, --version                 print version
+  -h, --help                    display help
+```
+
+## Environment variables
+
+| Variable                  | Description                                           |
+| ------------------------- | ----------------------------------------------------- |
+| `BROWSER_TESTER_BASE_URL` | Default base URL for the browser                      |
+| `BROWSER_TESTER_HEADED`   | Set to `true` or `1` to run headed by default         |
+| `BROWSER_TESTER_COOKIES`  | Set to `true` or `1` to enable cookie sync by default |
+
+## Examples
+
+Test unstaged changes interactively:
+
+```bash
+testie
+```
+
+Test with a specific instruction, skip plan review:
+
+```bash
+testie -m "add an item to the cart and check out" -y
+```
+
+Test full branch diff:
+
+```bash
+testie branch -m "verify the new settings page" -y
+```
+
+Reuse a saved flow:
+
+```bash
+testie -f checkout-flow
+```
+
+Run with a custom base URL and visible browser:
+
+```bash
+testie --base-url http://localhost:5173 --headed
+```
+
+## Contributing
+
+```bash
+git clone https://github.com/millionco/testie
+cd testie
 pnpm install --no-frozen-lockfile
 cd apps/cli
 pnpm link-global
 ```
 
-This builds the CLI and registers the `testie` command globally. After linking, you can run `testie` from anywhere.
-
-### Run dev
+Run in dev mode:
 
 ```bash
 cd apps/cli
 pnpm dev
 ```
 
-This starts `tsup` in watch mode, rebuilding on file changes. If you've already linked globally, the `testie` command will pick up changes automatically.
+### License
 
-## 3/13 notes
-
-### Testing the browser CLI
-
-```bash
-# from repo root
-pnpm install --no-frozen-lockfile
-cd packages/browser && pnpm build && cd ../..
-cd packages/browser-tester-cli && pnpm build && cd ../..
-
-# snapshot a page
-bun packages/browser-tester-cli/dist/cli.js snapshot example.com
-
-# interactive only + JSON
-bun packages/browser-tester-cli/dist/cli.js snapshot example.com -i --json
-
-# click a ref and see what changed
-bun packages/browser-tester-cli/dist/cli.js click example.com e2 --diff
-
-# annotated screenshot (numbered labels on elements)
-bun packages/browser-tester-cli/dist/cli.js screenshot example.com /tmp/page.png --annotate
-
-# record a video
-bun packages/browser-tester-cli/dist/cli.js click example.com e2 --video /tmp/recording.webm
-
-# run browser package tests
-cd packages/browser && pnpm test
-```
-
-### Using with Claude Code
-
-Tell Claude Code to use the CLI for browser testing:
-
-```
-Use browser-tester-cli to test the page. The CLI is at packages/browser-tester-cli/dist/cli.js.
-
-Core workflow:
-1. bun packages/browser-tester-cli/dist/cli.js snapshot <url> -i --json
-2. Pick refs from the snapshot (e.g. e1, e2)
-3. bun packages/browser-tester-cli/dist/cli.js click <url> <ref> --diff
-4. Re-snapshot after page changes
-
-Other commands: fill, type, select, hover, screenshot (--annotate), diff, --video
-```
-
-### 3/12 notes
-
-**P0**: GET USERS
-
-- little league football vs. NFL
-  - football = https://en.wikipedia.org/wiki/American_football
-  - little league teams have different problems than NFL teams, and thus must solve different problems
-  - ~= to Cursor solving very long bg agents - this is an area every "NFL" agent and model lab is going to fight
-    - as a little league team don't solve problems of NFL teams - pick fights you can win
-  - there's an unspoken rule that every 6-18 months a company must raise a round to signal success.
-    - if no VC round = no money, company dies
-    - if no metrics (lots of users, revenue) = no round
-    - if no successful product = no metrics
-    - if no team focus = no successful product
-- the point: as a company, our singular focus is to solve our users problem, not to solve irrelevant problems that may be hyper-relevant to the NBA teams
-
-**P1**: TRUST YOUR TEAM
-
-- in a well functioning, successful team, everyone knows what they are doing
-  - in the most successful football teams (whether little league or NFL), the _most_ important thing is to rely on whatother teammates are doing
-    - quarterback initates the ball
-    - linebackers do defense
-    - linemen just block the attackers
-  - IF trust exists, each member must have clear boundaries on what they trust each other to do, and defer each other to do
-    - flip side: you as a team member need to pull your weight to prove that you are worthy of that trust
-- team:
-  - Aiden: how to acquire users?
-  - Nisarg: how to retain users?
-  - Ben: how to ship a world class design?
-  - Rasmus: how do we ship robust software, fast?
-
-- how to avoid shit shovelling:
-  - create markdown files or references for code
-  - build systems to review (automations to review issues in new code that is introduced)
-  - how do we introduce sane guardrails or scanning to proactively fix tech debt?
-  - https://x.com/thdxr/status/2031377117007454421
-    - how do we choose our product battles right (avoid dopaminemaxxing and shipping bad code)
-    - actor/critic issue - person shipping code is incentivized to ship - not thinking as deep about
-      code quality speed only maters, critic needs to take overhead over these
-    - scoping + seeding
-
----
-
-1. testing is the new frontier
-
-- coderabbit, greptile, bugbot - look at the code, algo, knowledge base
-- spur, momentic - b2b ai test companies
-- testing ripe for disruption, review bots are enough
-- line b/w codegen -(xyz)> ship
-- review bots exists but they are not good
-- co mission is to solve coding -> solve long horizon coding tasks
-  - the area that is hardest and least care for model + agent labs to solve is deep testing
-
-2. good testing requires insights
-
-- every business has different values
-- diff - how are review bots different from agent testing
-
-3. diff between good and great testing is not(tech, price) but outcome for the end company
-
-- for ecommerce it might be revenue -> user churn -> web performance (LCP/INP)
-- for a SaaS it might be INP or dev velocity without increasing user churn
-- great testing is mostly not a model or technology problem
-- this is the problem with the current crop of "AI testing tools" like Momentic, Spur
-  - big distance. currently require lots of fwd deployed engineers OR agent driven, a wide gap in thoroughlyness
-
----
-
-the car:
-
-PostHog, Sentry, Slack, Discord, GitHub, Twitter -> Simulated users (n) -> Insights -> Test insights
-
-- use simulated users as verification
-
----
-
-the skateboard:
-
-- CLI that does test your current changes / issues / branch for regressions or potential next step usage
-- browser recordings
-- reuse
-- abiltiy to add in Github Actions
-- testie / tests / repair.dev
+FSL-1.1-MIT © Million Software, Inc.
