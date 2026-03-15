@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, Text } from "ink";
 import { useAppStore } from "../../store.js";
 import {
   getRecommendedScope,
@@ -44,8 +44,8 @@ export const MainMenu = () => {
     gitState.hasUnstagedChanges ||
     (!gitState.isOnMain && gitState.hasBranchCommits);
 
-  const submit = () => {
-    const trimmed = value.trim();
+  const submit = (submittedValue?: string) => {
+    const trimmed = (submittedValue ?? value).trim();
     if (!trimmed) {
       setErrorMessage("Describe what you want the browser agent to test.");
       return;
@@ -53,12 +53,6 @@ export const MainMenu = () => {
     selectAction(testAction);
     submitFlowInstruction(trimmed);
   };
-
-  useInput((_input, key) => {
-    if (key.return && !key.shift) {
-      submit();
-    }
-  });
 
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
@@ -98,16 +92,18 @@ export const MainMenu = () => {
       <ErrorMessage message={errorMessage} />
 
       <Box marginTop={1} flexDirection="column">
-        <Text color={COLORS.DIM}>
-          Testing against{" "}
-          <Text color={COLORS.TEXT} bold>
-            {branchLabel}
+        <Box>
+          <Text color={COLORS.DIM}>
+            Testing against{" "}
+            <Text color={COLORS.TEXT} bold>
+              {branchLabel}
+            </Text>
+            {" · "}
           </Text>
-          {" · "}
           <Clickable fullWidth={false} onClick={() => navigateTo("select-pr")}>
             <Text color={COLORS.PRIMARY}>switch branch/PR</Text>
           </Clickable>
-        </Text>
+        </Box>
 
         <Clickable onClick={toggleAutoRun}>
           <Text color={autoRunAfterPlanning ? COLORS.TEXT : COLORS.DIM}>
