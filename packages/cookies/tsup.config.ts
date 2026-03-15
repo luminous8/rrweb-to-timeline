@@ -1,10 +1,10 @@
 import { defineConfig } from "tsup";
 
-export default defineConfig({
+export default defineConfig((options) => ({
   entry: ["src/index.ts"],
   format: ["esm"],
   dts: true,
-  clean: true,
+  clean: !options.watch,
   sourcemap: true,
   external: ["bun:sqlite"],
-});
+}));

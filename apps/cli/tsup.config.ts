@@ -1,19 +1,19 @@
 import { defineConfig } from "tsup";
 import { reactCompilerPlugin } from "./esbuild-react-compiler-plugin";
 
-export default defineConfig({
+export default defineConfig((options) => ({
   entry: ["src/index.tsx"],
   format: ["esm"],
   dts: true,
-  clean: true,
+  clean: !options.watch,
   sourcemap: true,
   platform: "node",
   banner: { js: "#!/usr/bin/env node" },
   noExternal: [/^@browser-tester\//],
   external: ["playwright", "playwright-core", "chromium-bidi", "sqlite", "ws"],
   esbuildPlugins: [reactCompilerPlugin()],
-  esbuildOptions(options) {
-    options.inject = [...(options.inject ?? []), "./ink-grab/inject-hook.js"];
-    options.supported = { ...options.supported, "import-meta": true };
+  esbuildOptions(esbuildOptions) {
+    esbuildOptions.inject = [...(esbuildOptions.inject ?? []), "./ink-grab/inject-hook.js"];
+    esbuildOptions.supported = { ...esbuildOptions.supported, "import-meta": true };
   },
-});
+}));

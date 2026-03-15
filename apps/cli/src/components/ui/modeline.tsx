@@ -18,6 +18,7 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
   const generatedPlan = useAppStore((state) => state.generatedPlan);
   const savedFlowSummaries = useAppStore((state) => state.savedFlowSummaries);
   const latestRunReport = useAppStore((state) => state.latestRunReport);
+  const liveViewUrl = useAppStore((state) => state.liveViewUrl);
   switch (screen) {
     case "main": {
       const hints: HintSegment[] = [
@@ -64,10 +65,7 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
           ? [
               {
                 key: "c",
-                label:
-                  browserEnvironment?.cookies === true
-                    ? "cookies on"
-                    : "sync cookies",
+                label: browserEnvironment?.cookies === true ? "cookies on" : "sync cookies",
                 onClick: () =>
                   updateEnvironment({
                     ...(browserEnvironment ?? {}),
@@ -110,14 +108,20 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
           onClick: approvePlan,
         },
       ];
-    case "testing":
-      return [];
+    case "testing": {
+      const hints: HintSegment[] = [
+        { key: "v", label: "cycle trace" },
+        { key: "esc", label: "cancel" },
+      ];
+      if (liveViewUrl) {
+        hints.push({ key: "o", label: "open live view", cta: true });
+      }
+      return hints;
+    }
     case "results": {
       return [
         { key: "y", label: "copy", color: COLORS.PRIMARY, cta: true },
-        ...(latestRunReport?.pullRequest
-          ? [{ key: "p", label: "post to PR", cta: true }]
-          : []),
+        ...(latestRunReport?.pullRequest ? [{ key: "p", label: "post to PR", cta: true }] : []),
         { key: "esc", label: "main menu", cta: true, onClick: goBack },
       ];
     }
@@ -135,9 +139,7 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
 
 const getHintText = (segments: HintSegment[]): string =>
   segments.length > 0
-    ? ` ${segments
-        .map((segment) => `${segment.label} ${segment.key}`)
-        .join(HINT_SEPARATOR)}`
+    ? ` ${segments.map((segment) => `${segment.label} ${segment.key}`).join(HINT_SEPARATOR)}`
     : "";
 
 export const Modeline = () => {
@@ -155,9 +157,7 @@ export const Modeline = () => {
   const keybindText = getHintText(keybinds);
   const actionPills = actions
     .map((action) =>
-      action.color
-        ? ` ${action.label} │ ${action.key} `
-        : `${action.label} ${action.key}`
+      action.color ? ` ${action.label} │ ${action.key} ` : `${action.label} ${action.key}`,
     )
     .join("   ");
   const actionWidth = actions.length > 0 ? stringWidth(actionPills) : 0;
@@ -184,8 +184,7 @@ export const Modeline = () => {
               {action.color ? (
                 <Text backgroundColor={action.color} color="#000000">
                   {" "}
-                  <Text bold>{action.label}</Text> │{" "}
-                  <Text bold>{action.key}</Text>{" "}
+                  <Text bold>{action.label}</Text> │ <Text bold>{action.key}</Text>{" "}
                 </Text>
               ) : (
                 <Text>
@@ -199,11 +198,7 @@ export const Modeline = () => {
           );
 
           return action.onClick ? (
-            <Clickable
-              key={action.key + action.label}
-              onClick={action.onClick}
-              fullWidth={false}
-            >
+            <Clickable key={action.key + action.label} onClick={action.onClick} fullWidth={false}>
               {pill}
             </Clickable>
           ) : (
@@ -212,11 +207,7 @@ export const Modeline = () => {
         })}
         <Text>{" ".repeat(gap)}</Text>
         {keybinds.length > 0 ? (
-          <HintBar
-            segments={keybinds}
-            color={theme.primary}
-            mutedColor={theme.textMuted}
-          />
+          <HintBar segments={keybinds} color={theme.primary} mutedColor={theme.textMuted} />
         ) : null}
       </Box>
     </Box>
