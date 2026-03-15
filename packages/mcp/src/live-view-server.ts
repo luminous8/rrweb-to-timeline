@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { CDPSession, Page } from "playwright";
 import {
   LIVE_VIEW_MJPEG_BOUNDARY,
+  LIVE_VIEW_PAGE_POLL_INTERVAL_MS,
   LIVE_VIEW_SCREENCAST_EVERY_NTH_FRAME,
   LIVE_VIEW_SCREENCAST_MAX_HEIGHT_PX,
   LIVE_VIEW_SCREENCAST_MAX_WIDTH_PX,
@@ -18,113 +19,98 @@ interface StartLiveViewServerOptions {
   getPage: () => Page | null;
 }
 
-const getViewerHtml = (): string => `<!doctype html>
+interface ScreencastFrameParams {
+  data: string;
+  sessionId: number;
+  metadata: unknown;
+}
+
+type MjpegClient = ServerResponse<IncomingMessage>;
+
+const VIEWER_HTML = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Browser Tester Live View</title>
     <style>
-      :root {
-        color-scheme: dark;
-      }
-
-      body {
-        margin: 0;
-        font-family: ui-sans-serif, system-ui, sans-serif;
-        background: #111827;
-        color: #f9fafb;
-      }
-
-      main {
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        padding: 24px;
-        box-sizing: border-box;
-      }
-
-      img {
-        max-width: min(100%, 1200px);
-        width: 100%;
-        border-radius: 12px;
-        background: #030712;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-      }
+      :root { color-scheme: dark }
+      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #111827; color: #f9fafb }
+      main { min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box }
+      img { max-width: min(100%, 1200px); width: 100%; border-radius: 12px; background: #030712; box-shadow: 0 20px 60px rgba(0,0,0,.45) }
     </style>
   </head>
   <body>
-    <main>
-      <img src="/stream.mjpeg" alt="Live browser stream" />
-    </main>
+    <main><img src="/stream.mjpeg" alt="Live browser stream" /></main>
   </body>
-</html>
-`;
+</html>`;
 
-const writeMjpegFrame = (response: ServerResponse<IncomingMessage>, frameBuffer: Buffer): void => {
-  response.write(`--${LIVE_VIEW_MJPEG_BOUNDARY}\r\n`);
-  response.write("Content-Type: image/jpeg\r\n");
-  response.write(`Content-Length: ${frameBuffer.length}\r\n\r\n`);
-  response.write(frameBuffer);
-  response.write("\r\n");
+const NO_CACHE_HEADERS = { "Cache-Control": "no-store" } as const;
+
+const respondText = (response: MjpegClient, status: number, body: string): void => {
+  response.writeHead(status, { "Content-Type": "text/plain; charset=utf-8", ...NO_CACHE_HEADERS });
+  response.end(body);
+};
+
+const writeMjpegFrame = (client: MjpegClient, frameBuffer: Buffer): void => {
+  client.write(`--${LIVE_VIEW_MJPEG_BOUNDARY}\r\nContent-Type: image/jpeg\r\nContent-Length: ${frameBuffer.length}\r\n\r\n`);
+  client.write(frameBuffer);
+  client.write("\r\n");
 };
 
 export const startLiveViewServer = async ({
   liveViewUrl,
   getPage,
 }: StartLiveViewServerOptions): Promise<LiveViewServer> => {
-  const resolvedLiveViewUrl = new URL(liveViewUrl);
-  const clientResponses = new Set<ServerResponse<IncomingMessage>>();
-  let latestFrameBuffer: Buffer | null = null;
-  let activeCdpSession: CDPSession | null = null;
-  let trackedPage: Page | null = null;
+  const parsedUrl = new URL(liveViewUrl);
+  const viewers = new Set<MjpegClient>();
+  let latestFrame: Buffer | null = null;
+  let cdpSession: CDPSession | null = null;
+  let screencastPage: Page | null = null;
 
-  const pushFrameToClients = (frameBuffer: Buffer): void => {
-    latestFrameBuffer = frameBuffer;
-    for (const response of clientResponses) {
-      if (response.destroyed) {
-        clientResponses.delete(response);
+  const broadcastFrame = (frameBuffer: Buffer): void => {
+    latestFrame = frameBuffer;
+    for (const viewer of viewers) {
+      if (viewer.destroyed) {
+        viewers.delete(viewer);
         continue;
       }
       try {
-        writeMjpegFrame(response, frameBuffer);
+        writeMjpegFrame(viewer, frameBuffer);
       } catch {
-        clientResponses.delete(response);
-        response.end();
+        viewers.delete(viewer);
+        viewer.end();
       }
     }
   };
 
   const stopScreencast = async (): Promise<void> => {
-    if (!activeCdpSession) return;
-    const cdpSession = activeCdpSession;
-    activeCdpSession = null;
-    trackedPage = null;
+    if (!cdpSession) return;
+    const session = cdpSession;
+    cdpSession = null;
+    screencastPage = null;
     try {
-      await cdpSession.send("Page.stopScreencast");
-      await cdpSession.detach();
+      await session.send("Page.stopScreencast");
+      await session.detach();
     } catch {
-      // HACK: session may already be detached if page closed
+      // HACK: CDP session may already be detached if the page closed
     }
   };
 
   const startScreencast = async (page: Page): Promise<void> => {
-    if (trackedPage === page) return;
+    if (screencastPage === page) return;
     await stopScreencast();
 
-    trackedPage = page;
-    const cdpSession = await page.context().newCDPSession(page);
-    activeCdpSession = cdpSession;
+    screencastPage = page;
+    const session = await page.context().newCDPSession(page);
+    cdpSession = session;
 
-    cdpSession.on(
-      "Page.screencastFrame",
-      (params: { data: string; sessionId: number; metadata: unknown }) => {
-        pushFrameToClients(Buffer.from(params.data, "base64"));
-        cdpSession.send("Page.screencastFrameAck", { sessionId: params.sessionId }).catch(() => {});
-      },
-    );
+    session.on("Page.screencastFrame", (params: ScreencastFrameParams) => {
+      broadcastFrame(Buffer.from(params.data, "base64"));
+      session.send("Page.screencastFrameAck", { sessionId: params.sessionId }).catch(() => {});
+    });
 
-    await cdpSession.send("Page.startScreencast", {
+    await session.send("Page.startScreencast", {
       format: "jpeg",
       quality: LIVE_VIEW_SCREENCAST_QUALITY,
       maxWidth: LIVE_VIEW_SCREENCAST_MAX_WIDTH_PX,
@@ -133,123 +119,95 @@ export const startLiveViewServer = async ({
     });
 
     page.once("close", () => {
-      if (trackedPage === page) {
-        void stopScreencast();
-      }
+      if (screencastPage === page) void stopScreencast();
     });
   };
 
-  const hasViewers = (): boolean => clientResponses.size > 0;
-
-  const ensureScreencastForCurrentPage = (): void => {
-    if (!hasViewers()) {
-      if (trackedPage) void stopScreencast();
+  const syncScreencast = (): void => {
+    if (viewers.size === 0) {
+      if (screencastPage) void stopScreencast();
       return;
     }
     const page = getPage();
     if (!page || page.isClosed()) {
-      if (trackedPage) void stopScreencast();
+      if (screencastPage) void stopScreencast();
       return;
     }
-    if (page !== trackedPage) {
+    if (page !== screencastPage) {
       startScreencast(page).catch(() => {});
     }
   };
 
-  const pollPageInterval = setInterval(ensureScreencastForCurrentPage, 500);
+  const pollInterval = setInterval(syncScreencast, LIVE_VIEW_PAGE_POLL_INTERVAL_MS);
 
-  const server = createServer((request, response) => {
-    const requestUrl = new URL(request.url ?? "/", resolvedLiveViewUrl);
+  const handleStreamRequest = (request: IncomingMessage, response: MjpegClient): void => {
+    response.writeHead(200, {
+      "Content-Type": `multipart/x-mixed-replace; boundary=${LIVE_VIEW_MJPEG_BOUNDARY}`,
+      Connection: "keep-alive",
+      ...NO_CACHE_HEADERS,
+    });
+    response.flushHeaders();
+    viewers.add(response);
+    syncScreencast();
 
-    if (requestUrl.pathname === "/") {
-      response.writeHead(200, {
-        "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "no-store",
-      });
-      response.end(getViewerHtml());
+    if (latestFrame) writeMjpegFrame(response, latestFrame);
+
+    request.on("close", () => {
+      viewers.delete(response);
+      if (viewers.size === 0) void stopScreencast();
+    });
+  };
+
+  const routeRequest = (request: IncomingMessage, response: MjpegClient): void => {
+    const pathname = new URL(request.url ?? "/", parsedUrl).pathname;
+
+    if (pathname === "/") {
+      response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", ...NO_CACHE_HEADERS });
+      response.end(VIEWER_HTML);
       return;
     }
 
-    if (requestUrl.pathname === "/latest.jpg") {
-      if (!latestFrameBuffer) {
-        response.writeHead(503, {
-          "Content-Type": "text/plain; charset=utf-8",
-          "Cache-Control": "no-store",
-        });
-        response.end("Waiting for the first browser frame.");
+    if (pathname === "/latest.jpg") {
+      if (!latestFrame) {
+        respondText(response, 503, "Waiting for the first browser frame.");
         return;
       }
-
       response.writeHead(200, {
         "Content-Type": "image/jpeg",
-        "Content-Length": latestFrameBuffer.length,
-        "Cache-Control": "no-store",
+        "Content-Length": latestFrame.length,
+        ...NO_CACHE_HEADERS,
       });
-      response.end(latestFrameBuffer);
+      response.end(latestFrame);
       return;
     }
 
-    if (requestUrl.pathname === "/stream.mjpeg") {
-      response.writeHead(200, {
-        "Content-Type": `multipart/x-mixed-replace; boundary=${LIVE_VIEW_MJPEG_BOUNDARY}`,
-        "Cache-Control": "no-store",
-        Connection: "keep-alive",
-      });
-      response.flushHeaders();
-      clientResponses.add(response);
-      ensureScreencastForCurrentPage();
-
-      if (latestFrameBuffer) {
-        writeMjpegFrame(response, latestFrameBuffer);
-      }
-
-      request.on("close", () => {
-        clientResponses.delete(response);
-        if (!hasViewers()) void stopScreencast();
-      });
+    if (pathname === "/stream.mjpeg") {
+      handleStreamRequest(request, response);
       return;
     }
 
-    response.writeHead(404, {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "no-store",
-    });
-    response.end("Not found");
-  });
+    respondText(response, 404, "Not found");
+  };
+
+  const server = createServer(routeRequest);
 
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);
-    server.listen(
-      {
-        host: resolvedLiveViewUrl.hostname,
-        port: Number(resolvedLiveViewUrl.port),
-      },
-      () => {
-        server.off("error", reject);
-        resolve();
-      },
-    );
+    server.listen({ host: parsedUrl.hostname, port: Number(parsedUrl.port) }, () => {
+      server.off("error", reject);
+      resolve();
+    });
   });
 
   return {
-    url: resolvedLiveViewUrl.toString(),
+    url: parsedUrl.toString(),
     close: async () => {
-      clearInterval(pollPageInterval);
+      clearInterval(pollInterval);
       await stopScreencast();
-
-      for (const response of clientResponses) {
-        response.end();
-      }
-      clientResponses.clear();
-
+      for (const viewer of viewers) viewer.end();
+      viewers.clear();
       await new Promise<void>((resolve, reject) => {
-        server.close((error) => {
-          if (error) {
-            reject(error);
-            return;
-          }
-          resolve();
-        });
+        server.close((error) => (error ? reject(error) : resolve()));
       });
     },
   };

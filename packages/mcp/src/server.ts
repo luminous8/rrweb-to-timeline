@@ -204,10 +204,9 @@ export const createBrowserMcpServer = () => {
 
       const liveViewUrl = process.env[BROWSER_TESTER_LIVE_VIEW_URL_ENV_NAME];
       if (liveViewUrl && !liveViewServer) {
-        const currentSession = session;
         liveViewServer = await startLiveViewServer({
           liveViewUrl,
-          getPage: () => currentSession.page,
+          getPage: () => session?.page ?? null,
         });
       }
 
