@@ -35,12 +35,14 @@ export const MainMenu = () => {
   const selectAction = useAppStore((state) => state.selectAction);
   const navigateTo = useAppStore((state) => state.navigateTo);
   const checkedOutBranch = useAppStore((state) => state.checkedOutBranch);
-  const [value, setValue] = useState("");
+  const flowInstruction = useAppStore((state) => state.flowInstruction);
+  const hasExistingInput = flowInstruction.length > 0;
+  const [value, setValue] = useState(flowInstruction);
   const [inputKey, setInputKey] = useState(0);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [focus, setFocus] = useState<FocusArea>(
-    checkedOutBranch ? "input" : "branch"
+    hasExistingInput || checkedOutBranch ? "input" : "branch"
   );
 
   useEffect(() => {
