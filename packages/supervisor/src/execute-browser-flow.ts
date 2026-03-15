@@ -26,6 +26,7 @@ import type { ExecutionStreamContext, ExecutionStreamState } from "./parse-execu
 import type { ExecuteBrowserFlowOptions, PlanStep } from "./types.js";
 import { saveBrowserImageResult } from "./utils/save-browser-image-result.js";
 import { serializeToolResult } from "./utils/serialize-tool-result.js";
+import { resolveLiveViewUrl } from "./utils/resolve-live-view-url.js";
 
 const BROWSER_EXECUTION_TOOL_NAMES = [
   "open",
@@ -64,7 +65,12 @@ const buildExecutionToolAllowlist = (browserMcpServerName: string): string[] =>
 export const buildExecutionModelSettings = (
   options: Pick<
     ExecuteBrowserFlowOptions,
-    "provider" | "providerSettings" | "target" | "browserMcpServerName" | "videoOutputPath"
+    | "provider"
+    | "providerSettings"
+    | "target"
+    | "browserMcpServerName"
+    | "videoOutputPath"
+    | "liveViewUrl"
   >,
 ): AgentProviderSettings => {
   const provider = options.provider ?? DEFAULT_AGENT_PROVIDER;
@@ -80,6 +86,7 @@ export const buildExecutionModelSettings = (
     },
     browserMcpServerName,
     videoOutputPath: options.videoOutputPath,
+    liveViewUrl: options.liveViewUrl,
   });
 };
 
@@ -92,6 +99,7 @@ const createExecutionModel = (
     | "target"
     | "browserMcpServerName"
     | "videoOutputPath"
+    | "liveViewUrl"
   >,
 ): LanguageModelV3 => {
   if (options.model) return options.model;
@@ -175,6 +183,7 @@ export const executeBrowserFlow = async function* (
 ): AsyncGenerator<BrowserRunEvent> {
   const browserMcpServerName = options.browserMcpServerName ?? DEFAULT_BROWSER_MCP_SERVER_NAME;
   const videoOutputPath = options.videoOutputPath ?? createVideoOutputPath();
+  const liveViewUrl = options.liveViewUrl ?? (await resolveLiveViewUrl().catch(() => undefined));
   const model = createExecutionModel({
     model: options.model,
     provider: options.provider,
@@ -182,6 +191,7 @@ export const executeBrowserFlow = async function* (
     target: options.target,
     browserMcpServerName,
     videoOutputPath,
+    liveViewUrl,
   });
   const prompt = buildExecutionPrompt({
     ...options,
@@ -194,6 +204,7 @@ export const executeBrowserFlow = async function* (
     type: "run-started",
     timestamp: Date.now(),
     planTitle: options.plan.title,
+    liveViewUrl,
   };
   emittedEvents.push(runStartedEvent);
   yield runStartedEvent;

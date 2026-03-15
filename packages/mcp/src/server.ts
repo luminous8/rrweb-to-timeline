@@ -13,6 +13,8 @@ import {
   waitForNavigationSettle,
 } from "@browser-tester/browser";
 import type { SnapshotResult } from "@browser-tester/browser";
+import { BROWSER_TESTER_LIVE_VIEW_URL_ENV_NAME } from "./constants.js";
+import { startLiveViewServer, type LiveViewServer } from "./live-view-server.js";
 
 interface ConsoleEntry {
   type: string;
@@ -44,6 +46,7 @@ interface ClosedSessionResult {
 }
 
 let session: BrowserSession | null = null;
+let liveViewServer: LiveViewServer | null = null;
 const VIDEO_OUTPUT_ENV_NAME = "BROWSER_TESTER_VIDEO_OUTPUT_PATH";
 
 const setupPageTracking = (page: Page, browserSession: BrowserSession) => {
@@ -100,6 +103,12 @@ const closeSession = async (outputPath?: string): Promise<ClosedSessionResult | 
 
   const activeSession = session;
   session = null;
+
+  if (liveViewServer) {
+    await liveViewServer.close().catch(() => {});
+    liveViewServer = null;
+  }
+
   const savedVideoPath = await saveSessionVideo(activeSession, outputPath);
   await activeSession.browser.close();
 
@@ -192,6 +201,16 @@ export const createBrowserMcpServer = () => {
         trackedPages: new Set(),
       };
       setupPageTracking(page, session);
+
+      const liveViewUrl = process.env[BROWSER_TESTER_LIVE_VIEW_URL_ENV_NAME];
+      if (liveViewUrl && !liveViewServer) {
+        const currentSession = session;
+        liveViewServer = await startLiveViewServer({
+          liveViewUrl,
+          getPage: () => currentSession.page,
+        });
+      }
+
       return textResult(`Opened ${url}`);
     },
   );

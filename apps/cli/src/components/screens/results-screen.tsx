@@ -9,6 +9,7 @@ import { ScreenHeading } from "../ui/screen-heading.js";
 import { FileLink } from "../ui/file-link.js";
 import { Image } from "../ui/image.js";
 import { ErrorMessage } from "../ui/error-message.js";
+import { Clickable } from "../ui/clickable.js";
 
 const isRemoteUrl = (value: string | undefined): boolean =>
   typeof value === "string" && (value.startsWith("https://") || value.startsWith("http://"));
@@ -247,13 +248,19 @@ export const ResultsScreen = () => {
             Raw video: <FileLink path={latestRunReport.artifacts.rawVideoPath} />
           </Text>
         ) : null}
-        {isRemoteUrl(shareUrl) ? (
-          <Text color={COLORS.DIM}>
-            Share URL:{" "}
-            <Link url={shareUrl}>
-              <Text>{shareUrl}</Text>
-            </Link>
-          </Text>
+        {shareUrl ? (
+          isRemoteUrl(shareUrl) ? (
+            <Text color={COLORS.DIM}>
+              Share URL:{" "}
+              <Link url={shareUrl}>
+                <Text>{shareUrl}</Text>
+              </Link>
+            </Text>
+          ) : (
+            <Text color={COLORS.DIM}>
+              Local report: <FileLink path={shareUrl} />
+            </Text>
+          )
         ) : null}
       </Box>
 
@@ -277,17 +284,21 @@ export const ResultsScreen = () => {
       ) : null}
 
       <Box flexDirection="column" marginTop={1}>
-        <Text color={COLORS.DIM}>
-          Press <Text color={COLORS.PRIMARY}>y</Text> to copy share details to the clipboard.
-        </Text>
+        <Clickable onClick={handleCopyToClipboard}>
+          <Text color={COLORS.DIM}>
+            Press <Text color={COLORS.PRIMARY}>y</Text> to copy share details to the clipboard.
+          </Text>
+        </Clickable>
         {clipboardStatusMessage ? <Text color={COLORS.GREEN}>{clipboardStatusMessage}</Text> : null}
       </Box>
 
       {latestRunReport.pullRequest ? (
         <Box flexDirection="column">
-          <Text color={COLORS.DIM}>
-            Press <Text color={COLORS.PRIMARY}>p</Text> to post this summary to the PR.
-          </Text>
+          <Clickable onClick={handlePostPullRequestComment}>
+            <Text color={COLORS.DIM}>
+              Press <Text color={COLORS.PRIMARY}>p</Text> to post this summary to the PR.
+            </Text>
+          </Clickable>
           {isPostingComment ? <Text color={COLORS.DIM}>Posting PR comment...</Text> : null}
           {commentStatusMessage ? <Text color={COLORS.GREEN}>{commentStatusMessage}</Text> : null}
         </Box>

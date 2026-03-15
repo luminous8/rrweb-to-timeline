@@ -148,5 +148,6 @@ export interface ExecuteBrowserFlowOptions {
   model?: LanguageModelV3;
   browserMcpServerName?: string;
   videoOutputPath?: string;
+  liveViewUrl?: string;
   signal?: AbortSignal;
 }

@@ -32,6 +32,7 @@ interface TestingLine {
   text: string;
   color: string;
   filePath?: string;
+  url?: string;
 }
 
 interface FormatRunEventOptions {
@@ -59,6 +60,21 @@ const isDetailedTraceDisplayMode = (traceDisplayMode: string): boolean =>
 
 const isHiddenTraceDisplayMode = (traceDisplayMode: string): boolean =>
   traceDisplayMode === TOOL_CALL_DISPLAY_MODE_HIDDEN;
+
+const URL_ACTIONS = new Set(["open", "new_page", "navigate_page"]);
+
+const extractUrlFromToolInput = (toolName: string, input: string): string | undefined => {
+  if (!toolName.startsWith(BROWSER_TOOL_PREFIX)) return undefined;
+  const action = toolName.slice(BROWSER_TOOL_PREFIX.length);
+  if (!URL_ACTIONS.has(action)) return undefined;
+  try {
+    const parsed = JSON.parse(input);
+    const rawUrl = parsed?.url;
+    return typeof rawUrl === "string" && rawUrl.startsWith("http") ? rawUrl : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 const ARTIFACT_ACTIONS = new Set([
   "screenshot",
@@ -130,6 +146,7 @@ const formatRunEvent = (
         text: `• ${formatTraceText(toolCallText, options.traceDisplayMode)}`,
         color: colors.DIM,
         filePath: extractArtifactPathFromInput(event.toolName, event.input),
+        url: extractUrlFromToolInput(event.toolName, event.input),
       };
     }
     case "tool-result": {
@@ -190,6 +207,7 @@ export const TestingScreen = () => {
   const [videoPath, setVideoPath] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<string | null>(null);
   const [screenshotPaths, setScreenshotPaths] = useState<string[]>([]);
+  const [liveViewUrl, setLiveViewUrl] = useState<string | null>(null);
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
   const [elapsedTimeMs, setElapsedTimeMs] = useState(0);
   const [toolCallDisplayMode, setToolCallDisplayMode] = useState(TOOL_CALL_DISPLAY_MODE_COMPACT);
@@ -253,6 +271,9 @@ export const TestingScreen = () => {
           environment,
           signal: abortController.signal,
         })) {
+          if (event.type === "run-started" && event.liveViewUrl) {
+            setLiveViewUrl(event.liveViewUrl);
+          }
           if (event.type === "run-completed") {
             setVideoPath(event.report?.artifacts.rawVideoPath ?? event.videoPath ?? null);
             setCurrentStep(null);
@@ -343,6 +364,17 @@ export const TestingScreen = () => {
         subtitle={`${plan.title} · ${target.displayName}`}
       />
 
+      {liveViewUrl ? (
+        <Box marginTop={1}>
+          <Text color={COLORS.DIM}>
+            Live view:{" "}
+            <Link url={liveViewUrl}>
+              <Text color={COLORS.CYAN}>{liveViewUrl}</Text>
+            </Link>
+          </Text>
+        </Box>
+      ) : null}
+
       {autoSaveStatus === "saving" ? (
         <Box marginTop={1}>
           <Text color={COLORS.DIM}>Saving flow...</Text>
@@ -400,17 +432,18 @@ export const TestingScreen = () => {
         borderColor={COLORS.BORDER}
         paddingX={1}
       >
-        {visibleLines.map((line, index) =>
-          line.filePath ? (
-            <Link key={`${index}-${line.text}`} url={pathToFileURL(resolve(line.filePath)).href}>
+        {visibleLines.map((line, index) => {
+          const linkUrl = line.filePath ? pathToFileURL(resolve(line.filePath)).href : line.url;
+          return linkUrl ? (
+            <Link key={`${index}-${line.text}`} url={linkUrl}>
               <Text color={line.color}>{line.text}</Text>
             </Link>
           ) : (
             <Text key={`${index}-${line.text}`} color={line.color}>
               {line.text}
             </Text>
-          ),
-        )}
+          );
+        })}
         {visibleLines.length === 0 ? <Text color={COLORS.DIM}>No activity yet.</Text> : null}
       </Box>
 

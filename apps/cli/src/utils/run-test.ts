@@ -112,6 +112,9 @@ export const runTest = async (config: TestRunConfig): Promise<void> => {
     let latestRunReport: BrowserRunReport | null = null;
 
     for await (const event of executeBrowserFlow({ target, plan, environment })) {
+      if (event.type === "run-started" && event.liveViewUrl) {
+        process.stdout.write(`Live view: ${event.liveViewUrl}\n`);
+      }
       if (event.type === "run-completed" && event.report) {
         latestRunReport = event.report;
       }

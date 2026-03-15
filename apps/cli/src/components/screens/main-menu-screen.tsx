@@ -79,11 +79,7 @@ export const MainMenu = () => {
 
   if (!gitState) return null;
 
-  const scopeOptions = buildScopeOptions(
-    gitState,
-    checkedOutBranch,
-    checkedOutPrNumber
-  );
+  const scopeOptions = buildScopeOptions(gitState, checkedOutBranch, checkedOutPrNumber);
   const currentScope = scopeOptions[scopeIndex % scopeOptions.length];
   const testAction =
     currentScope?.action === "select-pr"
@@ -197,23 +193,33 @@ export const MainMenu = () => {
       {hasScope ? (
         <>
           <Text color={COLORS.DIM}>Test scope</Text>
-          <Box
-            borderStyle="round"
-            borderColor={focus === "branch" ? COLORS.PRIMARY : COLORS.BORDER}
-            paddingX={2}
+          <Clickable
+            onClick={() => {
+              if (focus === "branch") {
+                setScopeIndex((previous) => (previous + 1) % scopeOptions.length);
+              } else {
+                setFocus("branch");
+              }
+            }}
           >
-            <Text
-              color={focus === "branch" ? COLORS.PRIMARY : COLORS.TEXT}
-              bold={focus === "branch"}
+            <Box
+              borderStyle="round"
+              borderColor={focus === "branch" ? COLORS.PRIMARY : COLORS.BORDER}
+              paddingX={2}
             >
-              {currentScope?.label ?? "Select..."}
-            </Text>
-            {focus === "branch" ? (
-              <Text color={COLORS.DIM}>
-                {" ←→ "}[{(scopeIndex % scopeOptions.length) + 1}/{scopeOptions.length}]
+              <Text
+                color={focus === "branch" ? COLORS.PRIMARY : COLORS.TEXT}
+                bold={focus === "branch"}
+              >
+                {currentScope?.label ?? "Select..."}
               </Text>
-            ) : null}
-          </Box>
+              {focus === "branch" ? (
+                <Text color={COLORS.DIM}>
+                  {" ←→ "}[{(scopeIndex % scopeOptions.length) + 1}/{scopeOptions.length}]
+                </Text>
+              ) : null}
+            </Box>
+          </Clickable>
         </>
       ) : (
         <Text color={COLORS.DIM}>Not a git repository — enter a URL and describe what to test</Text>
@@ -221,27 +227,29 @@ export const MainMenu = () => {
 
       <Box marginTop={1} flexDirection="column">
         <Text color={COLORS.DIM}>Describe what to test</Text>
-        <Box
-          borderStyle="round"
-          borderColor={focus === "input" ? COLORS.PRIMARY : COLORS.BORDER}
-          paddingX={2}
-        >
-          <Text color={COLORS.PRIMARY}>{"❯ "}</Text>
-          <Input
-            key={inputKey}
-            focus={focus === "input"}
-            multiline
-            placeholder={`${currentSuggestion ?? "Describe what to test..."}  [tab]`}
-            value={value}
-            onSubmit={submit}
-            onUpArrowAtTop={() => setFocus("branch")}
-            onDownArrowAtBottom={() => setFocus("auto-run")}
-            onChange={(nextValue) => {
-              setValue(stripMouseSequences(nextValue));
-              if (errorMessage) setErrorMessage(null);
-            }}
-          />
-        </Box>
+        <Clickable onClick={() => setFocus("input")}>
+          <Box
+            borderStyle="round"
+            borderColor={focus === "input" ? COLORS.PRIMARY : COLORS.BORDER}
+            paddingX={2}
+          >
+            <Text color={COLORS.PRIMARY}>{"❯ "}</Text>
+            <Input
+              key={inputKey}
+              focus={focus === "input"}
+              multiline
+              placeholder={`${currentSuggestion ?? "Describe what to test..."}  [tab]`}
+              value={value}
+              onSubmit={submit}
+              onUpArrowAtTop={() => setFocus("branch")}
+              onDownArrowAtBottom={() => setFocus("auto-run")}
+              onChange={(nextValue) => {
+                setValue(stripMouseSequences(nextValue));
+                if (errorMessage) setErrorMessage(null);
+              }}
+            />
+          </Box>
+        </Clickable>
       </Box>
 
       {showSuggestion ? (
