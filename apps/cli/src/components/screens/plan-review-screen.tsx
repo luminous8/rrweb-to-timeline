@@ -7,7 +7,6 @@ import { Clickable } from "../ui/clickable.js";
 import { Collapsible } from "../ui/collapsible.js";
 import { saveFlow } from "../../utils/save-flow.js";
 import { useAppStore } from "../../store.js";
-import { ScreenHeading } from "../ui/screen-heading.js";
 import { ErrorMessage } from "../ui/error-message.js";
 import type { BrowserFlowPlan } from "@browser-tester/supervisor";
 
@@ -325,8 +324,6 @@ export const PlanReviewScreen = () => {
 
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
-      <ScreenHeading title="Review browser plan" subtitle={plan.title} />
-
       <Text color={COLORS.DIM} dimColor={inputFocused}>
         {"Branch / PR"}
       </Text>
@@ -513,25 +510,6 @@ export const PlanReviewScreen = () => {
 
       <ErrorMessage message={saveError} />
 
-      {exitConfirmationVisible ? (
-        <Box
-          flexDirection="column"
-          marginTop={1}
-          borderStyle="round"
-          borderColor={COLORS.YELLOW}
-          paddingX={1}
-        >
-          <Text color={COLORS.YELLOW} bold>
-            Leave plan review?
-          </Text>
-          <Text color={COLORS.DIM}>
-            You have not started this run yet. Press{" "}
-            <Text color={COLORS.PRIMARY}>y</Text> to leave or{" "}
-            <Text color={COLORS.PRIMARY}>n</Text> to stay here.
-          </Text>
-        </Box>
-      ) : null}
-
       <Box flexDirection="column" marginTop={1}>
         <Collapsible
           label="Steps"
@@ -598,6 +576,25 @@ export const PlanReviewScreen = () => {
       {saving ? (
         <Box marginTop={1}>
           <Text color={COLORS.DIM}>Saving flow...</Text>
+        </Box>
+      ) : null}
+
+      {exitConfirmationVisible ? (
+        <Box
+          flexDirection="column"
+          marginTop={1}
+          borderStyle="round"
+          borderColor={COLORS.YELLOW}
+          paddingX={1}
+        >
+          <Text color={COLORS.YELLOW} bold>
+            Leave plan review?
+          </Text>
+          <Text color={COLORS.DIM}>
+            You have not started this run yet. Press{" "}
+            <Text color={COLORS.PRIMARY}>y</Text> to leave or{" "}
+            <Text color={COLORS.PRIMARY}>n</Text> to stay here.
+          </Text>
         </Box>
       ) : null}
     </Box>

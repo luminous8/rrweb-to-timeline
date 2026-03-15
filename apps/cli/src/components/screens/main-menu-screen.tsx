@@ -154,7 +154,7 @@ export const MainMenu = () => {
         <Text bold color={COLORS.TEXT}>
           browser-tester
         </Text>
-        <Text color={COLORS.DIM}>↑↓ tab to navigate sections</Text>
+        <Text color={COLORS.DIM}>arrow keys or tab to navigate sections</Text>
       </Box>
 
       <Text color={COLORS.DIM}>Branch / PR</Text>
