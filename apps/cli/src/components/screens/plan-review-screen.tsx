@@ -39,22 +39,12 @@ type EditingState = StepEditingState | AssumptionsEditingState | null;
 
 interface PlanStepRowProps {
   step: BrowserFlowPlan["steps"][number];
-  stepNumber: number;
-  totalSteps: number;
   selected: boolean;
   onClick: () => void;
 }
 
-const PlanStepRow = ({
-  step,
-  stepNumber,
-  totalSteps,
-  selected,
-  onClick,
-}: PlanStepRowProps) => {
+const PlanStepRow = ({ step, selected, onClick }: PlanStepRowProps) => {
   const COLORS = useColors();
-  const isLast = stepNumber === totalSteps;
-  const connector = isLast ? "╰" : "│";
   const bullet = selected ? "●" : "○";
 
   return (
@@ -68,12 +58,6 @@ const PlanStepRow = ({
           {step.title}
         </Text>
       </Text>
-      {!isLast ? (
-        <Text color={COLORS.DIM}>
-          {"  "}
-          {connector}
-        </Text>
-      ) : null}
     </Clickable>
   );
 };
@@ -465,8 +449,6 @@ export const PlanReviewScreen = () => {
                 <PlanStepRow
                   key={step.id}
                   step={step}
-                  stepNumber={index + 1}
-                  totalSteps={plan.steps.length}
                   selected={selected}
                   onClick={() => {
                     const itemIndex = items.findIndex(
