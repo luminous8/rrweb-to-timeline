@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Box, Text } from "ink";
+import { useEffect, useState } from "react";
+import { Box, Text, useInput } from "ink";
 import { useAppStore } from "../../store.js";
 import {
   getRecommendedScope,
@@ -19,6 +19,8 @@ const getTestAction = (gitState: GitState): TestAction => {
   return "test-unstaged";
 };
 
+type FocusArea = "branch" | "input" | "auto-run";
+
 export const MainMenu = () => {
   const COLORS = useColors();
   const gitState = useAppStore((state) => state.gitState);
@@ -31,15 +33,21 @@ export const MainMenu = () => {
   );
   const selectAction = useAppStore((state) => state.selectAction);
   const navigateTo = useAppStore((state) => state.navigateTo);
+  const checkedOutBranch = useAppStore((state) => state.checkedOutBranch);
   const [value, setValue] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [focus, setFocus] = useState<FocusArea>(
+    checkedOutBranch ? "input" : "branch"
+  );
+
+  useEffect(() => {
+    if (checkedOutBranch) setFocus("input");
+  }, [checkedOutBranch]);
 
   if (!gitState) return null;
 
   const testAction = getTestAction(gitState);
-  const branchLabel = gitState.isOnMain
-    ? gitState.currentBranch
-    : `${gitState.currentBranch}`;
+  const branchLabel = checkedOutBranch ?? gitState.currentBranch;
   const hasChanges =
     gitState.hasUnstagedChanges ||
     (!gitState.isOnMain && gitState.hasBranchCommits);
@@ -54,60 +62,91 @@ export const MainMenu = () => {
     submitFlowInstruction(trimmed);
   };
 
+  useInput(
+    (_input, key) => {
+      if (focus === "branch") {
+        if (key.downArrow) {
+          setFocus("input");
+          return;
+        }
+        if (key.return) {
+          navigateTo("select-pr");
+          return;
+        }
+      }
+      if (focus === "auto-run") {
+        if (key.upArrow) {
+          setFocus("input");
+          return;
+        }
+        if (key.return) {
+          toggleAutoRun();
+          return;
+        }
+      }
+    },
+    { isActive: focus !== "input" }
+  );
+
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
       <Box flexDirection="column" marginBottom={1}>
         <Text bold color={COLORS.TEXT}>
           browser-tester
         </Text>
-        <Text color={COLORS.DIM}>
-          {branchLabel}
-          {hasChanges ? (
-            <Text color={COLORS.PRIMARY}>{" · changes detected"}</Text>
-          ) : null}
-        </Text>
+        {hasChanges ? (
+          <Text color={COLORS.PRIMARY}>changes detected</Text>
+        ) : null}
       </Box>
 
-      <Text color={COLORS.DIM}>Describe what to test</Text>
-      <Box
-        marginTop={0}
-        borderStyle="round"
-        borderColor={COLORS.PRIMARY}
-        paddingX={2}
-      >
-        <Text color={COLORS.PRIMARY}>{"❯ "}</Text>
-        <Input
-          focus
-          multiline
-          placeholder="Go through onboarding, click Import Projects, verify the list appears..."
-          value={value}
-          onSubmit={submit}
-          onChange={(nextValue) => {
-            setValue(stripMouseSequences(nextValue));
-            if (errorMessage) setErrorMessage(null);
-          }}
-        />
+      <Text color={COLORS.DIM}>Branch / PR</Text>
+      <Clickable onClick={() => navigateTo("select-pr")}>
+        <Box
+          borderStyle="round"
+          borderColor={focus === "branch" ? COLORS.PRIMARY : COLORS.BORDER}
+          paddingX={2}
+        >
+          <Text
+            color={focus === "branch" ? COLORS.PRIMARY : COLORS.TEXT}
+            bold={focus === "branch"}
+          >
+            {branchLabel}
+          </Text>
+          <Text color={COLORS.DIM}>{" · press enter to change"}</Text>
+        </Box>
+      </Clickable>
+
+      <Box marginTop={1} flexDirection="column">
+        <Text color={COLORS.DIM}>Describe what to test</Text>
+        <Box
+          borderStyle="round"
+          borderColor={focus === "input" ? COLORS.PRIMARY : COLORS.BORDER}
+          paddingX={2}
+        >
+          <Text color={COLORS.PRIMARY}>{"❯ "}</Text>
+          <Input
+            focus={focus === "input"}
+            multiline
+            placeholder="Go through onboarding, click Import Projects, verify the list appears..."
+            value={value}
+            onSubmit={submit}
+            onUpArrowAtTop={() => setFocus("branch")}
+            onDownArrowAtBottom={() => setFocus("auto-run")}
+            onChange={(nextValue) => {
+              setValue(stripMouseSequences(nextValue));
+              if (errorMessage) setErrorMessage(null);
+            }}
+          />
+        </Box>
       </Box>
 
       <ErrorMessage message={errorMessage} />
 
       <Box marginTop={1} flexDirection="column">
-        <Box>
-          <Text color={COLORS.DIM}>
-            Testing against{" "}
-            <Text color={COLORS.TEXT} bold>
-              {branchLabel}
-            </Text>
-            {" · "}
-          </Text>
-          <Clickable fullWidth={false} onClick={() => navigateTo("select-pr")}>
-            <Text color={COLORS.PRIMARY}>switch branch/PR</Text>
-          </Clickable>
-        </Box>
-
         <Clickable onClick={toggleAutoRun}>
-          <Text color={autoRunAfterPlanning ? COLORS.TEXT : COLORS.DIM}>
-            auto-run after planning:{" "}
+          <Text color={focus === "auto-run" ? COLORS.PRIMARY : COLORS.DIM}>
+            {focus === "auto-run" ? "▸ " : "  "}
+            <Text bold={focus === "auto-run"}>auto-run after planning: </Text>
             <Text
               color={autoRunAfterPlanning ? COLORS.GREEN : COLORS.DIM}
               bold={autoRunAfterPlanning}
