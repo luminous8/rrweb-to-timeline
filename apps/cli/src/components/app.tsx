@@ -36,12 +36,8 @@ const usePlanningEffect = () => {
     if (screen !== "planning" || !gitState || !testAction || !flowInstruction.trim()) return;
 
     let isCancelled = false;
-    const setStatus = (status: string) => {
-      if (!isCancelled) useAppStore.setState({ planningStatus: status });
-    };
 
     const run = async () => {
-      setStatus("Resolving git diff and changed files...");
       const target = resolveBrowserTarget({
         action: testAction,
         commit: selectedCommit ?? undefined,
@@ -49,12 +45,6 @@ const usePlanningEffect = () => {
       if (isCancelled) return;
 
       const environment = getBrowserEnvironment(environmentOverrides);
-
-      setStatus(`Reading ${target.changedFiles.length} changed files...`);
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      if (isCancelled) return;
-
-      setStatus("Waiting for Claude to generate plan...");
       const plan = await planBrowserFlow({
         target,
         userInstruction: flowInstruction,
@@ -62,7 +52,6 @@ const usePlanningEffect = () => {
       });
       if (isCancelled) return;
 
-      setStatus("Plan received. Finalizing...");
       completePlanning({ target, plan, environment });
     };
 
