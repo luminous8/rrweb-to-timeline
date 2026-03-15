@@ -12,6 +12,7 @@ import {
 } from "./constants.js";
 import { createAgentModel } from "./create-agent-model.js";
 import { extractJsonObject } from "./json.js";
+import { retrievePlannerMemory } from "./memory/retrieve-planner-memory.js";
 import type { BrowserFlowPlan, PlanBrowserFlowOptions, PlanStep, TestTarget } from "./types.js";
 import { formatDiffStats } from "./utils/format-diff-stats.js";
 import { buildPlanningDiffPreview } from "./utils/build-planning-diff-preview.js";
@@ -112,7 +113,7 @@ const formatScopePlanningStrategy = (target: TestTarget): string => {
   ].join("\n");
 };
 
-const buildPlanningPrompt = (options: PlanBrowserFlowOptions): string => {
+const buildPlanningPrompt = (options: PlanBrowserFlowOptions, memoryContext?: string): string => {
   const { target, userInstruction, environment } = options;
   const prioritizedFiles = prioritizePlanningFiles(target.changedFiles);
   const displayedFiles = prioritizedFiles.slice(0, PLANNER_CHANGED_FILE_LIMIT);
@@ -148,6 +149,13 @@ const buildPlanningPrompt = (options: PlanBrowserFlowOptions): string => {
     `- Headed mode: ${environment?.headed === true ? "yes" : "no or not specified"}`,
     `- Reuse browser cookies: ${environment?.cookies === true ? "yes" : "no or not specified"}`,
     "",
+    ...(memoryContext
+      ? [
+          "Past testing experience (use to improve plan quality and avoid known pitfalls):",
+          memoryContext,
+          "",
+        ]
+      : []),
     "Scope strategy:",
     formatScopePlanningStrategy(target),
     "",
@@ -196,7 +204,14 @@ const parsePlanJson = (parsedJson: unknown): z.infer<typeof browserFlowPlanSchem
 export const planBrowserFlow = async (
   options: PlanBrowserFlowOptions,
 ): Promise<BrowserFlowPlan> => {
-  const prompt = buildPlanningPrompt(options);
+  let memoryContext: string | undefined;
+  try {
+    memoryContext = retrievePlannerMemory(options.target.cwd, {
+      instruction: options.userInstruction,
+    });
+  } catch {}
+
+  const prompt = buildPlanningPrompt(options, memoryContext);
   const model = createPlannerModel(options);
   const response = await model.doGenerate({
     prompt: [{ role: "user", content: [{ type: "text", text: prompt }] }],

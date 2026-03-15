@@ -19,6 +19,20 @@ export {
   getUnstagedDiffStats,
   isInsideGitRepo,
 } from "./git.js";
+export {
+  createRunMemory,
+  promoteMemories,
+  recordRun,
+  resolveMemoryDirectoryPath,
+  retrievePlannerMemory,
+  retrieveExecutorMemory,
+} from "./memory/index.js";
+export type {
+  CreateRunMemoryOptions,
+  MemoryIndex,
+  RunMemoryRecord,
+  RunMemoryStepOutcome,
+} from "./memory/index.js";
 export { planBrowserFlow } from "./plan-browser-flow.js";
 export { formatDiffStats } from "./utils/format-diff-stats.js";
 export { isRunningInAgent } from "./utils/is-running-in-agent.js";

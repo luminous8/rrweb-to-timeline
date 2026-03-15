@@ -26,6 +26,7 @@ const HIGH_SIGNAL_NAME_PATTERNS = [
 ];
 const LOW_SIGNAL_PATH_PATTERNS = [
   /^\.agents\//,
+  /^\.browser-tester\//,
   /^\.browser-tester-logs\//,
   /^\.tgz\//,
   /^node_modules\//,

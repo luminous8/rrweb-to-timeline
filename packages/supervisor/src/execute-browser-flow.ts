@@ -23,6 +23,7 @@ import {
   parseTextDelta,
 } from "./parse-execution-stream.js";
 import type { ExecutionStreamContext, ExecutionStreamState } from "./parse-execution-stream.js";
+import { retrieveExecutorMemory } from "./memory/retrieve-executor-memory.js";
 import type { ExecuteBrowserFlowOptions, PlanStep } from "./types.js";
 import { saveBrowserImageResult } from "./utils/save-browser-image-result.js";
 import { serializeToolResult } from "./utils/serialize-tool-result.js";
@@ -127,7 +128,10 @@ const formatPlanSteps = (steps: PlanStep[]): string =>
     )
     .join("\n");
 
-const buildExecutionPrompt = (options: ExecuteBrowserFlowOptions): string => {
+const buildExecutionPrompt = (
+  options: ExecuteBrowserFlowOptions,
+  memoryContext?: string,
+): string => {
   const { plan, target, environment, browserMcpServerName, videoOutputPath } = options;
 
   return [
@@ -182,6 +186,13 @@ const buildExecutionPrompt = (options: ExecuteBrowserFlowOptions): string => {
     `- Current branch: ${target.branch.current}`,
     `- Main branch: ${target.branch.main ?? "unknown"}`,
     "",
+    ...(memoryContext
+      ? [
+          "Past experience with similar routes (use to anticipate issues and improve execution):",
+          memoryContext,
+          "",
+        ]
+      : []),
     "Approved plan:",
     `Title: ${plan.title}`,
     `Rationale: ${plan.rationale}`,
@@ -215,11 +226,18 @@ export const executeBrowserFlow = async function* (
     videoOutputPath,
     liveViewUrl,
   });
-  const prompt = buildExecutionPrompt({
-    ...options,
-    browserMcpServerName,
-    videoOutputPath,
-  });
+  let memoryContext: string | undefined;
+  try {
+    memoryContext = retrieveExecutorMemory(options.target.cwd, {
+      targetUrls: options.plan.targetUrls,
+      steps: options.plan.steps,
+    });
+  } catch {}
+
+  const prompt = buildExecutionPrompt(
+    { ...options, browserMcpServerName, videoOutputPath },
+    memoryContext,
+  );
 
   const emittedEvents: BrowserRunEvent[] = [];
   const runStartedEvent: BrowserRunEvent = {
