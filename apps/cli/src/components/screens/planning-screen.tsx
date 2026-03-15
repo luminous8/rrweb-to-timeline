@@ -27,12 +27,16 @@ export const PlanningScreen = () => {
 
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
-      <Text color={COLORS.DIM}>Branch / PR</Text>
-      <Box borderStyle="round" borderColor={COLORS.BORDER} paddingX={2}>
-        <Text color={COLORS.TEXT}>{branchLabel}</Text>
-      </Box>
+      {gitState ? (
+        <>
+          <Text color={COLORS.DIM}>Branch / PR</Text>
+          <Box borderStyle="round" borderColor={COLORS.BORDER} paddingX={2}>
+            <Text color={COLORS.TEXT}>{branchLabel}</Text>
+          </Box>
+        </>
+      ) : null}
 
-      <Box marginTop={1} flexDirection="column">
+      <Box marginTop={gitState ? 1 : 0} flexDirection="column">
         <Text color={COLORS.DIM}>Describe what to test</Text>
         <Box borderStyle="round" borderColor={COLORS.BORDER} paddingX={2}>
           <Text color={COLORS.DIM}>{flowInstruction}</Text>

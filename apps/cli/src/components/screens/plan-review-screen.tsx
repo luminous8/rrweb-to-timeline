@@ -347,24 +347,28 @@ export const PlanReviewScreen = () => {
 
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
-      <Text color={COLORS.DIM}>
-        {"Branch / PR"}
-      </Text>
-      <Clickable onClick={() => navigateTo("select-pr")}>
-        <Box
-          width="100%"
-          borderStyle="round"
-          borderColor={branchFocused ? COLORS.PRIMARY : COLORS.BORDER}
-          paddingX={2}
-        >
-          <Text color={branchFocused ? COLORS.PRIMARY : COLORS.TEXT} bold={branchFocused}>
-            {branchLabel}
+      {gitState ? (
+        <>
+          <Text color={COLORS.DIM}>
+            {"Branch / PR"}
           </Text>
-          <Text color={COLORS.DIM}>{" · press enter to change"}</Text>
-        </Box>
-      </Clickable>
+          <Clickable onClick={() => navigateTo("select-pr")}>
+            <Box
+              width="100%"
+              borderStyle="round"
+              borderColor={branchFocused ? COLORS.PRIMARY : COLORS.BORDER}
+              paddingX={2}
+            >
+              <Text color={branchFocused ? COLORS.PRIMARY : COLORS.TEXT} bold={branchFocused}>
+                {branchLabel}
+              </Text>
+              <Text color={COLORS.DIM}>{" · press enter to change"}</Text>
+            </Box>
+          </Clickable>
+        </>
+      ) : null}
 
-      <Box marginTop={1} flexDirection="column">
+      <Box marginTop={gitState ? 1 : 0} flexDirection="column">
         <Text color={COLORS.DIM}>Describe what to test</Text>
         <Clickable onClick={() => setTopFocus("input")}>
           <Box
