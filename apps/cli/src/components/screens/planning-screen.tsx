@@ -82,31 +82,28 @@ export const PlanningScreen = () => {
       </Box>
 
       <Box marginTop={1} flexDirection="column">
-        {PLANNING_PHASES.map((phase, index) => (
-          <Text key={phase}>
-            {index < phaseIndex ? (
-              <Text color={COLORS.DIM}>
-                <Text color={COLORS.GREEN}>{"  ✓ "}</Text>
-                {phase}
-                <Text color={COLORS.DIM}> {getPhaseTime(index)}</Text>
-              </Text>
-            ) : index === phaseIndex ? (
-              <Text color={COLORS.DIM}>
+        {PLANNING_PHASES.map((phase, index) => {
+          if (index > phaseIndex) return null;
+          if (index === phaseIndex) {
+            return (
+              <Text key={phase} color={COLORS.DIM}>
                 <Text color={COLORS.SELECTION}>
                   {"  "}
                   <InkSpinner type="dots" />{" "}
                 </Text>
                 {phase}
-                <Text color={COLORS.DIM}> {getPhaseTime(index)}</Text>
+                <Text> {getPhaseTime(index)}</Text>
               </Text>
-            ) : (
-              <Text color={COLORS.DIM}>
-                {"    "}
-                {phase}
-              </Text>
-            )}
-          </Text>
-        ))}
+            );
+          }
+          return (
+            <Text key={phase} color={COLORS.DIM}>
+              <Text color={COLORS.GREEN}>{"  ✓ "}</Text>
+              {phase}
+              <Text> {getPhaseTime(index)}</Text>
+            </Text>
+          );
+        })}
       </Box>
     </Box>
   );
