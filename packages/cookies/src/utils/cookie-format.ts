@@ -4,7 +4,7 @@ import type { Cookie, SameSitePolicy } from "../types.js";
 
 const SESSION_EXPIRES = -1;
 
-export interface PlaywrightCookie {
+export interface BrowserCookie {
   name: string;
   value: string;
   domain: string;
@@ -15,16 +15,8 @@ export interface PlaywrightCookie {
   sameSite?: SameSitePolicy;
 }
 
-export interface PuppeteerCookie {
-  name: string;
-  value: string;
-  domain: string;
-  path: string;
-  expires: number;
-  secure: boolean;
-  httpOnly: boolean;
-  sameSite?: SameSitePolicy;
-}
+export type PlaywrightCookie = BrowserCookie;
+export type PuppeteerCookie = BrowserCookie;
 
 const ensureDotPrefix = (domain: string): string =>
   domain.startsWith(".") ? domain : `.${domain}`;
@@ -62,14 +54,11 @@ export const matchCookies = (cookies: Cookie[], url: string): Cookie[] => {
 export const matchCookieHeader = (cookies: Cookie[], url: string): string =>
   toCookieHeader(matchCookies(cookies, url));
 
-export const toPlaywrightCookies = (cookies: Cookie[]): PlaywrightCookie[] =>
+const toBrowserCookies = (cookies: Cookie[]): BrowserCookie[] =>
   cookies.map((cookie) => ({
     ...toBaseCookie(cookie),
     sameSite: cookie.sameSite,
   }));
 
-export const toPuppeteerCookies = (cookies: Cookie[]): PuppeteerCookie[] =>
-  cookies.map((cookie) => ({
-    ...toBaseCookie(cookie),
-    sameSite: cookie.sameSite,
-  }));
+export const toPlaywrightCookies = toBrowserCookies;
+export const toPuppeteerCookies = toBrowserCookies;

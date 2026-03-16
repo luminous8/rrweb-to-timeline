@@ -10,6 +10,13 @@ const CHROME_EPOCH_MICROSECONDS = 1_000_000;
 const CHROME_EPOCH_OFFSET_SECONDS = 11_644_473_600;
 const MILLISECOND_THRESHOLD = 10_000_000_000;
 
+const SAME_SITE_BY_NAME: Readonly<Record<string, SameSitePolicy>> = {
+  strict: "Strict",
+  lax: "Lax",
+  none: "None",
+  no_restriction: "None",
+};
+
 export const normalizeSameSite = (value: unknown): SameSitePolicy | undefined => {
   if (typeof value === "bigint") return normalizeSameSite(Number(value));
   if (typeof value === "number") {
@@ -21,12 +28,6 @@ export const normalizeSameSite = (value: unknown): SameSitePolicy | undefined =>
   if (typeof value === "string") {
     const parsed = Number.parseInt(value, 10);
     if (Number.isFinite(parsed)) return normalizeSameSite(parsed);
-    const SAME_SITE_BY_NAME: Readonly<Record<string, SameSitePolicy>> = {
-      strict: "Strict",
-      lax: "Lax",
-      none: "None",
-      no_restriction: "None",
-    };
     return SAME_SITE_BY_NAME[value.toLowerCase()];
   }
   return undefined;
