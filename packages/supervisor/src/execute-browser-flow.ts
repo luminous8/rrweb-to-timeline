@@ -1,6 +1,6 @@
 import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import * as os from "node:os";
+import path from "node:path";
 import type { LanguageModelV3, LanguageModelV3StreamPart } from "@ai-sdk/provider";
 import type { AgentProviderSettings } from "@browser-tester/agent";
 import { Effect, Option, Result, Stream } from "effect";
@@ -11,27 +11,27 @@ import {
   EXECUTION_MODEL_EFFORT,
   VIDEO_DIRECTORY_PREFIX,
   VIDEO_FILE_NAME,
-} from "./constants.js";
-import { buildBrowserMcpSettings } from "./browser-mcp-config.js";
-import { createBrowserRunReport } from "./create-browser-run-report.js";
-import { createAgentModel } from "./create-agent-model.js";
-import { ExecutionError, MemoryRetrievalError } from "./errors.js";
-import type { BrowserRunEvent } from "./events.js";
+} from "./constants";
+import { buildBrowserMcpSettings } from "./browser-mcp-config";
+import { createBrowserRunReport } from "./create-browser-run-report";
+import { createAgentModel } from "./create-agent-model";
+import { ExecutionError, MemoryRetrievalError } from "./errors";
+import type { BrowserRunEvent } from "./events";
 import {
   buildStepMap,
   extractStreamSessionId,
   parseBrowserToolName,
   parseMarkerLine,
   parseTextDelta,
-} from "./parse-execution-stream.js";
-import type { ExecutionStreamContext, ExecutionStreamState } from "./parse-execution-stream.js";
-import { retrieveExecutorMemory } from "./memory/retrieve-executor-memory.js";
-import type { ExecuteBrowserFlowOptions } from "./types.js";
-import { detectAuthError } from "./utils/detect-auth-error.js";
-import { resolveAgentProvider } from "./utils/resolve-agent-provider.js";
-import { saveBrowserImageResult } from "./utils/save-browser-image-result.js";
-import { serializeToolResult } from "./utils/serialize-tool-result.js";
-import { resolveLiveViewUrl } from "./utils/resolve-live-view-url.js";
+} from "./parse-execution-stream";
+import type { ExecutionStreamContext, ExecutionStreamState } from "./parse-execution-stream";
+import { retrieveExecutorMemory } from "./memory/retrieve-executor-memory";
+import type { ExecuteBrowserFlowOptions } from "./types";
+import { detectAuthError } from "./utils/detect-auth-error";
+import { resolveAgentProvider } from "./utils/resolve-agent-provider";
+import { saveBrowserImageResult } from "./utils/save-browser-image-result";
+import { serializeToolResult } from "./utils/serialize-tool-result";
+import { resolveLiveViewUrl } from "./utils/resolve-live-view-url";
 
 export const buildExecutionModelSettings = (
   options: Pick<
@@ -75,7 +75,7 @@ const buildExecutionPrompt = (
     `You have 4 browser tools via the MCP server named "${mcpName}":`,
     "",
     "1. open — Launch a browser and navigate to a URL.",
-    "2. playwright — Execute Playwright code in Node.js. Globals: page (Page), context (BrowserContext), browser (Browser), ref(id) (resolves a snapshot ref like 'e4' to a Playwright Locator). Supports await. Return a value to get it back as JSON.",
+    "2. playwright — Execute Playwright code in Node. Globals: page (Page), context (BrowserContext), browser (Browser), ref(id) (resolves a snapshot ref like 'e4' to a Playwright Locator). Supports await. Return a value to get it back as JSON.",
     "3. screenshot — Capture page state. Set mode: 'snapshot' (ARIA accessibility tree, default and preferred), 'screenshot' (PNG image), or 'annotated' (PNG with numbered labels on interactive elements).",
     "4. close — Close the browser and flush the video recording.",
     "",
@@ -575,7 +575,7 @@ const buildExecutionStream = Effect.fn("executeBrowserFlow")(function* (
   const browserMcpServerName = options.browserMcpServerName ?? DEFAULT_BROWSER_MCP_SERVER_NAME;
   const videoOutputPath =
     options.videoOutputPath ??
-    join(mkdtempSync(join(tmpdir(), VIDEO_DIRECTORY_PREFIX)), VIDEO_FILE_NAME);
+    path.join(mkdtempSync(path.join(os.tmpdir(), VIDEO_DIRECTORY_PREFIX)), VIDEO_FILE_NAME);
   const liveViewUrl =
     options.liveViewUrl ??
     (yield* Effect.tryPromise({
