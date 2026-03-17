@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { LanguageModelV3, LanguageModelV3StreamPart } from "@ai-sdk/provider";
 import type { AgentProviderSettings } from "@browser-tester/agent";
-import { Effect, Either, Option, Stream } from "effect";
+import { Effect, Option, Result, Stream } from "effect";
 import {
   BROWSER_TEST_MODEL,
   DEFAULT_AGENT_PROVIDER,
@@ -528,7 +528,7 @@ const resolveExecutionStreamResult = Effect.fn("resolveExecutionStreamResult")(f
   ] as const;
 
   for (const [providerIndex, provider] of providersToTry.entries()) {
-    const attempt = yield* Effect.either(
+    const attempt = yield* Effect.result(
       createModelStreamResult(
         options,
         prompt,
@@ -540,20 +540,20 @@ const resolveExecutionStreamResult = Effect.fn("resolveExecutionStreamResult")(f
       ),
     );
 
-    if (Either.isRight(attempt)) {
-      return attempt.right;
+    if (Result.isSuccess(attempt)) {
+      return attempt.success;
     }
 
     const isLastProvider = providerIndex === providersToTry.length - 1;
 
     if (
       resolvedAgentProvider.explicit ||
-      attempt.left.authMessage === undefined ||
+      attempt.failure.authMessage === undefined ||
       isLastProvider
     ) {
       return yield* new ExecutionError({
         stage: "model streaming",
-        cause: attempt.left.authMessage ?? attempt.left.cause,
+        cause: attempt.failure.authMessage ?? attempt.failure.cause,
       }).asEffect();
     }
   }
