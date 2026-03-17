@@ -180,7 +180,11 @@ const filterFlowFileNames = (fileNames: string[]): string[] =>
     .filter((fileName) => fileName.endsWith(".md") && fileName !== FLOW_DIRECTORY_INDEX_FILE_NAME)
     .sort((leftValue, rightValue) => leftValue.localeCompare(rightValue));
 
-const getModifiedAtMs = (modifiedAt: Date | undefined): number => modifiedAt?.getTime() ?? 0;
+const getModifiedAtMs = (modifiedAt: Date | number | undefined): number => {
+  if (modifiedAt === undefined) return 0;
+  if (typeof modifiedAt === "number") return modifiedAt;
+  return modifiedAt.getTime();
+};
 const EMPTY_FLOW_FILE_NAMES: string[] = [];
 
 export class FlowStorage extends ServiceMap.Service<FlowStorage>()("@cli/FlowStorage", {
