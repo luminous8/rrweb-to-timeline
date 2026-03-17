@@ -1,6 +1,6 @@
 # Browser Tester
 
-pnpm monorepo. Turbo for builds, oxlint + oxfmt for linting/formatting.
+pnpm monorepo. Vite+ (`vp`) for builds, lint, format, and test.
 
 ## Verify changes
 

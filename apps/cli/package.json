@@ -21,7 +21,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "link-global": "pnpm build && pnpm link --global",
-    "lint": "oxlint && tsc --noEmit"
+    "lint": "vp lint && tsc --noEmit"
   },
   "dependencies": {
     "@browser-tester/mcp": "workspace:*",

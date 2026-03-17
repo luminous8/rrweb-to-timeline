@@ -19,20 +19,14 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1
         with:
-          node-version: 22
-          cache: "pnpm"
+          node-version: "22"
+          cache: true
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        env:
-          GITHUB_ACTIONS: "1"
+        run: vp install --frozen-lockfile
       - name: Build
         run: pnpm build
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ vars.TURBO_TEAM }}
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - name: Run E2E tests

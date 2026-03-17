@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "lint": "oxlint && tsc --noEmit"
+    "lint": "vp lint && tsc --noEmit"
   },
   "dependencies": {
     "@browser-tester/browser": "workspace:*",
