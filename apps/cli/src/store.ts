@@ -102,6 +102,11 @@ interface AppStore {
   clearCheckoutError: () => void;
 }
 
+const needsCookieConfirmation = (
+  plan: BrowserFlowPlan | null,
+  environment: BrowserEnvironmentHints | null,
+): boolean => Boolean(plan?.cookieSync.required) && environment?.cookies !== true;
+
 const RESET_PLAN_STATE = {
   generatedPlan: null,
   resolvedTarget: null,
@@ -193,7 +198,7 @@ export const useAppStore = create<AppStore>((set) => ({
         return { screen: "main" };
       }
       if (state.screen === "cookie-sync-confirm") {
-        return { screen: "review-plan" };
+        return { screen: state.skipPlanning ? "main" : "review-plan" };
       }
       if (state.screen === "results") {
         return {
@@ -309,6 +314,10 @@ export const useAppStore = create<AppStore>((set) => ({
           commit: state.selectedCommit ?? undefined,
         });
         const browserEnvironment = getBrowserEnvironment(state.environmentOverrides);
+        const directPlan = createDirectRunPlan({
+          userInstruction: instruction,
+          target: resolvedTarget,
+        });
 
         return {
           ...RESET_PLAN_STATE,
@@ -317,12 +326,11 @@ export const useAppStore = create<AppStore>((set) => ({
           planningError: null,
           planOrigin: "generated",
           resolvedTarget,
-          generatedPlan: createDirectRunPlan({
-            userInstruction: instruction,
-            target: resolvedTarget,
-          }),
+          generatedPlan: directPlan,
           browserEnvironment,
-          screen: "testing",
+          screen: needsCookieConfirmation(directPlan, browserEnvironment)
+            ? "cookie-sync-confirm"
+            : "testing",
         };
       }
 
@@ -357,10 +365,9 @@ export const useAppStore = create<AppStore>((set) => ({
 
   requestPlanApproval: () =>
     set((state) => ({
-      screen:
-        state.generatedPlan?.cookieSync.required && state.browserEnvironment?.cookies !== true
-          ? "cookie-sync-confirm"
-          : "testing",
+      screen: needsCookieConfirmation(state.generatedPlan, state.browserEnvironment)
+        ? "cookie-sync-confirm"
+        : "testing",
     })),
 
   approvePlan: () => set({ screen: "testing" }),

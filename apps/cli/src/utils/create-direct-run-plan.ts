@@ -34,8 +34,8 @@ export const createDirectRunPlan = ({
     riskAreas: changedFileEvidence,
     targetUrls: [],
     cookieSync: {
-      required: false,
-      reason: "Direct runs do not require authenticated state by default.",
+      required: true,
+      reason: "Direct runs may need an authenticated browser session to access non-public pages.",
     },
     steps: [
       {
