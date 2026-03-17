@@ -16,8 +16,6 @@ import {
   HIGHLIGHT_WINDOW_MIN_DURATION_MS,
   HIGHLIGHT_WINDOW_TRAILING_MS,
   MIN_RUN_DURATION_MS,
-  PII_TESSERACT_CONFIDENCE_THRESHOLD,
-  REDACTED_VIDEO_FILE_NAME,
   SHARE_ASSET_DIRECTORY_NAME,
   SHARE_DIRECTORY_PREFIX,
   SHARE_REPORT_FILE_NAME,
@@ -49,21 +47,12 @@ interface TimeWindow {
   title?: string;
 }
 
-interface RedactionBox {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-}
-
 interface ArtifactPreparationResult {
   artifacts: BrowserRunArtifacts;
   warnings: string[];
 }
 
 const execFileAsync = promisify(execFile);
-
-const EMAIL_PATTERN = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 
 const commandExists = async (command: string): Promise<boolean> => {
   try {
@@ -363,107 +352,6 @@ const createHighlightVideo = async (
   }
 };
 
-const getScreenshotEmailBoxes = async (screenshotPath: string): Promise<RedactionBox[]> => {
-  if (!(await commandExists("tesseract"))) return [];
-
-  try {
-    const { stdout } = await execFileAsync("tesseract", [screenshotPath, "stdout", "tsv"], {
-      encoding: "utf-8",
-    });
-    const lines = stdout.split("\n").slice(1);
-    const boxes: RedactionBox[] = [];
-
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      const columns = line.split("\t");
-      if (columns.length < 12) continue;
-
-      const left = Number(columns[6]);
-      const top = Number(columns[7]);
-      const width = Number(columns[8]);
-      const height = Number(columns[9]);
-      const confidence = Number(columns[10]);
-      const text = columns[11] ?? "";
-
-      if (
-        Number.isNaN(left) ||
-        Number.isNaN(top) ||
-        Number.isNaN(width) ||
-        Number.isNaN(height) ||
-        Number.isNaN(confidence)
-      ) {
-        continue;
-      }
-
-      if (confidence < PII_TESSERACT_CONFIDENCE_THRESHOLD) continue;
-      if (!EMAIL_PATTERN.test(text)) continue;
-
-      boxes.push({ left, top, width, height });
-    }
-
-    return boxes;
-  } catch {
-    return [];
-  }
-};
-
-const buildDrawBoxFilter = (boxes: RedactionBox[]): string =>
-  boxes
-    .map(
-      (box) =>
-        `drawbox=x=${box.left}:y=${box.top}:w=${box.width}:h=${box.height}:color=black@1:t=fill`,
-    )
-    .join(",");
-
-const redactImage = async (
-  imagePath: string,
-  boxes: RedactionBox[],
-): Promise<string | undefined> => {
-  if (boxes.length === 0 || !(await commandExists("ffmpeg"))) return undefined;
-
-  const imageExtension = extname(imagePath) || ".png";
-  const redactedImagePath = imagePath.replace(imageExtension, `-redacted${imageExtension}`);
-
-  try {
-    await execFileAsync("ffmpeg", [
-      "-y",
-      "-i",
-      imagePath,
-      "-vf",
-      buildDrawBoxFilter(boxes),
-      redactedImagePath,
-    ]);
-    return redactedImagePath;
-  } catch {
-    return undefined;
-  }
-};
-
-const redactVideo = async (
-  videoPath: string | undefined,
-  boxes: RedactionBox[],
-): Promise<string | undefined> => {
-  if (!videoPath || !existsSync(videoPath) || boxes.length === 0) return undefined;
-  if (!(await commandExists("ffmpeg"))) return undefined;
-
-  const redactedVideoPath = join(dirname(resolve(videoPath)), REDACTED_VIDEO_FILE_NAME);
-  try {
-    await execFileAsync("ffmpeg", [
-      "-y",
-      "-i",
-      videoPath,
-      "-vf",
-      buildDrawBoxFilter(boxes),
-      "-c:a",
-      "copy",
-      redactedVideoPath,
-    ]);
-    return redactedVideoPath;
-  } catch {
-    return undefined;
-  }
-};
-
 const copyArtifact = (
   assetDirectoryPath: string,
   filePath: string,
@@ -495,14 +383,8 @@ const createShareBundle = (options: {
   const assetDirectoryPath = join(shareBundlePath, SHARE_ASSET_DIRECTORY_NAME);
   mkdirSync(assetDirectoryPath, { recursive: true });
 
-  const sharedVideoPath =
-    options.artifacts.redactedVideoPath ??
-    options.artifacts.highlightVideoPath ??
-    options.artifacts.rawVideoPath;
-  const sharedScreenshotPaths =
-    options.artifacts.redactedScreenshotPaths.length > 0
-      ? options.artifacts.redactedScreenshotPaths
-      : options.artifacts.screenshotPaths;
+  const sharedVideoPath = options.artifacts.highlightVideoPath ?? options.artifacts.rawVideoPath;
+  const sharedScreenshotPaths = options.artifacts.screenshotPaths;
 
   const bundledVideoRelativePath = sharedVideoPath
     ? copyArtifact(assetDirectoryPath, sharedVideoPath, "video")
@@ -609,42 +491,12 @@ const prepareArtifacts = async (
   const highlightVideoResult = await createHighlightVideo(existingRawVideoPath, events);
   if (highlightVideoResult.warning) warnings.push(highlightVideoResult.warning);
 
-  const redactionBoxResults = await Promise.all(
-    existingScreenshotPaths.map((screenshotPath) => getScreenshotEmailBoxes(screenshotPath)),
-  );
-  const redactionBoxes = redactionBoxResults.flat();
-
-  if (
-    existingScreenshotPaths.length > 0 &&
-    redactionBoxes.length === 0 &&
-    !(await commandExists("tesseract"))
-  ) {
-    warnings.push("PII redaction skipped because tesseract is not installed.");
-  }
-
-  if (redactionBoxes.length > 0 && !(await commandExists("ffmpeg"))) {
-    warnings.push("PII redaction skipped because ffmpeg is not installed.");
-  }
-
-  const redactedScreenshotResults = await Promise.all(
-    existingScreenshotPaths.map((screenshotPath) => redactImage(screenshotPath, redactionBoxes)),
-  );
-  const redactedScreenshotPaths = redactedScreenshotResults.filter(
-    (screenshotPath): screenshotPath is string => Boolean(screenshotPath),
-  );
-  const redactedVideoPath = await redactVideo(
-    highlightVideoResult.highlightVideoPath ?? existingRawVideoPath,
-    redactionBoxes,
-  );
-
   return {
     warnings,
     artifacts: {
       rawVideoPath: existingRawVideoPath,
       highlightVideoPath: highlightVideoResult.highlightVideoPath,
-      redactedVideoPath,
       screenshotPaths: existingScreenshotPaths,
-      redactedScreenshotPaths,
     },
   };
 };

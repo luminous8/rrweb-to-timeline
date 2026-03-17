@@ -102,9 +102,7 @@ export interface BrowserRunPullRequest {
 export interface BrowserRunArtifacts {
   rawVideoPath?: string;
   highlightVideoPath?: string;
-  redactedVideoPath?: string;
   screenshotPaths: string[];
-  redactedScreenshotPaths: string[];
   shareBundlePath?: string;
   shareSummaryPath?: string;
   shareUrl?: string;

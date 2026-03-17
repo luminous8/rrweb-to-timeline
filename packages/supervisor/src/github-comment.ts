@@ -114,11 +114,7 @@ export const buildPullRequestCommentBody = (report: BrowserRunReport): string =>
   } else if (report.artifacts.rawVideoPath) {
     artifactLines.push(`- Raw video saved locally at \`${report.artifacts.rawVideoPath}\``);
   }
-  if (report.artifacts.redactedScreenshotPaths.length > 0) {
-    artifactLines.push(
-      `- ${report.artifacts.redactedScreenshotPaths.length} redacted screenshot(s) saved locally`,
-    );
-  } else if (report.artifacts.screenshotPaths.length > 0) {
+  if (report.artifacts.screenshotPaths.length > 0) {
     artifactLines.push(`- ${report.artifacts.screenshotPaths.length} screenshot(s) saved locally`);
   }
 

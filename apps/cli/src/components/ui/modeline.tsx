@@ -118,8 +118,7 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
     }
     case "results": {
       const resultsHints: HintSegment[] = [];
-      const videoPath =
-        latestRunReport?.artifacts.redactedVideoPath ?? latestRunReport?.artifacts.rawVideoPath;
+      const videoPath = latestRunReport?.artifacts.rawVideoPath;
       if (videoPath) {
         resultsHints.push({ key: "v", label: "open video" });
       }

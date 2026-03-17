@@ -19,10 +19,7 @@ const isRemoteUrl = (value: string | undefined): boolean =>
   typeof value === "string" && (value.startsWith("https://") || value.startsWith("http://"));
 
 const buildResultsClipboardText = (report: BrowserRunReport): string => {
-  const screenshotPaths =
-    report.artifacts.redactedScreenshotPaths.length > 0
-      ? report.artifacts.redactedScreenshotPaths
-      : report.artifacts.screenshotPaths;
+  const screenshotPaths = report.artifacts.screenshotPaths;
   const clipboardLines = [
     `Title: ${report.title}`,
     `Status: ${report.status}`,
@@ -37,9 +34,7 @@ const buildResultsClipboardText = (report: BrowserRunReport): string => {
     clipboardLines.push(`Highlight reel: ${report.artifacts.highlightVideoPath}`);
   }
 
-  if (report.artifacts.redactedVideoPath) {
-    clipboardLines.push(`Redacted video: ${report.artifacts.redactedVideoPath}`);
-  } else if (report.artifacts.rawVideoPath) {
+  if (report.artifacts.rawVideoPath) {
     clipboardLines.push(`Raw video: ${report.artifacts.rawVideoPath}`);
   }
 
@@ -140,8 +135,7 @@ export const ResultsScreen = () => {
     }
 
     if (normalizedInput === "v" && latestRunReport) {
-      const videoPath =
-        latestRunReport.artifacts.redactedVideoPath ?? latestRunReport.artifacts.rawVideoPath;
+      const videoPath = latestRunReport.artifacts.rawVideoPath;
       if (videoPath) openLocalFile(videoPath);
       return;
     }
@@ -163,10 +157,7 @@ export const ResultsScreen = () => {
 
   if (!latestRunReport) return null;
 
-  const screenshotPaths =
-    latestRunReport.artifacts.redactedScreenshotPaths.length > 0
-      ? latestRunReport.artifacts.redactedScreenshotPaths
-      : latestRunReport.artifacts.screenshotPaths;
+  const screenshotPaths = latestRunReport.artifacts.screenshotPaths;
   const shareUrl = latestRunReport.artifacts.shareUrl;
 
   return (
@@ -268,11 +259,7 @@ export const ResultsScreen = () => {
             Highlight reel: <FileLink path={latestRunReport.artifacts.highlightVideoPath} />
           </Text>
         ) : null}
-        {latestRunReport.artifacts.redactedVideoPath ? (
-          <Text color={COLORS.DIM}>
-            Redacted video: <FileLink path={latestRunReport.artifacts.redactedVideoPath} />
-          </Text>
-        ) : latestRunReport.artifacts.rawVideoPath ? (
+        {latestRunReport.artifacts.rawVideoPath ? (
           <Text color={COLORS.DIM}>
             Raw video: <FileLink path={latestRunReport.artifacts.rawVideoPath} />
           </Text>
