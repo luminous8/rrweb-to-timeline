@@ -63,19 +63,20 @@ export const PlanReviewScreen = () => {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState("");
   const [pickerIndex, setPickerIndex] = useState(0);
+  const [localOptions, setLocalOptions] = useState<ContextOption[]>([]);
   const [remoteOptions, setRemoteOptions] = useState<ContextOption[]>([]);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const inputFocused = topFocus === "input";
   const branchFocused = topFocus === "branch";
 
-  const localOptions = useMemo(
-    () => (gitState ? buildLocalContextOptions(gitState) : []),
-    [gitState],
-  );
-
   useEffect(() => {
     if (!pickerOpen || !gitState) return;
     let cancelled = false;
+    buildLocalContextOptions(gitState)
+      .then((options) => {
+        if (!cancelled) setLocalOptions(options);
+      })
+      .catch(() => {});
     setRemoteLoading(true);
     fetchRemoteContextOptions(gitState)
       .then((options) => {
