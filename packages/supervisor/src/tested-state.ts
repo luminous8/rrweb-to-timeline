@@ -2,11 +2,7 @@ import { createHash } from "node:crypto";
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import {
-  GIT_FINGERPRINT_TIMEOUT_MS,
-  TESTED_FINGERPRINT_FILE,
-  TESTIE_STATE_DIR,
-} from "./constants";
+import { GIT_FINGERPRINT_TIMEOUT_MS, TESTED_FINGERPRINT_FILE, TESTIE_STATE_DIR } from "./constants";
 
 const NULL_SEPARATOR = "\0";
 

@@ -27,10 +27,7 @@ import {
 import type { ExecutionStreamContext, ExecutionStreamState } from "./parse-execution-stream";
 import type { AgentProvider, ExecuteBrowserFlowOptions } from "./types";
 import { detectAuthError } from "./utils/detect-auth-error";
-import {
-  resolveAgentProvider,
-  type ResolvedAgentProvider,
-} from "./utils/resolve-agent-provider";
+import { resolveAgentProvider, type ResolvedAgentProvider } from "./utils/resolve-agent-provider";
 import { saveBrowserImageResult } from "./utils/save-browser-image-result";
 import { serializeToolResult } from "./utils/serialize-tool-result";
 import { resolveLiveViewUrl } from "./utils/resolve-live-view-url";

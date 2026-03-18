@@ -10,10 +10,7 @@ import { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner
 import { NodeServices } from "@effect/platform-node";
 import { chromiumConfig } from "./browser-config";
 import { deriveKey, decryptAes128Cbc, decryptAes256Gcm } from "./utils/crypto";
-import {
-  normalizeChromiumExpiration,
-  normalizeChromiumSameSite,
-} from "./utils/chromium-normalize";
+import { normalizeChromiumExpiration, normalizeChromiumSameSite } from "./utils/chromium-normalize";
 import {
   CookieDatabaseNotFoundError,
   CookieDecryptionKeyError,

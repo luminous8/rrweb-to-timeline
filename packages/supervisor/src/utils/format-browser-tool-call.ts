@@ -1,9 +1,5 @@
 import { Schema } from "effect";
-import {
-  BROWSER_TOOL_PREFIX,
-  TOOL_INPUT_CHAR_LIMIT,
-  SELECT_TRUNCATION_LIMIT,
-} from "../constants";
+import { BROWSER_TOOL_PREFIX, TOOL_INPUT_CHAR_LIMIT, SELECT_TRUNCATION_LIMIT } from "../constants";
 
 interface BrowserToolCallFormatOptions {
   includeRelevantInputs?: boolean;
