@@ -1,3 +1,4 @@
+import { Schema } from "effect";
 import {
   BROWSER_TOOL_PREFIX,
   TOOL_INPUT_CHAR_LIMIT,
@@ -8,11 +9,11 @@ interface BrowserToolCallFormatOptions {
   includeRelevantInputs?: boolean;
 }
 
+const JsonRecordSchema = Schema.Record(Schema.String, Schema.Unknown);
+
 const parseToolInput = (input: string): Record<string, unknown> | null => {
   try {
-    const parsedValue = JSON.parse(input);
-    if (!parsedValue || typeof parsedValue !== "object" || Array.isArray(parsedValue)) return null;
-    return parsedValue;
+    return Schema.decodeUnknownSync(JsonRecordSchema)(JSON.parse(input));
   } catch {
     return null;
   }

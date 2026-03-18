@@ -3,18 +3,21 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
+import { Schema } from "effect";
 import { COMMENT_DIRECTORY_PREFIX, GITHUB_TIMEOUT_MS } from "./constants.js";
 import type { BrowserRunPullRequest, BrowserRunReport } from "./types.js";
 import { commandExists } from "./utils/command-exists.js";
 
 const execFileAsync = promisify(execFile);
 
-interface PullRequestJson {
-  number?: unknown;
-  url?: unknown;
-  title?: unknown;
-  headRefName?: unknown;
-}
+const PullRequestSchema = Schema.Struct({
+  number: Schema.Number,
+  url: Schema.String,
+  title: Schema.String,
+  headRefName: Schema.String,
+});
+
+const PullRequestListSchema = Schema.Array(PullRequestSchema);
 
 export interface PostPullRequestCommentOptions {
   cwd: string;
@@ -33,30 +36,6 @@ const runGhCommand = async (cwd: string, args: string[]): Promise<string> => {
     timeout: GITHUB_TIMEOUT_MS,
   });
   return stdout.trim();
-};
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === "object" && !Array.isArray(value);
-
-const parsePullRequest = (value: unknown): BrowserRunPullRequest | null => {
-  if (!isRecord(value)) return null;
-
-  const pullRequest: PullRequestJson = value;
-  if (
-    typeof pullRequest.number !== "number" ||
-    typeof pullRequest.url !== "string" ||
-    typeof pullRequest.title !== "string" ||
-    typeof pullRequest.headRefName !== "string"
-  ) {
-    return null;
-  }
-
-  return {
-    number: pullRequest.number,
-    url: pullRequest.url,
-    title: pullRequest.title,
-    headRefName: pullRequest.headRefName,
-  };
 };
 
 const isRemoteShareUrl = (shareUrl: string | undefined): boolean =>
@@ -82,9 +61,8 @@ export const getPullRequestForBranch = async (
       "--json",
       "number,url,title,headRefName",
     ]);
-    const parsedValue: unknown = JSON.parse(output);
-    if (!Array.isArray(parsedValue) || parsedValue.length === 0) return null;
-    return parsePullRequest(parsedValue[0]);
+    const pullRequests = Schema.decodeUnknownSync(PullRequestListSchema)(JSON.parse(output));
+    return pullRequests[0] ?? null;
   } catch {
     return null;
   }

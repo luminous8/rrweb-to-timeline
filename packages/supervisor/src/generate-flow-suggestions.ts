@@ -1,3 +1,4 @@
+import { Schema } from "effect";
 import { BROWSER_TEST_MODEL, CODEX_PLANNER_MODEL, DEFAULT_AGENT_PROVIDER } from "./constants.js";
 import { ensureSafeCurrentWorkingDirectory } from "@browser-tester/utils";
 import { createAgentModel } from "./create-agent-model.js";
@@ -6,6 +7,7 @@ import type { AgentProvider, ChangedFile } from "./types.js";
 
 const SUGGESTION_COUNT = 3;
 const SUGGESTION_MAX_FILES = 15;
+const FlowSuggestionsSchema = Schema.Array(Schema.String);
 
 interface GenerateFlowSuggestionsOptions {
   changedFiles: ChangedFile[];
@@ -86,13 +88,11 @@ export const generateFlowSuggestions = async (
       .map((part) => part.text)
       .join("\n");
 
-    const parsed: unknown = JSON.parse(extractJsonObject(text));
+    const parsedSuggestions = Schema.decodeUnknownSync(FlowSuggestionsSchema)(
+      JSON.parse(extractJsonObject(text)),
+    );
 
-    if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === "string")) {
-      throw new Error("Invalid suggestion response format");
-    }
-
-    return parsed.slice(0, SUGGESTION_COUNT);
+    return parsedSuggestions.slice(0, SUGGESTION_COUNT);
   } catch {
     return [];
   }

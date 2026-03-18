@@ -1,22 +1,23 @@
 import { randomUUID } from "node:crypto";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { Schema } from "effect";
 import { SCREENSHOT_DIRECTORY_PREFIX, SCREENSHOT_OUTPUT_DIRECTORY_PATH } from "../constants.js";
-
-interface BrowserToolResultContentItem {
-  type?: unknown;
-  data?: unknown;
-  mimeType?: unknown;
-}
-
-interface BrowserToolResultPayload {
-  content?: unknown;
-}
 
 interface BrowserImageContent {
   data: string;
   mimeType: string;
 }
+
+const BrowserToolResultPayloadSchema = Schema.Struct({
+  content: Schema.Array(Schema.Unknown),
+});
+
+const BrowserImageContentSchema = Schema.Struct({
+  type: Schema.Literals(["image"] as const),
+  data: Schema.String,
+  mimeType: Schema.String,
+});
 
 export interface SavedBrowserImageResult {
   outputDirectoryPath: string;
@@ -24,36 +25,16 @@ export interface SavedBrowserImageResult {
   resultText: string;
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === "object" && !Array.isArray(value);
-
 const getBrowserImageContent = (result: string): BrowserImageContent | null => {
   try {
-    const parsedValue: unknown = JSON.parse(result);
-    if (!isRecord(parsedValue)) return null;
+    const payload = Schema.decodeUnknownSync(BrowserToolResultPayloadSchema)(JSON.parse(result));
+    const browserImageContent = payload.content.find(Schema.is(BrowserImageContentSchema));
+    if (!browserImageContent) return null;
 
-    const payload: BrowserToolResultPayload = parsedValue;
-    if (!Array.isArray(payload.content)) return null;
-
-    for (const contentItem of payload.content) {
-      if (!isRecord(contentItem)) continue;
-
-      const browserToolResultContentItem: BrowserToolResultContentItem = contentItem;
-      if (
-        browserToolResultContentItem.type !== "image" ||
-        typeof browserToolResultContentItem.data !== "string" ||
-        typeof browserToolResultContentItem.mimeType !== "string"
-      ) {
-        continue;
-      }
-
-      return {
-        data: browserToolResultContentItem.data,
-        mimeType: browserToolResultContentItem.mimeType,
-      };
-    }
-
-    return null;
+    return {
+      data: browserImageContent.data,
+      mimeType: browserImageContent.mimeType,
+    };
   } catch {
     return null;
   }

@@ -3,7 +3,7 @@
 // platform-specific key retrieval (macOS Keychain, Linux secret-tool, Windows DPAPI).
 import path from "node:path";
 import { homedir, platform } from "node:os";
-import { Effect, Layer, ServiceMap } from "effect";
+import { Effect, Layer, Schema, ServiceMap } from "effect";
 import * as FileSystem from "effect/FileSystem";
 import { ChildProcess } from "effect/unstable/process";
 import { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner";
@@ -27,6 +27,12 @@ const CHROMIUM_META_VERSION_HASH_PREFIX = 24;
 const PBKDF2_ITERATIONS_DARWIN = 1003;
 const PBKDF2_ITERATIONS_LINUX = 1;
 const DPAPI_PREFIX_LENGTH_BYTES = 5;
+
+const ChromiumLocalStateSchema = Schema.Struct({
+  os_crypt: Schema.Struct({
+    encrypted_key: Schema.String,
+  }),
+});
 
 interface DecryptFn {
   (encrypted: Uint8Array): string | undefined;
@@ -150,17 +156,12 @@ export class ChromiumKeyProvider extends ServiceMap.Service<
         );
 
         const localState = yield* Effect.try({
-          try: () => JSON.parse(localStateContent),
+          try: () =>
+            Schema.decodeUnknownSync(ChromiumLocalStateSchema)(JSON.parse(localStateContent)),
           catch: () => new CookieDecryptionKeyError({ browser: browserKey, platform: "win32" }),
         });
 
-        const encodedKey = localState?.os_crypt?.encrypted_key;
-        if (typeof encodedKey !== "string") {
-          return yield* new CookieDecryptionKeyError({
-            browser: browserKey,
-            platform: "win32",
-          }).asEffect();
-        }
+        const encodedKey = localState.os_crypt.encrypted_key;
 
         const encryptedKey = Buffer.from(encodedKey, "base64");
         const base64Key = encryptedKey.subarray(DPAPI_PREFIX_LENGTH_BYTES).toString("base64");

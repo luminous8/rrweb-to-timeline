@@ -46,6 +46,17 @@ const BrowserFlowPlanSchema = Schema.Struct({
   steps: Schema.Array(PlanStepSchema),
 });
 
+const JsonRecordSchema = Schema.Record(Schema.String, Schema.Unknown);
+
+const PlanCandidateSchema = Schema.Union([
+  Schema.Struct({ title: Schema.Unknown }),
+  Schema.Struct({ steps: Schema.Unknown }),
+  Schema.Struct({ cookieSync: Schema.Unknown }),
+]);
+
+const isJsonRecord = Schema.is(JsonRecordSchema);
+const isPlanCandidate = Schema.is(PlanCandidateSchema);
+
 export const buildPlannerModelSettings = (
   options: Pick<PlanBrowserFlowOptions, "provider" | "providerSettings" | "target">,
 ): AgentProviderSettings => {
@@ -196,15 +207,10 @@ const buildPlanningPrompt = (options: PlanBrowserFlowOptions): string => {
 
 const findPlanCandidate = (parsedJson: unknown): unknown => {
   const looksLikePlan = (value: unknown): value is Record<string, unknown> =>
-    Boolean(
-      value &&
-      typeof value === "object" &&
-      !Array.isArray(value) &&
-      ("title" in value || "steps" in value || "cookieSync" in value),
-    );
+    isPlanCandidate(value);
 
   if (looksLikePlan(parsedJson)) return parsedJson;
-  if (!parsedJson || typeof parsedJson !== "object" || Array.isArray(parsedJson)) return parsedJson;
+  if (!isJsonRecord(parsedJson)) return parsedJson;
 
   for (const value of Object.values(parsedJson)) {
     if (looksLikePlan(value)) return value;

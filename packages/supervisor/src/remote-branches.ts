@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { Data, Effect } from "effect";
+import { Data, Effect, Schema } from "effect";
 import { GIT_TIMEOUT_MS, GITHUB_TIMEOUT_MS, PR_LIMIT } from "./constants.js";
 
 export interface RemoteBranch {
@@ -18,6 +18,17 @@ interface GhPullRequest {
   isDraft: boolean;
   updatedAt: string;
 }
+
+const GhPullRequestSchema = Schema.Struct({
+  headRefName: Schema.String,
+  author: Schema.Struct({ login: Schema.String }),
+  number: Schema.Number,
+  state: Schema.String,
+  isDraft: Schema.Boolean,
+  updatedAt: Schema.String,
+});
+
+const GhPullRequestListSchema = Schema.Array(GhPullRequestSchema);
 
 class CommandError extends Data.TaggedError("CommandError")<{
   command: string;
@@ -93,7 +104,7 @@ const fetchPrs = Effect.fn("fetchPrs")(function* (cwd: string, state: string) {
   );
 
   return yield* Effect.try({
-    try: (): GhPullRequest[] => JSON.parse(output),
+    try: () => Schema.decodeUnknownSync(GhPullRequestListSchema)(JSON.parse(output)),
     catch: (error) =>
       new GhParseError({
         output,
