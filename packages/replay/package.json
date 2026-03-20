@@ -22,13 +22,13 @@
     "build:runtime": "node scripts/build-runtime.js",
     "build": "pnpm build:runtime && vp pack",
     "dev": "vp pack --watch",
-    "lint": "vp lint && tsc --noEmit",
+    "lint": "pnpm build:runtime && vp lint && tsc --noEmit",
     "format": "vp fmt",
     "format:check": "vp fmt --check",
     "check": "vp check",
     "test": "vp test run",
     "test:watch": "vp test",
-    "typecheck": "tsgo --noEmit"
+    "typecheck": "pnpm build:runtime && tsgo --noEmit"
   },
   "dependencies": {
     "effect": "4.0.0-beta.28",
