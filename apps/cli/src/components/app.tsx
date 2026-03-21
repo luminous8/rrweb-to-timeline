@@ -1,26 +1,48 @@
 import { useState } from "react";
 import { Box, useInput } from "ink";
-import { MouseProvider } from "../hooks/mouse-context";
-import { PrPickerScreen } from "./screens/pr-picker-screen";
-import { CookieSyncConfirmScreen } from "./screens/cookie-sync-confirm-screen";
-import { SavedFlowPickerScreen } from "./screens/saved-flow-picker-screen";
-import { Spinner } from "./ui/spinner";
-import { TestingScreen } from "./screens/testing-screen";
-import { ResultsScreen } from "./screens/results-screen";
-import { ThemePickerScreen } from "./screens/theme-picker-screen";
-import { MainMenu } from "./screens/main-menu-screen";
-import { Modeline } from "./ui/modeline";
-import { useNavigationStore } from "../stores/use-navigation";
-import { useFlowSessionStore } from "../stores/use-flow-session";
-import { useGitState } from "../hooks/use-git-state";
-import { clearInkDisplay } from "../utils/clear-ink-display";
-import { useStdoutDimensions } from "../hooks/use-stdout-dimensions";
+import { MouseProvider } from "../hooks/mouse-context.js";
+import { PrPickerScreen } from "./screens/pr-picker-screen.js";
+import { PlanReviewScreen } from "./screens/plan-review-screen.js";
+import { CookieSyncConfirmScreen } from "./screens/cookie-sync-confirm-screen.js";
+import { Spinner } from "./ui/spinner.js";
+import { TestingScreen } from "./screens/testing-screen.js";
+import { ResultsScreen } from "./screens/results-screen.js";
+import { ThemePickerScreen } from "./screens/theme-picker-screen.js";
+import { MainMenu } from "./screens/main-menu-screen.js";
+import { Modeline } from "./ui/modeline.js";
+import { useNavigationStore, Screen } from "../stores/use-navigation.js";
+import { usePlanStore } from "../stores/use-plan-store.js";
+import { usePlanExecutionStore } from "../stores/use-plan-execution-store.js";
+import { useGitState } from "../hooks/use-git-state.js";
+import { clearInkDisplay } from "../utils/clear-ink-display.js";
+import { useStdoutDimensions } from "../hooks/use-stdout-dimensions.js";
 
 export const App = () => {
   const screen = useNavigationStore((state) => state.screen);
-  const { data: gitState, isLoading: gitStateLoading } = useGitState();
-  const goBack = useFlowSessionStore((state) => state.goBack);
+  const setScreen = useNavigationStore((state) => state.setScreen);
   const navigateTo = useNavigationStore((state) => state.navigateTo);
+  const { data: gitState, isLoading: gitStateLoading } = useGitState();
+
+  const goBack = () => {
+    if (screen._tag === "ReviewPlan") {
+      setScreen(Screen.Main());
+      return;
+    }
+    if (screen._tag === "CookieSyncConfirm") {
+      setScreen(Screen.ReviewPlan({ plan: screen.plan }));
+      return;
+    }
+    if (screen._tag === "Results") {
+      usePlanStore.getState().setPlan(undefined);
+      usePlanStore.getState().setReadyTestPlan(undefined);
+      usePlanExecutionStore.getState().setExecutedPlan(undefined);
+      setScreen(Screen.Main());
+      return;
+    }
+    if (screen._tag !== "Testing") {
+      setScreen(Screen.Main());
+    }
+  };
 
   const [, setRefreshTick] = useState(0);
   const [, rows] = useStdoutDimensions();
@@ -31,17 +53,14 @@ export const App = () => {
       setRefreshTick((previous) => previous + 1);
       return;
     }
-    if (key.escape && screen !== "main") {
+    if (key.escape && screen._tag !== "Main" && screen._tag !== "ReviewPlan") {
       goBack();
     }
-    if (key.ctrl && input === "p" && screen === "main" && gitState?.isGitRepo) {
-      navigateTo("select-pr");
-    }
-    if (key.ctrl && input === "r" && screen === "main") {
-      navigateTo("saved-flow-picker");
+    if (key.ctrl && input === "p" && screen._tag === "Main" && gitState?.isGitRepo) {
+      navigateTo(Screen.SelectPr());
     }
     if (key.ctrl && input === "t") {
-      navigateTo("theme");
+      navigateTo(Screen.Theme());
     }
   });
 
@@ -54,21 +73,21 @@ export const App = () => {
   }
 
   const renderScreen = () => {
-    switch (screen) {
-      case "testing":
-        return <TestingScreen />;
-      case "results":
-        return <ResultsScreen />;
-      case "theme":
+    switch (screen._tag) {
+      case "Testing":
+        return <TestingScreen changesFor={screen.changesFor} instruction={screen.instruction} />;
+      case "Results":
+        return <ResultsScreen report={screen.report} />;
+      case "Theme":
         return <ThemePickerScreen />;
-      case "select-pr":
+      case "SelectPr":
         return <PrPickerScreen />;
-      case "saved-flow-picker":
-        return <SavedFlowPickerScreen />;
-      case "cookie-sync-confirm":
-        return <CookieSyncConfirmScreen />;
+      case "ReviewPlan":
+        return <PlanReviewScreen plan={screen.plan} />;
+      case "CookieSyncConfirm":
+        return <CookieSyncConfirmScreen plan={screen.plan} />;
       default:
-        return <MainMenu />;
+        return <MainMenu gitState={gitState} />;
     }
   };
 

@@ -1,9 +1,9 @@
 import figures from "figures";
 import { Text } from "ink";
-import { formatFileCategories, getHealthcheckReport } from "@browser-tester/supervisor";
-import { useGitState } from "../../hooks/use-git-state";
-import { useColors } from "../theme-context";
-import { RuledBox } from "./ruled-box";
+import { categorizeChangedFiles, formatFileCategories } from "@browser-tester/supervisor";
+import { useGitState } from "../../hooks/use-git-state.js";
+import { useColors } from "../theme-context.js";
+import { RuledBox } from "./ruled-box.js";
 
 export const UntestedChangesBanner = () => {
   const COLORS = useColors();
@@ -11,19 +11,23 @@ export const UntestedChangesBanner = () => {
 
   if (!gitState?.isGitRepo) return null;
 
-  const { hasUntestedChanges, changedLines, fileCount, categories } =
-    getHealthcheckReport(gitState);
+  if (!gitState.hasUntestedChanges) return null;
 
-  if (!hasUntestedChanges) return null;
+  if (gitState.isCurrentStateTested) return null;
+
+  const fileCount = gitState.fileStats.length;
+  const changedLines = gitState.totalChangedLines;
 
   const headline =
     changedLines > 0
       ? `${changedLines} changed line${changedLines === 1 ? "" : "s"} not tested`
       : "Untested changes detected";
 
-  const detail =
-    categories.length > 0
-      ? `${formatFileCategories(categories)} across ${fileCount} file${fileCount === 1 ? "" : "s"}`
+  const filePaths = gitState.fileStats.map((stat) => stat.relativePath);
+  const summary = categorizeChangedFiles(filePaths);
+  const categoryText =
+    summary.categories.length > 0
+      ? `${formatFileCategories(summary.categories)} across ${fileCount} file${fileCount === 1 ? "" : "s"}`
       : `${fileCount} file${fileCount === 1 ? "" : "s"} changed`;
 
   return (
@@ -31,7 +35,7 @@ export const UntestedChangesBanner = () => {
       <Text color={COLORS.YELLOW} bold>
         {figures.warning} {headline}
       </Text>
-      <Text color={COLORS.DIM}>{detail}</Text>
+      <Text color={COLORS.DIM}>{categoryText}</Text>
     </RuledBox>
   );
 };

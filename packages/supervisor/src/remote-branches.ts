@@ -1,8 +1,9 @@
-import * as child_process from "node:child_process";
-import { Data, Effect, Schema } from "effect";
-import { GIT_TIMEOUT_MS, GITHUB_TIMEOUT_MS, PR_LIMIT } from "./constants";
+import { execFile } from "node:child_process";
+import { PR_LIMIT } from "./constants.js";
 
-export interface RemoteBranch {
+const GH_PR_FIELDS = "headRefName,author,number,state,isDraft,updatedAt";
+
+interface RemoteBranchResult {
   name: string;
   author: string;
   prNumber: number | null;
@@ -10,7 +11,7 @@ export interface RemoteBranch {
   updatedAt: string | null;
 }
 
-interface GhPullRequest {
+interface GhPrItem {
   headRefName: string;
   author: { login: string };
   number: number;
@@ -19,170 +20,88 @@ interface GhPullRequest {
   updatedAt: string;
 }
 
-const GhPullRequestSchema = Schema.Struct({
-  headRefName: Schema.String,
-  author: Schema.Struct({ login: Schema.String }),
-  number: Schema.Number,
-  state: Schema.String,
-  isDraft: Schema.Boolean,
-  updatedAt: Schema.String,
-});
+const execCommand = (command: string, args: string[], cwd?: string): Promise<string> =>
+  new Promise((resolve, reject) => {
+    execFile(command, args, { cwd }, (error, stdout) => {
+      if (error) reject(error);
+      else resolve(stdout);
+    });
+  });
 
-const GhPullRequestListSchema = Schema.Array(GhPullRequestSchema);
-
-class CommandError extends Data.TaggedError("CommandError")<{
-  command: string;
-  message: string;
-}> {}
-
-class GhParseError extends Data.TaggedError("GhParseError")<{
-  output: string;
-  message: string;
-}> {}
-
-const normalizePrStatus = (state: string, isDraft: boolean): "open" | "draft" | "merged" => {
-  if (state === "MERGED") return "merged";
+const normalizePrStatus = (state: string, isDraft: boolean): "open" | "draft" | "merged" | null => {
   if (isDraft) return "draft";
-  return "open";
+  if (state === "MERGED") return "merged";
+  if (state === "OPEN") return "open";
+  return null;
 };
 
-const buildEmptyBranch = (name: string): RemoteBranch => ({
-  name,
-  author: "",
-  prNumber: null,
-  prStatus: null,
-  updatedAt: null,
-});
+export const fetchRemoteBranches = async (cwd: string): Promise<RemoteBranchResult[]> => {
+  let branchOutput: string;
+  try {
+    branchOutput = await execCommand("git", ["branch", "-r", "--format=%(refname:short)"], cwd);
+  } catch {
+    return [];
+  }
 
-const execCommand = Effect.fn("execCommand")(function* (
-  command: string,
-  args: ReadonlyArray<string>,
-  cwd: string,
-  timeoutMs: number,
-) {
-  return yield* Effect.tryPromise({
-    try: () =>
-      new Promise<string>((resolve, reject) => {
-        child_process.execFile(
-          command,
-          [...args],
-          { cwd, encoding: "utf-8", timeout: timeoutMs },
-          (error, stdout) => {
-            if (error) reject(error);
-            else resolve(stdout.trim());
-          },
-        );
-      }),
-    catch: (error) =>
-      new CommandError({
-        command: `${command} ${args.join(" ")}`,
-        message: error instanceof Error ? error.message : String(error),
-      }),
-  });
-});
-
-const checkGhAvailable = Effect.fn("checkGhAvailable")(function* () {
-  yield* execCommand("which", ["gh"], "/", GIT_TIMEOUT_MS);
-  return true;
-});
-
-const fetchPrs = Effect.fn("fetchPrs")(function* (cwd: string, state: string) {
-  const output = yield* execCommand(
-    "gh",
-    [
-      "pr",
-      "list",
-      "--state",
-      state,
-      "--limit",
-      String(PR_LIMIT),
-      "--json",
-      "headRefName,author,number,state,isDraft,updatedAt",
-    ],
-    cwd,
-    GITHUB_TIMEOUT_MS,
-  );
-
-  return yield* Effect.try({
-    try: () => Schema.decodeUnknownSync(GhPullRequestListSchema)(JSON.parse(output)),
-    catch: (error) =>
-      new GhParseError({
-        output,
-        message: error instanceof Error ? error.message : String(error),
-      }),
-  });
-});
-
-const getRemoteBranchNames = Effect.fn("getRemoteBranchNames")(function* (cwd: string) {
-  const output = yield* execCommand(
-    "git",
-    ["branch", "-r", "--format=%(refname:short)"],
-    cwd,
-    GIT_TIMEOUT_MS,
-  );
-
-  if (!output) return [] as string[];
-
-  return output
+  const branches = branchOutput
     .split("\n")
-    .filter(Boolean)
-    .filter((ref) => !ref.includes("HEAD"))
-    .map((ref) => ref.replace(/^origin\//, ""));
-});
+    .map((line) => line.replace("origin/", "").trim())
+    .filter((name) => Boolean(name) && name !== "HEAD");
 
-const handlePrFailure = (errorMessage: string) =>
-  Effect.log("Failed to fetch PRs", { error: errorMessage }).pipe(
-    Effect.map((): GhPullRequest[] => []),
-  );
-
-const fetchRemoteBranchesEffect = Effect.fn("fetchRemoteBranches")(function* (cwd: string) {
-  const branchNames = yield* getRemoteBranchNames(cwd).pipe(
-    Effect.catchTag("CommandError", (error) =>
-      Effect.log("Failed to list remote branches", { error: error.message }).pipe(
-        Effect.map((): string[] => []),
-      ),
-    ),
-  );
-
-  if (branchNames.length === 0) return [] as RemoteBranch[];
-
-  const ghAvailable = yield* checkGhAvailable().pipe(
-    Effect.catchTag("CommandError", () => Effect.succeed(false)),
-  );
+  let ghAvailable = false;
+  try {
+    await execCommand("which", ["gh"]);
+    ghAvailable = true;
+  } catch {
+    // gh not available
+  }
 
   if (!ghAvailable) {
-    return branchNames.map(buildEmptyBranch);
+    return branches.map((name) => ({
+      name,
+      author: "",
+      prNumber: null,
+      prStatus: null,
+      updatedAt: null,
+    }));
   }
 
-  // HACK: open PRs are iterated first so they take precedence over merged PRs in the Map
-  const [openPrs, mergedPrs] = yield* Effect.all(
-    [
-      fetchPrs(cwd, "open").pipe(
-        Effect.catchTags({
-          CommandError: (error) => handlePrFailure(error.message),
-          GhParseError: (error) => handlePrFailure(error.message),
-        }),
-      ),
-      fetchPrs(cwd, "merged").pipe(
-        Effect.catchTags({
-          CommandError: (error) => handlePrFailure(error.message),
-          GhParseError: (error) => handlePrFailure(error.message),
-        }),
-      ),
-    ],
-    { concurrency: 2 },
-  );
-
-  const pullRequestByBranch = new Map<string, GhPullRequest>();
-  for (const pullRequest of [...openPrs, ...mergedPrs]) {
-    if (!pullRequestByBranch.has(pullRequest.headRefName)) {
-      pullRequestByBranch.set(pullRequest.headRefName, pullRequest);
+  const fetchPrs = async (state: string): Promise<GhPrItem[]> => {
+    try {
+      const output = await execCommand("gh", [
+        "pr",
+        "list",
+        "--state",
+        state,
+        "--limit",
+        String(PR_LIMIT),
+        "--json",
+        GH_PR_FIELDS,
+      ]);
+      return JSON.parse(output) as GhPrItem[];
+    } catch {
+      return [];
     }
+  };
+
+  const [openPrs, mergedPrs] = await Promise.all([fetchPrs("open"), fetchPrs("merged")]);
+
+  const prMap = new Map<string, GhPrItem>();
+  for (const pullRequest of [...openPrs, ...mergedPrs]) {
+    prMap.set(pullRequest.headRefName, pullRequest);
   }
 
-  return branchNames.map((name) => {
-    const pullRequest = pullRequestByBranch.get(name);
-    if (!pullRequest) return buildEmptyBranch(name);
+  return branches.map((name) => {
+    const pullRequest = prMap.get(name);
+    if (!pullRequest) {
+      return {
+        name,
+        author: "",
+        prNumber: null,
+        prStatus: null,
+        updatedAt: null,
+      };
+    }
     return {
       name,
       author: pullRequest.author.login,
@@ -191,7 +110,4 @@ const fetchRemoteBranchesEffect = Effect.fn("fetchRemoteBranches")(function* (cw
       updatedAt: pullRequest.updatedAt,
     };
   });
-});
-
-export const fetchRemoteBranches = (cwd: string): Promise<RemoteBranch[]> =>
-  Effect.runPromise(fetchRemoteBranchesEffect(cwd));
+};

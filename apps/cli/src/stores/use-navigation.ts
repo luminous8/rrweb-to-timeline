@@ -1,13 +1,18 @@
 import { create } from "zustand";
+import * as Data from "effect/Data";
+import type { ChangesFor, TestPlan, TestReport } from "@browser-tester/shared/models";
 
-export type Screen =
-  | "main"
-  | "select-pr"
-  | "saved-flow-picker"
-  | "cookie-sync-confirm"
-  | "testing"
-  | "results"
-  | "theme";
+export type Screen = Data.TaggedEnum<{
+  Main: {};
+  SelectPr: {};
+  ReviewPlan: { plan: TestPlan };
+  CookieSyncConfirm: { plan: TestPlan };
+  Testing: { changesFor: ChangesFor; instruction: string };
+  Results: { report: TestReport };
+  Theme: {};
+  SavedFlowPicker: {};
+}>;
+export const Screen = Data.taggedEnum<Screen>();
 
 interface NavigationStore {
   screen: Screen;
@@ -17,8 +22,8 @@ interface NavigationStore {
 }
 
 export const useNavigationStore = create<NavigationStore>((set) => ({
-  screen: "main",
-  previousScreen: "main",
+  screen: Screen.Main(),
+  previousScreen: Screen.Main(),
   navigateTo: (screen) => set((state) => ({ screen, previousScreen: state.screen })),
   setScreen: (screen) => set({ screen }),
 }));

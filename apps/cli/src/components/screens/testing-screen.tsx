@@ -1,181 +1,154 @@
-import { Cause, Effect, Fiber, Stream } from "effect";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Static, Text, useInput } from "ink";
 import figures from "figures";
-import { executeBrowserFlow, type BrowserRunEvent } from "@browser-tester/supervisor";
+import { Option } from "effect";
+import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
+import { useAtom, useAtomValue, useAtomSet } from "@effect/atom-react";
 import {
-  LIVE_VIEW_READY_POLL_INTERVAL_MS,
+  changesForDisplayName,
+  type ChangesFor,
+  type StepId,
+  type TestPlan,
+  type ExecutedTestPlan,
+} from "@browser-tester/shared/models";
+import {
   PROGRESS_BAR_WIDTH,
   TESTING_TIMER_UPDATE_INTERVAL_MS,
   TESTING_TOOL_TEXT_CHAR_LIMIT,
-} from "../../constants";
-import { useColors } from "../theme-context";
-import { RuledBox } from "../ui/ruled-box";
-import { Spinner } from "../ui/spinner";
-import { TextShimmer } from "../ui/text-shimmer";
-import { useFlowSessionStore } from "../../stores/use-flow-session";
-import { usePreferencesStore } from "../../stores/use-preferences";
-import { ScreenHeading } from "../ui/screen-heading";
+} from "../../constants.js";
+import { useColors } from "../theme-context.js";
+import { RuledBox } from "../ui/ruled-box.js";
+import { Spinner } from "../ui/spinner.js";
+import { TextShimmer } from "../ui/text-shimmer.js";
+import { usePlanStore } from "../../stores/use-plan-store.js";
+import { usePlanExecutionStore } from "../../stores/use-plan-execution-store.js";
+import { usePreferencesStore } from "../../stores/use-preferences.js";
+import { useNavigationStore, Screen } from "../../stores/use-navigation.js";
+import { ScreenHeading } from "../ui/screen-heading.js";
 import cliTruncate from "cli-truncate";
-import { formatElapsedTime } from "../../utils/format-elapsed-time";
-import { extractScreenshotPath } from "../../utils/extract-screenshot-path";
-import { Image } from "../ui/image";
-import { ErrorMessage } from "../ui/error-message";
-import { deriveTestingState, saveTestedFingerprint } from "@browser-tester/supervisor";
-import { openUrl } from "../../utils/open-url";
+import { formatElapsedTime } from "../../utils/format-elapsed-time.js";
+import { Image } from "../ui/image.js";
+import { ErrorMessage } from "../ui/error-message.js";
+import { createPlanFn } from "../../data/planning-atom.js";
+import { executePlanFn, screenshotPathsAtom } from "../../data/execution-atom.js";
 
-const LIVE_VIEW_SHORTCUT_KEY = "o";
+interface TestingScreenProps {
+  changesFor: ChangesFor;
+  instruction: string;
+}
 
-export const TestingScreen = () => {
-  const target = useFlowSessionStore((state) => state.resolvedTarget);
-  const flowInstruction = useFlowSessionStore((state) => state.flowInstruction);
-  const pendingSavedFlow = useFlowSessionStore((state) => state.pendingSavedFlow);
-  const environment = useFlowSessionStore((state) => state.browserEnvironment);
-  const executionProvider = usePreferencesStore((state) => state.executionProvider);
-  const executionModel = usePreferencesStore((state) => state.executionModel);
-  const completeTestingRun = useFlowSessionStore((state) => state.completeTestingRun);
-  const exitTesting = useFlowSessionStore((state) => state.exitTesting);
-  const liveViewUrl = useFlowSessionStore((state) => state.liveViewUrl);
-  const setLiveViewUrl = useFlowSessionStore((state) => state.setLiveViewUrl);
+export const TestingScreen = ({ changesFor, instruction }: TestingScreenProps) => {
+  const setScreen = useNavigationStore((state) => state.setScreen);
   const COLORS = useColors();
-  const [events, setEvents] = useState<BrowserRunEvent[]>([]);
-  const collectedEventsRef = useRef<BrowserRunEvent[]>([]);
-  const [running, setRunning] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [screenshotPaths, setScreenshotPaths] = useState<string[]>([]);
-  const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
+
+  const displayName = changesForDisplayName(changesFor);
+
+  const initialPlan = usePlanStore.getState().readyTestPlan;
+  const [testPlan, setTestPlan] = useState<TestPlan | undefined>(initialPlan);
+  const [planningError, setPlanningError] = useState<string | undefined>(undefined);
+
+  const agentBackend = usePreferencesStore((state) => state.agentBackend);
+  const triggerCreatePlan = useAtomSet(createPlanFn, { mode: "promise" });
+  const [executionResult, triggerExecute] = useAtom(executePlanFn, { mode: "promiseExit" });
+  const screenshotPaths = useAtomValue(screenshotPathsAtom);
+  const running = testPlan ? AsyncResult.isWaiting(executionResult) : false;
+  const done = AsyncResult.isSuccess(executionResult);
+  const error = AsyncResult.isFailure(executionResult)
+    ? executionResult.cause instanceof Error
+      ? executionResult.cause.message
+      : String(executionResult.cause)
+    : undefined;
+  const report = done ? executionResult.value.report : undefined;
+
+  const [executedPlan, setExecutedPlan] = useState<ExecutedTestPlan | undefined>(undefined);
+  const [runStartedAt, setRunStartedAt] = useState<number | undefined>(undefined);
   const [elapsedTimeMs, setElapsedTimeMs] = useState(0);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [exitRequested, setExitRequested] = useState(false);
-  const [pendingLiveViewUrl, setPendingLiveViewUrl] = useState<string | null>(null);
-  const runFiberRef = useRef<Fiber.Fiber<unknown, unknown> | null>(null);
 
-  const derivedState = useMemo(
-    () => (events.length > 0 ? deriveTestingState(events, "hidden") : null),
-    [events],
-  );
+  const stepTimingsRef = useRef(new Map<StepId, { startedAt: number; endedAt?: number }>());
 
   const elapsedTimeLabel = useMemo(() => formatElapsedTime(elapsedTimeMs), [elapsedTimeMs]);
 
-  useEffect(() => {
-    if (!exitRequested || running) return;
-    exitTesting();
-  }, [exitRequested, exitTesting, running]);
+  const handlePlanUpdate = useCallback((updated: ExecutedTestPlan) => {
+    setExecutedPlan(updated);
+    const now = Date.now();
+    const timings = stepTimingsRef.current;
+    for (const step of updated.steps) {
+      if (step.status === "active" && !timings.has(step.id)) {
+        timings.set(step.id, { startedAt: now });
+      } else if (
+        (step.status === "passed" || step.status === "failed") &&
+        timings.has(step.id) &&
+        !timings.get(step.id)!.endedAt
+      ) {
+        timings.get(step.id)!.endedAt = now;
+      }
+    }
+  }, []);
 
+  // Planning phase: create plan if not provided
+  const planningStartedRef = useRef(false);
   useEffect(() => {
-    if (!running || runStartedAt === null) return;
+    if (testPlan || planningStartedRef.current) return;
+    planningStartedRef.current = true;
+    setRunStartedAt(Date.now());
 
+    triggerCreatePlan({ changesFor, flowInstruction: instruction, agentBackend })
+      .then((plan) => {
+        usePlanStore.getState().setReadyTestPlan(plan);
+
+        const { skipPlanning } = usePreferencesStore.getState();
+        if (skipPlanning) {
+          setTestPlan(plan);
+        } else {
+          setScreen(Screen.ReviewPlan({ plan }));
+        }
+      })
+      .catch((planError) => {
+        setPlanningError(planError instanceof Error ? planError.message : String(planError));
+      });
+  }, [testPlan, changesFor, instruction, agentBackend, triggerCreatePlan, setScreen]);
+
+  // Execution phase: start when plan becomes available
+  const executionStartedRef = useRef(false);
+  useEffect(() => {
+    if (!testPlan || executionStartedRef.current || exitRequested) return;
+    executionStartedRef.current = true;
+    if (runStartedAt === undefined) {
+      setRunStartedAt(Date.now());
+    }
+    triggerExecute({ testPlan, agentBackend, onUpdate: handlePlanUpdate });
+  }, [testPlan, agentBackend, triggerExecute, handlePlanUpdate, runStartedAt, exitRequested]);
+
+  // Exit when exitRequested and no longer running/planning
+  useEffect(() => {
+    if (!exitRequested) return;
+    if (running) return;
+    usePlanStore.getState().setPlan(undefined);
+    usePlanStore.getState().setReadyTestPlan(undefined);
+    usePlanExecutionStore.getState().setExecutedPlan(undefined);
+    setScreen(Screen.Main());
+  }, [exitRequested, running, setScreen]);
+
+  // HACK: setInterval for elapsed time — no atom equivalent yet
+  useEffect(() => {
+    if (runStartedAt === undefined) return;
+    if (!running && testPlan) return;
     setElapsedTimeMs(Date.now() - runStartedAt);
-
     const interval = setInterval(() => {
       setElapsedTimeMs(Date.now() - runStartedAt);
     }, TESTING_TIMER_UPDATE_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [runStartedAt, running, testPlan]);
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, [runStartedAt, running]);
-
+  // Auto-navigate to results on completion
   useEffect(() => {
-    if (!pendingLiveViewUrl) return;
-
-    let cancelled = false;
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(pendingLiveViewUrl);
-        if (response.ok && !cancelled) {
-          setLiveViewUrl(pendingLiveViewUrl);
-          clearInterval(interval);
-        }
-      } catch {
-        // HACK: server not ready yet, keep polling
-      }
-    }, LIVE_VIEW_READY_POLL_INTERVAL_MS);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [pendingLiveViewUrl, setLiveViewUrl]);
-
-  useEffect(() => {
-    if (!target || !flowInstruction || !environment) return;
-
-    const startedAt = Date.now();
-    setEvents([]);
-    collectedEventsRef.current = [];
-    setRunning(true);
-    setError(null);
-    setScreenshotPaths([]);
-    setRunStartedAt(startedAt);
-    setElapsedTimeMs(0);
-    setShowCancelConfirmation(false);
-    setExitRequested(false);
-    useFlowSessionStore.setState({ resolvedExecutionProvider: executionProvider ?? null });
-    runFiberRef.current = Effect.runFork(
-      Stream.runForEach(
-        executeBrowserFlow({
-          target,
-          userInstruction: flowInstruction,
-          environment,
-          savedFlow: pendingSavedFlow ?? undefined,
-          provider: executionProvider,
-          ...(executionModel ? { providerSettings: { model: executionModel } } : {}),
-        }),
-        (event) =>
-          Effect.sync(() => {
-            if (event.type === "run-started" && event.liveViewUrl) {
-              setPendingLiveViewUrl(event.liveViewUrl);
-            }
-            if (event.type === "run-completed") {
-              if (event.report) {
-                if (event.report.status === "passed") {
-                  saveTestedFingerprint();
-                }
-                completeTestingRun(event.report, collectedEventsRef.current);
-              }
-            }
-            if (event.type === "tool-result") {
-              const screenshotPath = extractScreenshotPath(event);
-              if (screenshotPath) {
-                setScreenshotPaths((previous) => [...previous, screenshotPath]);
-              }
-            }
-            collectedEventsRef.current = [...collectedEventsRef.current, event];
-            setEvents(collectedEventsRef.current);
-          }),
-      ).pipe(
-        Effect.catchCause((cause) =>
-          Cause.hasInterruptsOnly(cause)
-            ? Effect.void
-            : Effect.sync(() => setError(Cause.pretty(cause))),
-        ),
-        Effect.ensuring(
-          Effect.sync(() => {
-            runFiberRef.current = null;
-            setShowCancelConfirmation(false);
-            setRunning(false);
-          }),
-        ),
-      ),
-    );
-
-    return () => {
-      const runFiber = runFiberRef.current;
-      if (runFiber) {
-        void Effect.runFork(Fiber.interrupt(runFiber));
-      }
-    };
-  }, [
-    completeTestingRun,
-    environment,
-    executionModel,
-    executionProvider,
-    flowInstruction,
-    pendingSavedFlow,
-    setLiveViewUrl,
-    target,
-  ]);
+    if (done && executedPlan && report && !exitRequested) {
+      usePlanExecutionStore.getState().setExecutedPlan(executedPlan);
+      setScreen(Screen.Results({ report }));
+    }
+  }, [done, executedPlan, report, setScreen, exitRequested]);
 
   useInput((input, key) => {
     const normalizedInput = input.toLowerCase();
@@ -188,50 +161,67 @@ export const TestingScreen = () => {
       if (key.return || normalizedInput === "y") {
         setShowCancelConfirmation(false);
         setExitRequested(true);
-        const runFiber = runFiberRef.current;
-        if (runFiber) {
-          void Effect.runFork(Fiber.interrupt(runFiber));
-        }
         return;
       }
-
       if (key.escape || normalizedInput === "n") {
         setShowCancelConfirmation(false);
       }
-
-      return;
-    }
-
-    if (normalizedInput === LIVE_VIEW_SHORTCUT_KEY && liveViewUrl) {
-      openUrl(liveViewUrl);
       return;
     }
 
     if (key.escape) {
-      if (running) {
+      if (planningError) {
+        usePlanStore.getState().setPlan(undefined);
+        usePlanStore.getState().setReadyTestPlan(undefined);
+        setScreen(Screen.Main());
+        return;
+      }
+      if (planning || running) {
         setShowCancelConfirmation(true);
         return;
       }
-
-      exitTesting();
+      if (executedPlan && report) {
+        usePlanExecutionStore.getState().setExecutedPlan(executedPlan);
+        setScreen(Screen.Results({ report }));
+        return;
+      }
+      usePlanStore.getState().setPlan(undefined);
+      usePlanStore.getState().setReadyTestPlan(undefined);
+      usePlanExecutionStore.getState().setExecutedPlan(undefined);
+      setScreen(Screen.Main());
     }
   });
 
-  if (!target || !flowInstruction || !environment) return null;
+  const planning = !testPlan && !planningError;
+  const planToRender = executedPlan ?? testPlan;
 
-  const { steps, completedCount, totalCount, runStatusLabel } = derivedState ?? {
-    steps: [],
-    completedCount: 0,
-    totalCount: 0,
-    runStatusLabel: "Testing",
-  };
+  const completedCount = planToRender
+    ? planToRender.steps.filter((step) => step.status === "passed" || step.status === "failed")
+        .length
+    : 0;
+  const totalCount = planToRender ? planToRender.steps.length : 0;
+  const currentActiveStep = planToRender?.steps.find((step) => step.status === "active");
+  const runStatusLabel = planning
+    ? "Planning"
+    : currentActiveStep
+      ? `Running ${currentActiveStep.title}`
+      : completedCount === totalCount && totalCount > 0
+        ? "Finishing up"
+        : "Starting";
+
   const filledWidth =
     totalCount > 0 ? Math.round((completedCount / totalCount) * PROGRESS_BAR_WIDTH) : 0;
   const emptyWidth = PROGRESS_BAR_WIDTH - filledWidth;
 
+  const getStepElapsed = (stepId: StepId): number | undefined => {
+    const timing = stepTimingsRef.current.get(stepId);
+    if (!timing) return undefined;
+    return (timing.endedAt ?? Date.now()) - timing.startedAt;
+  };
+
   return (
     <>
-      <Static items={screenshotPaths}>
+      <Static items={[...screenshotPaths]}>
         {(screenshotPath) => (
           <Box key={screenshotPath} paddingX={1}>
             <Image src={screenshotPath} alt={screenshotPath} />
@@ -242,7 +232,7 @@ export const TestingScreen = () => {
         <Box paddingX={1}>
           <ScreenHeading
             title="Executing browser plan"
-            subtitle={`${flowInstruction} │ ${target.displayName}`}
+            subtitle={`${instruction} │ ${displayName}`}
           />
         </Box>
 
@@ -253,38 +243,40 @@ export const TestingScreen = () => {
           </Text>
           <Text color={COLORS.DIM}>
             {`  ${completedCount}/${totalCount}`}
-            {running ? ` ${figures.pointerSmall} ${elapsedTimeLabel}` : ""}
+            {running || planning ? ` ${figures.pointerSmall} ${elapsedTimeLabel}` : ""}
           </Text>
         </Box>
 
         <Box flexDirection="column" marginTop={1} paddingX={1}>
-          {steps.map((step, stepIndex) => {
+          {(planToRender?.steps ?? []).map((step, stepIndex) => {
             const stepPrefix = `Step ${stepIndex + 1}`;
+            const label = Option.isSome(step.summary) ? step.summary.value : step.title;
+            const stepElapsedMs = getStepElapsed(step.id);
+            const stepElapsedLabel =
+              stepElapsedMs !== undefined ? formatElapsedTime(stepElapsedMs) : undefined;
             return (
-              <Box key={step.stepId} flexDirection="column">
+              <Box key={step.id} flexDirection="column">
                 {step.status === "passed" ? (
                   <Text color={COLORS.GREEN}>
-                    {`  ${figures.tick} ${stepPrefix} ${cliTruncate(step.label, TESTING_TOOL_TEXT_CHAR_LIMIT)}${step.elapsedMs !== null ? ` ${formatElapsedTime(step.elapsedMs)}` : ""}`}
+                    {`  ${figures.tick} ${stepPrefix} ${cliTruncate(label, TESTING_TOOL_TEXT_CHAR_LIMIT)}${stepElapsedLabel ? ` ${stepElapsedLabel}` : ""}`}
                   </Text>
                 ) : step.status === "failed" ? (
                   <Text color={COLORS.RED}>
-                    {`  ${figures.cross} ${stepPrefix} ${cliTruncate(step.label, TESTING_TOOL_TEXT_CHAR_LIMIT)}${step.elapsedMs !== null ? ` ${formatElapsedTime(step.elapsedMs)}` : ""}`}
+                    {`  ${figures.cross} ${stepPrefix} ${cliTruncate(label, TESTING_TOOL_TEXT_CHAR_LIMIT)}${stepElapsedLabel ? ` ${stepElapsedLabel}` : ""}`}
                   </Text>
                 ) : step.status === "active" ? (
-                  <>
-                    <Box>
-                      <Text>{"  "}</Text>
-                      <Spinner />
-                      <Text> </Text>
-                      <TextShimmer
-                        text={`${stepPrefix} ${step.label} ${formatElapsedTime(Math.round(elapsedTimeMs))}`}
-                        baseColor={COLORS.SELECTION}
-                        highlightColor={COLORS.PRIMARY}
-                      />
-                    </Box>
-                  </>
+                  <Box>
+                    <Text>{"  "}</Text>
+                    <Spinner />
+                    <Text> </Text>
+                    <TextShimmer
+                      text={`${stepPrefix} ${step.title} ${formatElapsedTime(Math.round(elapsedTimeMs))}`}
+                      baseColor={COLORS.SELECTION}
+                      highlightColor={COLORS.PRIMARY}
+                    />
+                  </Box>
                 ) : (
-                  <Text color={COLORS.DIM}>{`  ○ ${stepPrefix} ${step.label}`}</Text>
+                  <Text color={COLORS.DIM}>{`  ○ ${stepPrefix} ${step.title}`}</Text>
                 )}
               </Box>
             );
@@ -306,7 +298,7 @@ export const TestingScreen = () => {
           </RuledBox>
         ) : null}
 
-        {running && !showCancelConfirmation ? (
+        {(running || planning) && !showCancelConfirmation ? (
           <Box marginTop={1} paddingX={1}>
             <TextShimmer
               text={`${exitRequested ? "Stopping" : runStatusLabel}${figures.ellipsis} ${elapsedTimeLabel}`}
@@ -316,7 +308,7 @@ export const TestingScreen = () => {
           </Box>
         ) : null}
 
-        {!running && !error ? (
+        {!running && !planning && !error && !planningError ? (
           <Box marginTop={1} flexDirection="column" paddingX={1}>
             <Text color={COLORS.GREEN} bold>
               Done
@@ -325,7 +317,7 @@ export const TestingScreen = () => {
         ) : null}
 
         <Box paddingX={1}>
-          <ErrorMessage message={error ? `Error: ${error}` : null} />
+          <ErrorMessage message={planningError ?? error} />
         </Box>
       </Box>
     </>

@@ -1,5 +1,4 @@
 import * as path from "node:path";
-import type { ChangedFile } from "../types";
 
 const COMPONENT_EXTENSIONS = new Set([".tsx", ".jsx"]);
 const STYLE_EXTENSIONS = new Set([".css", ".scss", ".sass", ".less", ".styl"]);
@@ -17,14 +16,14 @@ export interface ChangedFileSummary {
   totalFiles: number;
 }
 
-export const categorizeChangedFiles = (files: ChangedFile[]): ChangedFileSummary => {
+export const categorizeChangedFiles = (filePaths: string[]): ChangedFileSummary => {
   let componentCount = 0;
   let styleCount = 0;
   let webCodeCount = 0;
   let markupCount = 0;
 
-  for (const file of files) {
-    const extension = path.extname(file.path).toLowerCase();
+  for (const filePath of filePaths) {
+    const extension = path.extname(filePath).toLowerCase();
     if (COMPONENT_EXTENSIONS.has(extension)) {
       componentCount++;
     } else if (STYLE_EXTENSIONS.has(extension)) {
@@ -46,7 +45,7 @@ export const categorizeChangedFiles = (files: ChangedFile[]): ChangedFileSummary
   return {
     categories,
     totalWebFiles: componentCount + styleCount + webCodeCount + markupCount,
-    totalFiles: files.length,
+    totalFiles: filePaths.length,
   };
 };
 
