@@ -1,11 +1,11 @@
-# @browser-tester/cookies
+# @expect/cookies
 
 Extract cookies from local browsers for use in automated testing.
 
 ## Install
 
 ```bash
-pnpm add @browser-tester/cookies
+pnpm add @expect/cookies
 ```
 
 ## Quick Start
@@ -18,7 +18,7 @@ import {
   matchCookieHeader,
   toPlaywrightCookies,
   toPuppeteerCookies,
-} from "@browser-tester/cookies";
+} from "@expect/cookies";
 
 const { cookies } = await extractCookies({ url: "https://github.com" });
 
@@ -30,7 +30,7 @@ toPuppeteerCookies(cookies); // ready for Puppeteer's setCookie()
 Extract cookies from a specific browser profile:
 
 ```ts
-import { detectBrowserProfiles, extractProfileCookies } from "@browser-tester/cookies";
+import { detectBrowserProfiles, extractProfileCookies } from "@expect/cookies";
 
 const profiles = detectBrowserProfiles({ browser: "chrome" });
 const { cookies } = await extractProfileCookies({ profile: profiles[0] });
@@ -39,7 +39,7 @@ const { cookies } = await extractProfileCookies({ profile: profiles[0] });
 Detect the system default browser:
 
 ```ts
-import { detectDefaultBrowser } from "@browser-tester/cookies";
+import { detectDefaultBrowser } from "@expect/cookies";
 
 const browser = await detectDefaultBrowser(); // "chrome" | "safari" | ... | null
 ```

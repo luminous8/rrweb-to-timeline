@@ -1,8 +1,8 @@
 import { Effect, Option } from "effect";
 import * as Atom from "effect/unstable/reactivity/Atom";
-import { Agent } from "@browser-tester/agent";
-import { Git, Planner, TestPlanDraft, DraftId } from "@browser-tester/supervisor";
-import type { ChangesFor } from "@browser-tester/shared/models";
+import { Agent } from "@expect/agent";
+import { Git, Planner, TestPlanDraft, DraftId } from "@expect/supervisor";
+import type { ChangesFor } from "@expect/shared/models";
 import { cliAtomRuntime } from "./runtime.js";
 
 interface CreatePlanInput {

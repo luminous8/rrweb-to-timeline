@@ -13,8 +13,8 @@ import {
   type CommitSummary,
   FileStat,
   GitState,
-} from "@browser-tester/shared/models";
-import { TESTED_FINGERPRINT_FILE, TESTIE_STATE_DIR } from "../constants.js";
+} from "@expect/shared/models";
+import { TESTED_FINGERPRINT_FILE, EXPECT_STATE_DIR } from "../constants.js";
 import { GitError, FindRepoRootError } from "./errors.js";
 
 // ── GitRepoRoot context service ──────────────────────────────────────
@@ -298,7 +298,7 @@ export class Git extends ServiceMap.Service<Git>()("@supervisor/Git", {
 
     const getFingerprintPath = Effect.gen(function* () {
       const repoRoot = yield* GitRepoRoot;
-      return path.join(repoRoot, TESTIE_STATE_DIR, TESTED_FINGERPRINT_FILE);
+      return path.join(repoRoot, EXPECT_STATE_DIR, TESTED_FINGERPRINT_FILE);
     });
 
     const loadSavedFingerprint = Effect.fn("Git.loadSavedFingerprint")(function* () {

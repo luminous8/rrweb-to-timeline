@@ -7,7 +7,7 @@ export type {
   BrowserKey,
   Cookie,
   ExtractOptions,
-} from "@browser-tester/cookies";
+} from "@expect/cookies";
 export {
   ActionTimeoutError,
   ActionUnknownError,

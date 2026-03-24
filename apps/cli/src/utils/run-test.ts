@@ -1,6 +1,6 @@
 import * as crypto from "node:crypto";
 import { Effect, Option, Stream } from "effect";
-import { changesForDisplayName, type ChangesFor } from "@browser-tester/shared/models";
+import { changesForDisplayName, type ChangesFor } from "@expect/shared/models";
 import {
   DraftId,
   Executor,
@@ -9,8 +9,8 @@ import {
   Planner,
   Reporter,
   TestPlanDraft,
-} from "@browser-tester/supervisor";
-import type { AgentBackend } from "@browser-tester/agent";
+} from "@expect/supervisor";
+import type { AgentBackend } from "@expect/agent";
 import figures from "figures";
 import { VERSION } from "../constants.js";
 import { layerCli } from "../layers.js";
@@ -29,7 +29,7 @@ export const runHeadless = (options: HeadlessRunOptions) =>
     const executor = yield* Executor;
     const reporter = yield* Reporter;
 
-    console.log(`testie v${VERSION}`);
+    console.log(`expect v${VERSION}`);
     console.log(`Testing ${changesForDisplayName(options.changesFor)}`);
     console.log("Planning browser flow...");
 

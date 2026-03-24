@@ -9,7 +9,7 @@ import {
   PlanId,
   ChangesFor,
   AcpSessionUpdate,
-} from "@browser-tester/shared/models";
+} from "@expect/shared/models";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 

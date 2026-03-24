@@ -8,7 +8,7 @@ const main = async () => {
     prompt: [{ role: "user", content: [{ type: "text", text: "What is 2 + 2?" }] }],
   });
   console.log("content:", JSON.stringify(result.content, null, 2));
-  console.log("sessionId:", result.providerMetadata?.["browser-tester-agent"]);
+  console.log("sessionId:", result.providerMetadata?.["expect-agent"]);
 
   console.log("\n=== doStream ===");
   const { stream } = await model.doStream({

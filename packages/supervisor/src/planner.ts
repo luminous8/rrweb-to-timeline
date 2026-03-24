@@ -1,12 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as crypto from "node:crypto";
-import {
-  AcpSessionCreateError,
-  AcpStreamError,
-  Agent,
-  AgentStreamOptions,
-} from "@browser-tester/agent";
+import { AcpSessionCreateError, AcpStreamError, Agent, AgentStreamOptions } from "@expect/agent";
 import { Effect, Layer, Option, Schema, ServiceMap, Stream } from "effect";
 import {
   PlanId,
@@ -15,8 +10,8 @@ import {
   TestPlanJson,
   TestPlanStep,
   type TestPlanDraft,
-} from "@browser-tester/shared/models";
-import { STEP_ID_PAD_LENGTH, PLANNER_MAX_STEP_COUNT, TESTIE_STATE_DIR } from "./constants.js";
+} from "@expect/shared/models";
+import { STEP_ID_PAD_LENGTH, PLANNER_MAX_STEP_COUNT, EXPECT_STATE_DIR } from "./constants.js";
 
 export class PlanParseError extends Schema.ErrorClass<PlanParseError>("@supervisor/PlanParseError")(
   {
@@ -81,7 +76,7 @@ export class Planner extends ServiceMap.Service<Planner>()("@supervisor/Planner"
     const agent = yield* Agent;
 
     const plan = Effect.fn("Planner.plan")(function* (draft: TestPlanDraft) {
-      const stateDir = path.join(process.cwd(), TESTIE_STATE_DIR);
+      const stateDir = path.join(process.cwd(), EXPECT_STATE_DIR);
       fs.mkdirSync(stateDir, { recursive: true });
       const sentinelPath = path.join(stateDir, draft.planFileName);
 

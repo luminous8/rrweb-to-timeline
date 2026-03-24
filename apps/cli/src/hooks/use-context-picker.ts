@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { GitState, TestContext } from "@browser-tester/shared/models";
+import type { GitState, TestContext } from "@expect/shared/models";
 import { stripMouseSequences } from "./mouse-context.js";
 import {
   buildLocalContextOptions,

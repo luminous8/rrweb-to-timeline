@@ -24,7 +24,7 @@ interface CommandOutput {
 }
 
 const COMMANDS: Record<string, CommandOutput> = {
-  testie: {
+  expect: {
     lines: [
       { text: "◆ 3 changed files detected", style: "default" },
       { text: "  src/cart.tsx  src/checkout.tsx  src/api/orders.ts", style: "muted" },
@@ -42,7 +42,7 @@ const COMMANDS: Record<string, CommandOutput> = {
       { text: "◆ 2 passed, 1 failed", style: "default" },
     ],
   },
-  "testie unstaged": {
+  "expect unstaged": {
     lines: [
       { text: "◆ 3 changed files detected", style: "default" },
       { text: "  src/cart.tsx  src/checkout.tsx  src/api/orders.ts", style: "muted" },
@@ -60,7 +60,7 @@ const COMMANDS: Record<string, CommandOutput> = {
       { text: "◆ 2 passed, 1 failed", style: "default" },
     ],
   },
-  "testie branch": {
+  "expect branch": {
     lines: [
       { text: "◆ Comparing against main...", style: "default" },
       { text: "  12 files changed across 4 commits", style: "muted" },
@@ -80,7 +80,7 @@ const COMMANDS: Record<string, CommandOutput> = {
       { text: "◆ 4 passed, 0 failed", style: "default" },
     ],
   },
-  "testie -f checkout-flow": {
+  "expect -f checkout-flow": {
     lines: [
       { text: "◆ Loading saved flow: checkout-flow", style: "default" },
       { text: "", style: "muted" },
@@ -101,9 +101,9 @@ const COMMANDS: Record<string, CommandOutput> = {
       { text: "◆ 5 passed, 0 failed", style: "default" },
     ],
   },
-  "testie --help": {
+  "expect --help": {
     lines: [
-      { text: "Usage: testie [command] [options]", style: "default" },
+      { text: "Usage: expect [command] [options]", style: "default" },
       { text: "", style: "muted" },
       { text: "Commands:", style: "default" },
       { text: "  unstaged          test current unstaged changes (default)", style: "muted" },
@@ -118,9 +118,9 @@ const COMMANDS: Record<string, CommandOutput> = {
       { text: "  -h, --help        display help", style: "muted" },
     ],
   },
-  "testie -h": {
+  "expect -h": {
     lines: [
-      { text: "Usage: testie [command] [options]", style: "default" },
+      { text: "Usage: expect [command] [options]", style: "default" },
       { text: "", style: "muted" },
       { text: "Commands:", style: "default" },
       { text: "  unstaged          test current unstaged changes (default)", style: "muted" },
@@ -138,7 +138,7 @@ const COMMANDS: Record<string, CommandOutput> = {
   clear: { lines: [] },
 };
 
-const AUTO_DEMO_COMMAND = "testie unstaged";
+const AUTO_DEMO_COMMAND = "expect unstaged";
 
 export const TerminalDemo = () => {
   const [history, setHistory] = useState<OutputLine[]>([]);
@@ -208,7 +208,7 @@ export const TerminalDemo = () => {
         setHistory((previous) => [
           ...previous,
           { text: `command not found: ${trimmed}`, style: "fail" },
-          { text: "try: testie, testie branch, testie --help", style: "muted" },
+          { text: "try: expect, expect branch, expect --help", style: "muted" },
         ]);
         setTimeout(scrollToBottom, 0);
       }

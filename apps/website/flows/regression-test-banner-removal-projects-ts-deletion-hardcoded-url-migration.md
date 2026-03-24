@@ -14,7 +14,7 @@ plan:
       [
         "The dev server is running locally; assumed base URL is http://localhost:3000.",
         "The site is a public, unauthenticated Next.js marketing/landing page — no login required.",
-        "The hardcoded GITHUB_URL points to https://github.com/millionco/testie and DOCS_URL to https://github.com/millionco/testie#readme.",
+        "The hardcoded GITHUB_URL points to https://github.com/millionco/expect and DOCS_URL to https://github.com/millionco/expect#readme.",
         "CommandDisplay and ProjectInfo previously read name, description, or install command from PROJECTS[0] and now either use hardcoded strings or props.",
         "No feature flags or environment variables gate any of the changed components.",
       ],
@@ -78,8 +78,8 @@ plan:
         {
           "id": "step-5",
           "title": "Verify GitHub button link target",
-          "instruction": "Find the GitHub button in the ActionButtons section. Right-click or inspect it to confirm its href is 'https://github.com/millionco/testie'. Then click it and confirm it opens the correct GitHub repository.",
-          "expectedOutcome": "GitHub button href equals 'https://github.com/millionco/testie' and navigates to the correct repo page.",
+          "instruction": "Find the GitHub button in the ActionButtons section. Right-click or inspect it to confirm its href is 'https://github.com/millionco/expect'. Then click it and confirm it opens the correct GitHub repository.",
+          "expectedOutcome": "GitHub button href equals 'https://github.com/millionco/expect' and navigates to the correct repo page.",
           "routeHint": "/",
           "changedFileEvidence":
             ["apps/website/components/action-buttons.tsx", "apps/website/lib/projects.ts"],
@@ -87,8 +87,8 @@ plan:
         {
           "id": "step-6",
           "title": "Verify Docs button link target",
-          "instruction": "Return to the homepage. Find the Docs button in the ActionButtons section. Inspect its href to confirm it is 'https://github.com/millionco/testie#readme'. Click it and verify it reaches the README anchor.",
-          "expectedOutcome": "Docs button href equals 'https://github.com/millionco/testie#readme' and navigates to the README section.",
+          "instruction": "Return to the homepage. Find the Docs button in the ActionButtons section. Inspect its href to confirm it is 'https://github.com/millionco/expect#readme'. Click it and verify it reaches the README anchor.",
+          "expectedOutcome": "Docs button href equals 'https://github.com/millionco/expect#readme' and navigates to the README section.",
           "routeHint": "/",
           "changedFileEvidence":
             ["apps/website/components/action-buttons.tsx", "apps/website/lib/projects.ts"],
@@ -159,7 +159,7 @@ Check for regressions in related features
 
 - The dev server is running locally; assumed base URL is http://localhost:3000.
 - The site is a public, unauthenticated Next.js marketing/landing page — no login required.
-- The hardcoded GITHUB_URL points to https://github.com/millionco/testie and DOCS_URL to https://github.com/millionco/testie#readme.
+- The hardcoded GITHUB_URL points to https://github.com/millionco/expect and DOCS_URL to https://github.com/millionco/expect#readme.
 - CommandDisplay and ProjectInfo previously read name, description, or install command from PROJECTS[0] and now either use hardcoded strings or props.
 - No feature flags or environment variables gate any of the changed components.
 
@@ -195,15 +195,15 @@ Changed file evidence: apps/website/components/command-display.tsx, apps/website
 
 ### 5. Verify GitHub button link target
 
-Instruction: Find the GitHub button in the ActionButtons section. Right-click or inspect it to confirm its href is 'https://github.com/millionco/testie'. Then click it and confirm it opens the correct GitHub repository.
-Expected outcome: GitHub button href equals 'https://github.com/millionco/testie' and navigates to the correct repo page.
+Instruction: Find the GitHub button in the ActionButtons section. Right-click or inspect it to confirm its href is 'https://github.com/millionco/expect'. Then click it and confirm it opens the correct GitHub repository.
+Expected outcome: GitHub button href equals 'https://github.com/millionco/expect' and navigates to the correct repo page.
 Route hint: /
 Changed file evidence: apps/website/components/action-buttons.tsx, apps/website/lib/projects.ts
 
 ### 6. Verify Docs button link target
 
-Instruction: Return to the homepage. Find the Docs button in the ActionButtons section. Inspect its href to confirm it is 'https://github.com/millionco/testie#readme'. Click it and verify it reaches the README anchor.
-Expected outcome: Docs button href equals 'https://github.com/millionco/testie#readme' and navigates to the README section.
+Instruction: Return to the homepage. Find the Docs button in the ActionButtons section. Inspect its href to confirm it is 'https://github.com/millionco/expect#readme'. Click it and verify it reaches the README anchor.
+Expected outcome: Docs button href equals 'https://github.com/millionco/expect#readme' and navigates to the README section.
 Route hint: /
 Changed file evidence: apps/website/components/action-buttons.tsx, apps/website/lib/projects.ts
 

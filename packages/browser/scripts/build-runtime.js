@@ -20,7 +20,7 @@ const generateRuntimeTypes = (exportNames) => {
   return [
     `import type * as Runtime from "../runtime/index";`,
     ``,
-    `export interface BrowserTesterRuntime {`,
+    `export interface ExpectRuntime {`,
     fields,
     `}`,
     ``,
@@ -33,8 +33,7 @@ const emitPlugin = {
     build.onEnd((result) => {
       if (result.errors.length > 0) return;
       const runtimeCode =
-        `${result.outputFiles[0].text}\n` +
-        "globalThis.__browserTesterRuntime = __browserTesterRuntime;\n";
+        `${result.outputFiles[0].text}\n` + "globalThis.__expectRuntime = __expectRuntime;\n";
       fs.mkdirSync("src/generated", { recursive: true });
       fs.writeFileSync(
         "src/generated/runtime-script.ts",
@@ -52,7 +51,7 @@ const ctx = await context({
   entryPoints: ["src/runtime/index.ts"],
   bundle: true,
   format: "iife",
-  globalName: "__browserTesterRuntime",
+  globalName: "__expectRuntime",
   write: false,
   minify: true,
   target: "es2020",

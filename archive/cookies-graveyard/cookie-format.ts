@@ -4,7 +4,7 @@
  * Kept only as reference for browser SQLite decryption and cookie extraction logic.
  */
 
-import { getEpochSeconds } from "@browser-tester/utils";
+import { getEpochSeconds } from "@expect/utils";
 import { hostMatchesCookieDomain, toCookieHeader } from "./host-matching";
 import type { Cookie, SameSitePolicy } from "../types";
 

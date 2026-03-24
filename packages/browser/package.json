@@ -1,5 +1,5 @@
 {
-  "name": "@browser-tester/browser",
+  "name": "@expect/browser",
   "version": "0.0.1",
   "private": true,
   "files": [
@@ -38,8 +38,8 @@
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
-    "@browser-tester/cookies": "workspace:*",
     "@effect/platform-node": "4.0.0-beta.28",
+    "@expect/cookies": "workspace:*",
     "@medv/finder": "^4.0.2",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "effect": "4.0.0-beta.28",

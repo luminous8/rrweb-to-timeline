@@ -1,11 +1,11 @@
-# @browser-tester/browser
+# @expect/browser
 
 Launch Playwright pages with cookie injection, accessibility snapshots, and ref-based interaction.
 
 ## Install
 
 ```bash
-pnpm add @browser-tester/browser
+pnpm add @expect/browser
 ```
 
 ## `createPage`
@@ -13,7 +13,7 @@ pnpm add @browser-tester/browser
 Launch a Chromium page navigated to a URL. Optionally inject cookies from local browsers.
 
 ```ts
-import { createPage } from "@browser-tester/browser";
+import { createPage } from "@expect/browser";
 
 const { browser, context, page } = await createPage("https://github.com", {
   headed: true, // optional, default false
@@ -31,7 +31,7 @@ await browser.close();
 Capture an accessibility tree from the page. Each element gets a ref (e.g. `e1`, `e2`) for use with `act`.
 
 ```ts
-import { snapshot } from "@browser-tester/browser";
+import { snapshot } from "@expect/browser";
 
 const { tree, refs, locator } = await snapshot(page, {
   timeout: 30000, // optional, snapshot timeout in ms
@@ -53,7 +53,7 @@ const signIn = locator("e1"); // Playwright Locator for the ref
 Perform an action on a ref and return a fresh snapshot.
 
 ```ts
-import { act } from "@browser-tester/browser";
+import { act } from "@expect/browser";
 
 const result = await act(page, "e1", async (locator) => {
   await locator.click();
@@ -67,7 +67,7 @@ console.log(result.tree); // updated accessibility tree
 Inject cookies into a Playwright `BrowserContext`.
 
 ```ts
-import { injectCookies } from "@browser-tester/browser";
+import { injectCookies } from "@expect/browser";
 
 await injectCookies(context, cookies);
 ```
@@ -114,8 +114,8 @@ interface RefMap {
 
 ## Re-exports
 
-Cookie utilities are re-exported from `@browser-tester/cookies` for convenience:
+Cookie utilities are re-exported from `@expect/cookies` for convenience:
 
 `extractCookies` `extractProfileCookies` `extractAllProfileCookies` `detectBrowserProfiles` `matchCookies` `matchCookieHeader` `toCookieHeader` `toPlaywrightCookies` `toPuppeteerCookies`
 
-See [@browser-tester/cookies](../cookies/README.md) for full cookie API docs.
+See [@expect/cookies](../cookies/README.md) for full cookie API docs.

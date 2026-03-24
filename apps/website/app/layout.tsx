@@ -11,9 +11,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "testie",
+  title: "expect",
   description:
-    "change your code → testie tests it in a real browser. no playwright scripts, no selectors to maintain, just your git diff.",
+    "change your code → expect tests it in a real browser. no playwright scripts, no selectors to maintain, just your git diff.",
 };
 
 export default function RootLayout({

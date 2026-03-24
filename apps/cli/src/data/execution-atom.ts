@@ -1,8 +1,8 @@
 import { Effect, Stream } from "effect";
 import * as Atom from "effect/unstable/reactivity/Atom";
-import { ExecutedTestPlan, Executor, Git, Reporter } from "@browser-tester/supervisor";
-import type { AgentBackend } from "@browser-tester/agent";
-import type { TestPlan, TestReport } from "@browser-tester/shared/models";
+import { ExecutedTestPlan, Executor, Git, Reporter } from "@expect/supervisor";
+import type { AgentBackend } from "@expect/agent";
+import type { TestPlan, TestReport } from "@expect/shared/models";
 import { cliAtomRuntime } from "./runtime.js";
 
 interface ExecutePlanInput {

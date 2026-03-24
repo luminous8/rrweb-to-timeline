@@ -46,7 +46,7 @@ These files had integration changes when the experiment was active:
   - close it during browser session shutdown
 - `packages/supervisor/src/browser-mcp-config.ts`
   - add `liveViewUrl` to `buildBrowserMcpServerEnv()`
-  - pass `BROWSER_TESTER_LIVE_VIEW_URL`
+  - pass `EXPECT_LIVE_VIEW_URL`
 - `packages/supervisor/src/constants.ts`
   - restore the live-view host, port, search-limit, and env-name constants
 - `packages/supervisor/src/types.ts`

@@ -39,7 +39,7 @@ export const createBrowserMcpServer = <E>(
   const runMcp = <A>(effect: Effect.Effect<A, unknown, McpSession>) => runtime.runPromise(effect);
 
   const server = new McpServer({
-    name: "browser-tester",
+    name: "expect",
     version: "0.0.1",
   });
 

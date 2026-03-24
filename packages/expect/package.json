@@ -1,7 +1,7 @@
 {
-  "name": "testie",
+  "name": "expect",
   "version": "0.0.0",
-  "description": "testie",
+  "description": "expect",
   "license": "MIT",
   "files": [
     "index.js"

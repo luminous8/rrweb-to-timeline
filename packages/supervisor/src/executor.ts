@@ -1,11 +1,6 @@
-import {
-  AcpSessionCreateError,
-  AcpStreamError,
-  Agent,
-  AgentStreamOptions,
-} from "@browser-tester/agent";
+import { AcpSessionCreateError, AcpStreamError, Agent, AgentStreamOptions } from "@expect/agent";
 import { Effect, Layer, Option, Schema, ServiceMap, Stream } from "effect";
-import { ExecutedTestPlan, RunStarted, type TestPlan } from "@browser-tester/shared/models";
+import { ExecutedTestPlan, RunStarted, type TestPlan } from "@expect/shared/models";
 import { NodeServices } from "@effect/platform-node";
 
 export class ExecutionError extends Schema.ErrorClass<ExecutionError>("@supervisor/ExecutionError")(

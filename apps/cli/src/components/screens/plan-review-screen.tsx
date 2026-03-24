@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Option } from "effect";
-import { TestPlanDraft, ChangesFor, DraftId, type TestPlan } from "@browser-tester/supervisor";
+import { TestPlanDraft, ChangesFor, DraftId, type TestPlan } from "@expect/supervisor";
 import { Input } from "../ui/input.js";
 import { useColors } from "../theme-context.js";
 import { stripMouseSequences } from "../../hooks/mouse-context.js";
@@ -9,7 +9,7 @@ import { Clickable } from "../ui/clickable.js";
 import { RuledBox } from "../ui/ruled-box.js";
 import { ContextPicker } from "../ui/context-picker.js";
 import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions.js";
-import { changesForDisplayName } from "@browser-tester/shared/models";
+import { changesForDisplayName } from "@expect/shared/models";
 import { usePlanStore, Plan } from "../../stores/use-plan-store.js";
 import { useNavigationStore, Screen } from "../../stores/use-navigation.js";
 import { usePreferencesStore } from "../../stores/use-preferences.js";

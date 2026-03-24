@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { RemoteBranch } from "@browser-tester/shared/models";
+import type { RemoteBranch } from "@expect/shared/models";
 import { fetchRemoteBranches } from "../utils/context-options.js";
 
 export const useRemoteBranches = () =>

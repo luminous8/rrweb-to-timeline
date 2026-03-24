@@ -9,7 +9,7 @@ import path from "node:path";
 import { Effect, Layer, ServiceMap } from "effect";
 import * as FileSystem from "effect/FileSystem";
 import { NodeServices } from "@effect/platform-node";
-import { getEpochSeconds } from "@browser-tester/utils";
+import { getEpochSeconds } from "@expect/utils";
 import { parseBinaryCookies } from "./utils/binary-cookies";
 import { SAFARI_CONFIG } from "./browser-config";
 import { CookieDatabaseNotFoundError, BinaryParseError } from "./errors";

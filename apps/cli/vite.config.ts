@@ -12,7 +12,7 @@ export default defineConfig({
     fixedExtension: false,
     banner: "#!/usr/bin/env node",
     deps: {
-      alwaysBundle: [/^@browser-tester\//],
+      alwaysBundle: [/^@expect\//],
       neverBundle: ["playwright", "playwright-core", "chromium-bidi", "libsql", "ws", "undici"],
     },
     plugins: [reactCompilerPlugin()],

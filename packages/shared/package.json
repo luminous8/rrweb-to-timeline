@@ -1,5 +1,5 @@
 {
-  "name": "@browser-tester/shared",
+  "name": "@expect/shared",
   "version": "0.0.1",
   "private": true,
   "files": [

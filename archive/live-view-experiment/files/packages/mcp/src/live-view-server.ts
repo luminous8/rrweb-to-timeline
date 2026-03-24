@@ -21,7 +21,7 @@ const getViewerHtml = (): string => `<!doctype html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Browser Tester Live View</title>
+    <title>Expect Live View</title>
     <style>
       :root {
         color-scheme: dark;

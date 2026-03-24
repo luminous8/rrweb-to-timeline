@@ -1,4 +1,4 @@
-# @browser-tester/cookies — Package Learnings
+# @expect/cookies — Package Learnings
 
 What the code does, how it connects, and what it consists of. Written for migration planning.
 
@@ -277,7 +277,7 @@ Firefox profiles: parses `profiles.ini` (INI format) for profile paths.
 
 | Dependency                   | Usage                                                                                |
 | ---------------------------- | ------------------------------------------------------------------------------------ |
-| `@browser-tester/utils`      | `execCommand`, `getEpochSeconds`, `formatError`, `sleep`, `copyDir`, `MS_PER_SECOND` |
+| `@expect/utils`      | `execCommand`, `getEpochSeconds`, `formatError`, `sleep`, `copyDir`, `MS_PER_SECOND` |
 | `default-browser`            | Detects OS default browser (returns bundle ID / .desktop name)                       |
 | `ws`                         | WebSocket client for CDP communication                                               |
 | `node:crypto`                | PBKDF2 key derivation, AES decryption                                                |

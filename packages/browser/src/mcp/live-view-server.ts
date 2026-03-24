@@ -56,7 +56,7 @@ export const startLiveViewServer = Effect.fn("LiveViewServer.start")(function* (
   const stepsPubSub = yield* PubSub.unbounded<ViewerRunState>();
 
   const viewerHtml = buildReplayViewerHtml({
-    title: "Browser Tester Live View",
+    title: "Expect Live View",
     eventsSource: "sse",
   });
 

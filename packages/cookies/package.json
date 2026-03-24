@@ -1,5 +1,5 @@
 {
-  "name": "@browser-tester/cookies",
+  "name": "@expect/cookies",
   "version": "0.0.1",
   "private": true,
   "files": [

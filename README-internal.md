@@ -18,7 +18,7 @@ rasmus:
 - Planning failed: Browser flow plan parsing failed during json extraction: Error: The model did not return a JSON object.
 - Planning failed doesn't exit, it stays in the loading state.
 
-- `CLAUDECODE=1 testie` is not steerable
+- `CLAUDECODE=1 expect` is not steerable
 - doesn't work using `CLAUDECODE=1`
 - editing plan doesn't work
 - prompts / nothing is saved
@@ -44,7 +44,7 @@ aiden:
 names:
 
 - browser-control
-- testie
+- expect
 - control-freak
 - browser-doctor
 - tests.dev
@@ -62,7 +62,7 @@ cd apps/cli
 pnpm link-global
 ```
 
-This builds the CLI and registers the `testie` command globally. After linking, you can run `testie` from anywhere.
+This builds the CLI and registers the `expect` command globally. After linking, you can run `expect` from anywhere.
 
 ### Run dev
 
@@ -71,7 +71,7 @@ cd apps/cli
 pnpm dev
 ```
 
-This starts `tsup` in watch mode, rebuilding on file changes. If you've already linked globally, the `testie` command will pick up changes automatically.
+This starts `tsup` in watch mode, rebuilding on file changes. If you've already linked globally, the `expect` command will pick up changes automatically.
 
 ### 3/12 notes
 
@@ -155,4 +155,4 @@ the skateboard:
 - browser recordings
 - reuse
 - abiltiy to add in Github Actions
-- testie / tests / repair.dev
+- expect / tests / repair.dev

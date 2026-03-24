@@ -4,7 +4,7 @@ Live Chrome was removed from the codebase. This document describes how to re-imp
 
 ## Overview
 
-Live Chrome lets testie connect to the user's running Chrome session via the Chrome DevTools Protocol (CDP) instead of launching a headless Chromium instance. It supports two connection modes and two tab modes:
+Live Chrome lets expect connect to the user's running Chrome session via the Chrome DevTools Protocol (CDP) instead of launching a headless Chromium instance. It supports two connection modes and two tab modes:
 
 - **Connection modes**: "prompt" (Chrome's permission-prompt flow via `chrome-devtools-mcp`) or "cdp" (direct CDP WebSocket connection)
 - **Tab modes**: "new" (open a fresh tab in the existing session) or "attach" (bind to an existing open tab by URL match, title match, or index)
@@ -114,7 +114,7 @@ In `buildBrowserMcpSettings`:
 - Re-add `environment` to the options interface
 - Branch on connection mode:
   - **prompt**: spawn `chrome-devtools-mcp@latest` via npx with `--autoConnect` flag
-  - **cdp**: spawn the normal `@browser-tester/mcp` with live Chrome config passed as env vars
+  - **cdp**: spawn the normal `@expect/mcp` with live Chrome config passed as env vars
 
 ### Environment variable bridge
 
@@ -122,12 +122,12 @@ When connection mode is "cdp", pass config to the MCP child process via environm
 
 | Env var                                      | Source field              |
 | -------------------------------------------- | ------------------------- |
-| `BROWSER_TESTER_LIVE_CHROME`                 | `"true"`                  |
-| `BROWSER_TESTER_LIVE_CHROME_CDP_ENDPOINT`    | `liveChromeCdpEndpoint`   |
-| `BROWSER_TESTER_LIVE_CHROME_TAB_MODE`        | `liveChromeTabMode`       |
-| `BROWSER_TESTER_LIVE_CHROME_TAB_URL_MATCH`   | `liveChromeTabUrlMatch`   |
-| `BROWSER_TESTER_LIVE_CHROME_TAB_TITLE_MATCH` | `liveChromeTabTitleMatch` |
-| `BROWSER_TESTER_LIVE_CHROME_TAB_INDEX`       | `liveChromeTabIndex`      |
+| `EXPECT_LIVE_CHROME`                 | `"true"`                  |
+| `EXPECT_LIVE_CHROME_CDP_ENDPOINT`    | `liveChromeCdpEndpoint`   |
+| `EXPECT_LIVE_CHROME_TAB_MODE`        | `liveChromeTabMode`       |
+| `EXPECT_LIVE_CHROME_TAB_URL_MATCH`   | `liveChromeTabUrlMatch`   |
+| `EXPECT_LIVE_CHROME_TAB_TITLE_MATCH` | `liveChromeTabTitleMatch` |
+| `EXPECT_LIVE_CHROME_TAB_INDEX`       | `liveChromeTabIndex`      |
 
 Add these to `buildBrowserMcpServerEnv()`, which currently only handles the video output path.
 
@@ -228,7 +228,7 @@ Currently `saveSessionVideo` always saves. Add a guard: `if (!browserSession.own
 
 ### Environment variable reading
 
-Add `readConfiguredLiveChromeOptions()` that reads the `BROWSER_TESTER_LIVE_CHROME_*` env vars and returns a `LiveChromeConnectionOptions` object (a subset of `CreatePageOptions`).
+Add `readConfiguredLiveChromeOptions()` that reads the `EXPECT_LIVE_CHROME_*` env vars and returns a `LiveChromeConnectionOptions` object (a subset of `CreatePageOptions`).
 
 ### Options merging
 
@@ -268,7 +268,7 @@ When closing:
 - If `ownsBrowser` is true: close the browser normally (current behavior)
 - If `ownsBrowser` is false and owned pages exist: close only the pages the session created, then disconnect
 - If `ownsBrowser` is false and no owned pages: just disconnect
-- Messages: "Disconnected from live Chrome. Closed N browser-tester tab(s)." or "Disconnected from live Chrome."
+- Messages: "Disconnected from live Chrome. Closed N expect tab(s)." or "Disconnected from live Chrome."
 
 ### Tab close changes
 
@@ -351,7 +351,7 @@ The original implementation had architectural issues worth addressing if re-impl
 
 2. **Deduplicate connection mode resolution**: The original had identical `resolveLiveChromeConnectionMode` in both `apps/cli/src/utils/run-test.ts` and `packages/orchestrator/src/browser-mcp-config.ts`. Define it once in the orchestrator and import.
 
-3. **Consistent field naming**: Use the same names across `CreatePageOptions` (`tabMode`), `BrowserEnvironmentHints` (`liveChromeTabMode`), and env vars (`BROWSER_TESTER_LIVE_CHROME_TAB_MODE`). Consider aligning on the short names.
+3. **Consistent field naming**: Use the same names across `CreatePageOptions` (`tabMode`), `BrowserEnvironmentHints` (`liveChromeTabMode`), and env vars (`EXPECT_LIVE_CHROME_TAB_MODE`). Consider aligning on the short names.
 
 4. **TUI integration**: Instead of bypassing the TUI with `--live-chrome`, make it a toggleable option in the main menu alongside `auto-run after planning`. The environment overrides flow through the Zustand store naturally.
 

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { TestPlanDraft, type TestPlan } from "@browser-tester/supervisor";
+import { TestPlanDraft, type TestPlan } from "@expect/supervisor";
 import * as Data from "effect/Data";
 
 export type Plan = Data.TaggedEnum<{

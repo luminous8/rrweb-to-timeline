@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import * as Data from "effect/Data";
-import type { ChangesFor, TestPlan, TestReport } from "@browser-tester/shared/models";
+import type { ChangesFor, TestPlan, TestReport } from "@expect/shared/models";
 
 export type Screen = Data.TaggedEnum<{
   Main: {};

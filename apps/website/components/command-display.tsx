@@ -8,9 +8,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { COPY_FEEDBACK_DURATION_MS } from "@/constants";
 
 const TAB_TEXT: Record<string, string> = {
-  command: "npx testie@latest",
-  agent: "npx -y testie@latest -m 'test my current changes' -y",
-  skill: "npx skills add millionco/testie/testie-cli",
+  command: "npx expect@latest",
+  agent: "npx -y expect@latest -m 'test my current changes' -y",
+  skill: "npx skills add millionco/expect/expect-cli",
 };
 
 export const CommandDisplay = () => {

@@ -42,7 +42,7 @@ describe("startLiveViewServer", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/html");
     const html = await response.text();
-    expect(html).toContain("Browser Tester Live View");
+    expect(html).toContain("Expect Live View");
     expect(html).toContain("rrweb-player");
   });
 

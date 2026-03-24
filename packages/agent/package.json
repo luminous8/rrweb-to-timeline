@@ -1,5 +1,5 @@
 {
-  "name": "@browser-tester/agent",
+  "name": "@expect/agent",
   "version": "0.0.1",
   "private": true,
   "files": [
@@ -28,8 +28,8 @@
   "dependencies": {
     "@agentclientprotocol/sdk": "^0.16.1",
     "@ai-sdk/provider": "^3.0.8",
-    "@browser-tester/browser": "workspace:*",
-    "@browser-tester/shared": "workspace:*",
+    "@expect/browser": "workspace:*",
+    "@expect/shared": "workspace:*",
     "@zed-industries/claude-agent-acp": "^0.22.2",
     "@zed-industries/codex-acp": "^0.10.0",
     "effect": "4.0.0-beta.28",

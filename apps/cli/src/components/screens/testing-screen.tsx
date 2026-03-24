@@ -11,7 +11,7 @@ import {
   TestPlan,
   type ExecutedTestPlan,
   type TestPlanStep,
-} from "@browser-tester/shared/models";
+} from "@expect/shared/models";
 import {
   PROGRESS_BAR_WIDTH,
   TESTING_TIMER_UPDATE_INTERVAL_MS,

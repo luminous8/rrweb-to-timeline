@@ -6,7 +6,7 @@ import {
   type AcpStreamError,
   type SessionId,
 } from "./acp-client.js";
-import { AcpSessionUpdate } from "@browser-tester/shared/models";
+import { AcpSessionUpdate } from "@expect/shared/models";
 import { AgentStreamOptions } from "./types.js";
 import { NodeServices } from "@effect/platform-node";
 
@@ -20,7 +20,7 @@ export class Agent extends ServiceMap.Service<
     ) => Stream.Stream<AcpSessionUpdate, AcpStreamError | AcpSessionCreateError>;
     readonly createSession: (cwd: string) => Effect.Effect<SessionId, AcpSessionCreateError>;
   }
->()("@browser-tester/Agent") {
+>()("@expect/Agent") {
   static layerAcp = Layer.effect(Agent)(
     Effect.gen(function* () {
       const acpClient = yield* AcpClient;

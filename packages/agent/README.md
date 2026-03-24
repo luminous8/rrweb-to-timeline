@@ -1,11 +1,11 @@
-# @browser-tester/agent
+# @expect/agent
 
 AI SDK providers for Claude and Codex. Implements `LanguageModelV3` so both work with `generateText` and `streamText`.
 
 ## Install
 
 ```bash
-pnpm add @browser-tester/agent
+pnpm add @expect/agent
 ```
 
 ## `createClaudeModel`
@@ -13,7 +13,7 @@ pnpm add @browser-tester/agent
 Create a Claude model powered by the [Claude Agent SDK](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk). Requires `claude login`.
 
 ```ts
-import { createClaudeModel } from "@browser-tester/agent";
+import { createClaudeModel } from "@expect/agent";
 import { generateText, streamText } from "ai";
 
 const model = createClaudeModel({ cwd: "/my/project" });
@@ -31,7 +31,7 @@ for await (const chunk of result.textStream) {
 Create a Codex model powered by the [Codex SDK](https://www.npmjs.com/package/@openai/codex-sdk). Requires `OPENAI_API_KEY` or Codex CLI auth.
 
 ```ts
-import { createCodexModel } from "@browser-tester/agent";
+import { createCodexModel } from "@expect/agent";
 import { generateText } from "ai";
 
 const model = createCodexModel({ cwd: "/my/project" });
@@ -57,7 +57,7 @@ Both providers expose the session ID via `providerMetadata` on the result:
 
 ```ts
 const result = await generateText({ model, prompt: "Explore the codebase" });
-const sessionId = result.providerMetadata?.["browser-tester-agent"]?.sessionId;
+const sessionId = result.providerMetadata?.["expect-agent"]?.sessionId;
 
 const resumed = createClaudeModel({ sessionId });
 await generateText({ model: resumed, prompt: "Now fix the bug you found" });

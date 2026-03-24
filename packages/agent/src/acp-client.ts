@@ -13,7 +13,7 @@ import {
   ServiceMap,
   Stream,
 } from "effect";
-import { AcpSessionUpdate } from "@browser-tester/shared/models";
+import { AcpSessionUpdate } from "@expect/shared/models";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import { NodeServices } from "@effect/platform-node";
 
@@ -61,7 +61,7 @@ export class AcpAdapter extends ServiceMap.Service<
     readonly args: readonly string[];
     readonly env: Record<string, string>;
   }
->()("@browser-tester/AcpAdapter") {
+>()("@expect/AcpAdapter") {
   static layerCodex = Layer.effect(AcpAdapter)(
     Effect.try({
       try: () => {
@@ -103,7 +103,7 @@ export class AcpAdapter extends ServiceMap.Service<
   );
 }
 
-export class AcpClient extends ServiceMap.Service<AcpClient>()("@browser-tester/AcpClient", {
+export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClient", {
   make: Effect.gen(function* () {
     const x = yield* References.CurrentLogLevel;
     console.log("CURRENT LOGL EVEL", x);
@@ -153,7 +153,7 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@browser-tester/
 
     const connection = new acp.ClientSideConnection((_agent) => client, ndJsonStream);
 
-    const browserMcpBinPath = fileURLToPath(import.meta.resolve("@browser-tester/browser/cli"));
+    const browserMcpBinPath = fileURLToPath(import.meta.resolve("@expect/browser/cli"));
 
     const MCP_SERVERS: acp.McpServer[] = [
       {

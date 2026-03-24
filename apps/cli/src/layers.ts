@@ -1,7 +1,7 @@
 import { Cause, Layer, Logger, ManagedRuntime, References } from "effect";
 import { DevTools } from "effect/unstable/devtools";
-import { Executor, Git, Planner, Reporter, Updates } from "@browser-tester/supervisor";
-import { Agent, AgentBackend } from "@browser-tester/agent";
+import { Executor, Git, Planner, Reporter, Updates } from "@expect/supervisor";
+import { Agent, AgentBackend } from "@expect/agent";
 
 const stderrLogger = Logger.make(({ logLevel, message, date, cause }) => {
   console.error(

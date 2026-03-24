@@ -10,7 +10,7 @@ import {
   GhPrListItem,
   PullRequest,
   RemoteBranch,
-} from "@browser-tester/shared/models";
+} from "@expect/shared/models";
 
 export class GitHubCommandError extends Schema.ErrorClass<GitHubCommandError>("GitHubCommandError")(
   {

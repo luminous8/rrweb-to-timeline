@@ -1,6 +1,6 @@
 import type { eventWithTime } from "@rrweb/types";
 import type { Effect } from "effect";
-import type { Cookie } from "@browser-tester/cookies";
+import type { Cookie } from "@expect/cookies";
 import type { Locator, Page } from "playwright";
 import type { RefNotFoundError } from "./errors";
 

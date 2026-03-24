@@ -6,9 +6,9 @@ import { App } from "./components/app.js";
 import { ALT_SCREEN_OFF, ALT_SCREEN_ON, VERSION } from "./constants.js";
 import { ThemeProvider } from "./components/theme-context.js";
 import { loadThemeName } from "./utils/load-theme.js";
-import { ChangesFor, Git, TestPlanDraft, DraftId } from "@browser-tester/supervisor";
+import { ChangesFor, Git, TestPlanDraft, DraftId } from "@expect/supervisor";
 import { runHeadless } from "./utils/run-test.js";
-import type { AgentBackend } from "@browser-tester/agent";
+import type { AgentBackend } from "@expect/agent";
 import { useNavigationStore, Screen } from "./stores/use-navigation.js";
 import { usePreferencesStore } from "./stores/use-preferences.js";
 import { usePlanStore, Plan } from "./stores/use-plan-store.js";
@@ -31,7 +31,7 @@ interface CommanderOpts {
 }
 
 const program = new Command()
-  .name("testie")
+  .name("expect")
   .description("AI-powered browser testing for your changes")
   .version(VERSION, "-v, --version")
   .option("-m, --message <instruction>", "natural language instruction for what to test")
@@ -43,9 +43,9 @@ const program = new Command()
     "after",
     `
 Examples:
-  $ testie                                    open interactive TUI
-  $ testie -m "test the login flow" -y        plan and run immediately
-  $ testie branch -m "verify signup" -y       test all branch changes`,
+  $ expect                                    open interactive TUI
+  $ expect -m "test the login flow" -y        plan and run immediately
+  $ expect branch -m "verify signup" -y       test all branch changes`,
   );
 
 const isHeadless = () => !process.stdin.isTTY;

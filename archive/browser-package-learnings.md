@@ -1,4 +1,4 @@
-# @browser-tester/browser — Package Learnings
+# @expect/browser — Package Learnings
 
 What the code does, how it connects, and what it consists of. Written for migration planning.
 
@@ -8,7 +8,7 @@ What the code does, how it connects, and what it consists of. Written for migrat
 
 A Playwright-based browser testing layer that provides accessibility tree snapshots with stable element refs, ref-based actions, cookie injection, video recording, annotated screenshots, and snapshot diffing. It wraps Playwright's low-level APIs into a higher-level workflow: launch a browser → take a snapshot → interact via refs → observe changes.
 
-The package re-exports the full `@browser-tester/cookies` API so consumers only need one import.
+The package re-exports the full `@expect/cookies` API so consumers only need one import.
 
 ---
 
@@ -57,7 +57,7 @@ Exported from `index.ts`:
 | `saveVideo(page, outputPath)`              | Closes the page, saves its recorded video to disk. Returns path or null.                                                                              |
 | `waitForNavigationSettle(page, urlBefore)` | Short delay, then if URL changed, waits for `domcontentloaded` + settle delay.                                                                        |
 
-Plus all `@browser-tester/cookies` exports are re-exported (extractCookies, detectBrowserProfiles, matchCookies, toPlaywrightCookies, etc.).
+Plus all `@expect/cookies` exports are re-exported (extractCookies, detectBrowserProfiles, matchCookies, toPlaywrightCookies, etc.).
 
 ---
 
@@ -305,7 +305,7 @@ After an action that might trigger navigation:
 | Dependency                | Usage                                                                                                          |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `playwright`              | Browser automation — launch, context, page, locators, ARIA snapshots, screenshots, video                       |
-| `@browser-tester/cookies` | Cookie extraction from local browsers, format conversion                                                       |
+| `@expect/cookies` | Cookie extraction from local browsers, format conversion                                                       |
 | `zod`                     | Listed as dependency but **not imported anywhere in source** — possibly unused or used at runtime by consumers |
 | `node:os`                 | `tmpdir()` for default video recording directory                                                               |
 
@@ -376,7 +376,7 @@ Cursor-interactive elements are deduped by `name` (case-insensitive) against exi
 
 - **Build tool**: tsup (ESM output, declarations, sourcemaps)
 - **Entry**: `src/index.ts`
-- **External**: `playwright`, `@browser-tester/cookies`, `zod`
+- **External**: `playwright`, `@expect/cookies`, `zod`
 - **Output**: `dist/index.js` + `dist/index.d.ts`
 - **Test runner**: Vitest
 - **Linter**: oxlint + tsc --noEmit

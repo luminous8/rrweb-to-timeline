@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Option } from "effect";
-import { TestPlanDraft, ChangesFor, checkoutBranch, DraftId } from "@browser-tester/supervisor";
-import type { GitState, TestContext } from "@browser-tester/shared/models";
+import { TestPlanDraft, ChangesFor, checkoutBranch, DraftId } from "@expect/supervisor";
+import type { GitState, TestContext } from "@expect/shared/models";
 import { usePreferencesStore } from "../../stores/use-preferences.js";
 import { usePlanStore, Plan } from "../../stores/use-plan-store.js";
 import { useNavigationStore, Screen } from "../../stores/use-navigation.js";

@@ -5,7 +5,7 @@
  */
 
 import type { SameSitePolicy } from "../types";
-import { MS_PER_SECOND } from "@browser-tester/utils";
+import { MS_PER_SECOND } from "@expect/utils";
 
 const SAME_SITE_NONE = 0;
 const SAME_SITE_LAX = 1;

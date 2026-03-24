@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { useMutation } from "@tanstack/react-query";
-import { Github } from "@browser-tester/supervisor";
-import type { PullRequest } from "@browser-tester/shared/models";
+import { Github } from "@expect/supervisor";
+import type { PullRequest } from "@expect/shared/models";
 
 const postPrComment = (pullRequest: PullRequest, body: string) =>
   Effect.runPromise(

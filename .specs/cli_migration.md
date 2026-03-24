@@ -100,7 +100,7 @@ The `action` field is a string union that must be manually mapped to `ChangesFor
 
 **Used in**: `index.tsx`, `run-test.ts`, `use-preferences.ts`
 
-Every key is optional because CLI args are optional (`testie` with no flags). And `action` is a string instead of `ChangesFor` because resolving `ChangesFor` requires async git operations (getting `mainBranch`), so they deferred it. But every code path immediately resolves git state right after constructing this config — there's no reason for the intermediate step.
+Every key is optional because CLI args are optional (`expect` with no flags). And `action` is a string instead of `ChangesFor` because resolving `ChangesFor` requires async git operations (getting `mainBranch`), so they deferred it. But every code path immediately resolves git state right after constructing this config — there's no reason for the intermediate step.
 
 **Solution**: Remove entirely. The CLI should parse args → resolve git state → construct `TestPlanDraft` directly. No intermediate bag. The `--flow` flag loads a saved flow from the filesystem, which yields a `TestPlanDraft` or `TestPlan` — either way the codepath is the same (you either plan from a draft or skip planning with an existing plan). The only remaining fields (`autoRun`, provider selections) are session concerns that the supervisor session should accept as startup params, not a separate config type.
 

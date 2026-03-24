@@ -1,5 +1,5 @@
 {
-  "name": "browser-tester",
+  "name": "expect",
   "private": true,
   "license": "FSL-1.1-MIT",
   "scripts": {

@@ -1,6 +1,6 @@
 import figures from "figures";
 import { Text } from "ink";
-import { categorizeChangedFiles, formatFileCategories } from "@browser-tester/supervisor";
+import { categorizeChangedFiles, formatFileCategories } from "@expect/supervisor";
 import { useGitState } from "../../hooks/use-git-state.js";
 import { useColors } from "../theme-context.js";
 import { RuledBox } from "./ruled-box.js";

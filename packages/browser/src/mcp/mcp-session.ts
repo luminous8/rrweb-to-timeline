@@ -10,10 +10,7 @@ import { evaluateRuntime } from "../utils/evaluate-runtime";
 import { EVENT_COLLECT_INTERVAL_MS } from "../constants";
 import { buildReplayViewerHtml } from "../replay-viewer";
 import type { AnnotatedScreenshotOptions, SnapshotOptions, SnapshotResult } from "../types";
-import {
-  BROWSER_TESTER_LIVE_VIEW_URL_ENV_NAME,
-  BROWSER_TESTER_REPLAY_OUTPUT_ENV_NAME,
-} from "./constants";
+import { EXPECT_LIVE_VIEW_URL_ENV_NAME, EXPECT_REPLAY_OUTPUT_ENV_NAME } from "./constants";
 import { McpSessionNotOpenError } from "./errors";
 import { startLiveViewServer, type LiveViewHandle } from "./live-view-server";
 import type { ViewerRunState } from "./viewer-events";
@@ -93,10 +90,8 @@ export class McpSession extends ServiceMap.Service<McpSession>()("@browser/McpSe
   make: Effect.gen(function* () {
     const browserService = yield* Browser;
     const fileSystem = yield* FileSystem;
-    const replayOutputPath = yield* Config.option(
-      Config.string(BROWSER_TESTER_REPLAY_OUTPUT_ENV_NAME),
-    );
-    const liveViewUrl = yield* Config.option(Config.string(BROWSER_TESTER_LIVE_VIEW_URL_ENV_NAME));
+    const replayOutputPath = yield* Config.option(Config.string(EXPECT_REPLAY_OUTPUT_ENV_NAME));
+    const liveViewUrl = yield* Config.option(Config.string(EXPECT_LIVE_VIEW_URL_ENV_NAME));
 
     const sessionRef = yield* Ref.make<BrowserSessionData | undefined>(undefined);
     const liveViewRef = yield* Ref.make<LiveViewHandle | undefined>(undefined);
@@ -308,7 +303,7 @@ export class McpSession extends ServiceMap.Service<McpSession>()("@browser/McpSe
           );
           const htmlReportPath = join(dirname(resolvedReplayOutputPath), `${replayBaseName}.html`);
           const reportHtml = buildReplayViewerHtml({
-            title: runState ? `Test Report: ${runState.title}` : "Browser Tester Report",
+            title: runState ? `Test Report: ${runState.title}` : "Expect Report",
             eventsSource: { ndjsonPath: replayFileName },
             steps: runState,
           });

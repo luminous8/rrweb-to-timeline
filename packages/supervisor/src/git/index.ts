@@ -24,4 +24,4 @@ export {
   TestPlanStep,
   TestReport,
   type UpdateContent,
-} from "@browser-tester/shared/models";
+} from "@expect/shared/models";

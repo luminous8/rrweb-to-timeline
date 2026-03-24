@@ -1,6 +1,6 @@
 import { Effect, Exit } from "effect";
 import { useQuery } from "@tanstack/react-query";
-import { Git, type GitState } from "@browser-tester/supervisor";
+import { Git, type GitState } from "@expect/supervisor";
 
 export type { GitState };
 

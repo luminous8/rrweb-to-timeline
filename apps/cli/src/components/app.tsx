@@ -16,7 +16,7 @@ import { usePlanExecutionStore } from "../stores/use-plan-execution-store.js";
 import { useGitState } from "../hooks/use-git-state.js";
 import { clearInkDisplay } from "../utils/clear-ink-display.js";
 import { useStdoutDimensions } from "../hooks/use-stdout-dimensions.js";
-import { AgentBackend } from "@browser-tester/agent";
+import { AgentBackend } from "@expect/agent";
 import { useAtomSet } from "@effect/atom-react";
 import { agentProviderAtom } from "../data/runtime.js";
 import { Option } from "effect";

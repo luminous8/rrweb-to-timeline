@@ -14,7 +14,7 @@ import { RuledBox } from "../ui/ruled-box.js";
 import { stripMouseSequences } from "../../hooks/mouse-context.js";
 import { Clickable } from "../ui/clickable.js";
 import { SearchBar } from "../ui/search-bar.js";
-import { BRANCH_FILTERS, RemoteBranch, type BranchFilter } from "@browser-tester/shared/models";
+import { BRANCH_FILTERS, RemoteBranch, type BranchFilter } from "@expect/shared/models";
 import { useRemoteBranches } from "../../hooks/use-remote-branches.js";
 import { Spinner } from "../ui/spinner.js";
 import cliTruncate from "cli-truncate";
@@ -22,7 +22,7 @@ import { visualPadEnd } from "../../utils/visual-pad-end.js";
 import { useScrollableList } from "../../hooks/use-scrollable-list.js";
 import { usePlanStore } from "../../stores/use-plan-store.js";
 import { useNavigationStore, Screen } from "../../stores/use-navigation.js";
-import { checkoutBranch } from "@browser-tester/supervisor";
+import { checkoutBranch } from "@expect/supervisor";
 import { queryClient } from "../../query-client.js";
 import { ScreenHeading } from "../ui/screen-heading.js";
 

@@ -1,9 +1,9 @@
 {
-  "name": "@browser-tester/cli",
+  "name": "@expect/cli",
   "version": "0.0.1",
   "license": "FSL-1.1-MIT",
   "bin": {
-    "testie": "./dist/index.js"
+    "expect": "./dist/index.js"
   },
   "files": [
     "dist"
@@ -29,9 +29,9 @@
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
-    "@browser-tester/shared": "workspace:*",
-    "@browser-tester/supervisor": "workspace:*",
     "@effect/atom-react": "4.0.0-beta.35",
+    "@expect/shared": "workspace:*",
+    "@expect/supervisor": "workspace:*",
     "@tanstack/react-query": "^5.80.7",
     "@types/react": "^19.2.14",
     "cli-truncate": "^5.2.0",

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import figures from "figures";
-import type { TestPlan } from "@browser-tester/supervisor";
+import type { TestPlan } from "@expect/supervisor";
 import { useColors } from "../theme-context.js";
 import { Clickable } from "../ui/clickable.js";
 import { RuledBox } from "../ui/ruled-box.js";

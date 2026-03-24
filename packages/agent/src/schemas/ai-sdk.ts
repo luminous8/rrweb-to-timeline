@@ -1,4 +1,4 @@
-export const PROVIDER_ID = "browser-tester-agent";
+export const PROVIDER_ID = "expect-agent";
 
 export const EMPTY_USAGE = {
   inputTokens: {

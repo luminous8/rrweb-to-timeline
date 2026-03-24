@@ -11,7 +11,7 @@ import * as FileSystem from "effect/FileSystem";
 import { ChildProcess } from "effect/unstable/process";
 import { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner";
 import { NodeServices } from "@effect/platform-node";
-import { getEpochSeconds } from "@browser-tester/utils";
+import { getEpochSeconds } from "@expect/utils";
 import { chromiumConfig } from "./browser-config";
 import { decryptAes128Cbc, decryptAes256Gcm, deriveKey } from "./utils/crypto";
 import {

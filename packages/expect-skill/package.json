@@ -1,0 +1,10 @@
+{
+  "name": "@expect/expect-skill",
+  "version": "0.0.0",
+  "description": "AI agent skill for using the expect CLI in headless mode",
+  "license": "MIT",
+  "files": [
+    "SKILL.md"
+  ],
+  "type": "module"
+}

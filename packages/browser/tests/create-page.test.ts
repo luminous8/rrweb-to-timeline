@@ -24,7 +24,7 @@ const {
   closeMock: vi.fn(),
 }));
 
-vi.mock("@browser-tester/cookies", async () => {
+vi.mock("@expect/cookies", async () => {
   const { Effect, Layer, ServiceMap } = await import("effect");
 
   class Browsers extends ServiceMap.Service<Browsers>()("@cookies/Browsers", {

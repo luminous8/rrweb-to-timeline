@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Option } from "effect";
-import type { TestReport } from "@browser-tester/supervisor";
+import type { TestReport } from "@expect/supervisor";
 import { copyToClipboard } from "../../utils/copy-to-clipboard.js";
 import { useColors } from "../theme-context.js";
 import { RuledBox } from "../ui/ruled-box.js";

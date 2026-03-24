@@ -4,8 +4,8 @@ import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GitHubIcon } from "@/components/icons/github-icon";
 
-const GITHUB_URL = "https://github.com/millionco/testie";
-const DOCS_URL = "https://github.com/millionco/testie#readme";
+const GITHUB_URL = "https://github.com/millionco/expect";
+const DOCS_URL = "https://github.com/millionco/expect#readme";
 
 export const ActionButtons = () => {
   return (

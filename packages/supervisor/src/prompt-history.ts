@@ -1,10 +1,10 @@
 import * as fsPromises from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { TESTIE_STATE_DIR } from "./constants";
+import { EXPECT_STATE_DIR } from "./constants";
 
 const getStoragePath = (name: string): string =>
-  path.join(os.homedir(), TESTIE_STATE_DIR, `${name}.json`);
+  path.join(os.homedir(), EXPECT_STATE_DIR, `${name}.json`);
 
 const cache = new Map<string, string>();
 

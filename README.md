@@ -1,46 +1,46 @@
-# testie
+# expect
 
-[![version](https://img.shields.io/npm/v/@browser-tester/cli?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@browser-tester/cli)
-[![downloads](https://img.shields.io/npm/dt/@browser-tester/cli.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@browser-tester/cli)
+[![version](https://img.shields.io/npm/v/@expect/cli?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@expect/cli)
+[![downloads](https://img.shields.io/npm/dt/@expect/cli.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@expect/cli)
 
 Let coding agents test your code in a real browser. One command scans your unstaged changes or branch diff, generates a test plan, and runs it against a live browser.
 
-### [See it in action →](https://browser-tester-website.ami.construction/)
+### [See it in action →](https://expect-website.ami.construction/)
 
 ## Install
 
 ```bash
-npx @browser-tester/cli@latest
+npx @expect/cli@latest
 ```
 
 Or install globally:
 
 ```bash
-npm install -g @browser-tester/cli
+npm install -g @expect/cli
 ```
 
 Then run from your project root:
 
 ```bash
-testie
+expect
 ```
 
 ## Usage with coding agents
 
-Point your agent at testie and let it test your changes:
+Point your agent at expect and let it test your changes:
 
 ```bash
-BROWSER_TESTER_BASE_URL=http://localhost:3000 testie -m "Test the signup flow" -y
+EXPECT_BASE_URL=http://localhost:3000 expect -m "Test the signup flow" -y
 ```
 
 The `-y` flag skips plan review so agents can run non-interactively.
 
-Testie auto-detects agent environments (`CLAUDECODE`, `CURSOR_AGENT`, `CODEX_CI`, `CI`, etc.) and switches to headless mode.
+Expect auto-detects agent environments (`CLAUDECODE`, `CURSOR_AGENT`, `CODEX_CI`, `CI`, etc.) and switches to headless mode.
 
 ## Commands
 
 ```
-Usage: testie [command] [options]
+Usage: expect [command] [options]
 
 Commands:
   unstaged          test current unstaged changes (default)
@@ -65,8 +65,8 @@ Options:
 ## Development
 
 ```bash
-git clone https://github.com/millionco/testie
-cd testie
+git clone https://github.com/millionco/expect
+cd expect
 pnpm install --no-frozen-lockfile
 cd apps/cli
 pnpm link-global

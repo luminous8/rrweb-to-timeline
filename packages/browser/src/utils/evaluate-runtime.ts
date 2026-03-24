@@ -1,18 +1,18 @@
 import type { Page } from "playwright";
 import { Effect } from "effect";
-import type { BrowserTesterRuntime } from "../generated/runtime-types";
+import type { ExpectRuntime } from "../generated/runtime-types";
 
 // HACK: page.evaluate erases types across the serialization boundary; casts are confined here
-export const evaluateRuntime = <K extends keyof BrowserTesterRuntime>(
+export const evaluateRuntime = <K extends keyof ExpectRuntime>(
   page: Page,
   method: K,
-  ...args: Parameters<BrowserTesterRuntime[K]>
+  ...args: Parameters<ExpectRuntime[K]>
 ) =>
   Effect.promise(
     () =>
       page.evaluate(
         ({ method, args }: { method: string; args: unknown[] }) => {
-          const runtime = Reflect.get(globalThis, "__browserTesterRuntime");
+          const runtime = Reflect.get(globalThis, "__expectRuntime");
           if (!runtime || typeof runtime !== "object") {
             throw new Error("Browser runtime is not initialized");
           }
@@ -25,5 +25,5 @@ export const evaluateRuntime = <K extends keyof BrowserTesterRuntime>(
           return fn(...args);
         },
         { method, args: args as unknown[] },
-      ) as Promise<ReturnType<BrowserTesterRuntime[K]>>,
+      ) as Promise<ReturnType<ExpectRuntime[K]>>,
   );
