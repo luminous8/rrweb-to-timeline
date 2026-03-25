@@ -1,6 +1,5 @@
-import { createRequire } from "node:module";
-const pkg = createRequire(import.meta.url)("../../package.json");
-export const VERSION: string = pkg.version;
+declare const __VERSION__: string;
+export const VERSION: string = __VERSION__;
 
 export const TESTING_TOOL_TEXT_CHAR_LIMIT = 100;
 export const TESTING_TIMER_UPDATE_INTERVAL_MS = 1000;
