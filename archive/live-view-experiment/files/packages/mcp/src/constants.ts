@@ -1,4 +1,0 @@
-export const EXPECT_LIVE_VIEW_URL_ENV_NAME = "EXPECT_LIVE_VIEW_URL";
-export const LIVE_VIEW_CAPTURE_INTERVAL_MS = 300;
-export const LIVE_VIEW_JPEG_QUALITY = 60;
-export const LIVE_VIEW_MJPEG_BOUNDARY = "frame";
