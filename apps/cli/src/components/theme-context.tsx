@@ -12,6 +12,7 @@ export interface Colors {
   CYAN: string;
   INPUT_BG: string;
   BANNER_BG: string;
+  ERROR_BG: string;
 }
 
 export const theme = {
@@ -31,6 +32,7 @@ export const theme = {
   shimmerHighlight: "#ffffff",
   inputBg: "#1e1e1e",
   bannerBg: "#332b00",
+  errorBg: "#330b0b",
 };
 
 export const COLORS: Colors = {
@@ -47,6 +49,7 @@ export const COLORS: Colors = {
   CYAN: theme.info,
   INPUT_BG: theme.inputBg,
   BANNER_BG: theme.bannerBg,
+  ERROR_BG: theme.errorBg,
 };
 
 export const useColors = (): Colors => COLORS;

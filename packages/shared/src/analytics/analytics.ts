@@ -11,45 +11,12 @@ import type { EventMap } from "./analytics-events";
 const POSTHOG_API_KEY = "phc_t5FKk9mlc4pKbbBimiIlrM5Acq9meRp1FSuNjmwxjAX";
 const POSTHOG_DEFAULT_HOST = "https://us.i.posthog.com";
 
-const posthogClient = new PostHog(POSTHOG_API_KEY, { host: POSTHOG_DEFAULT_HOST });
+const posthogClient = new PostHog(POSTHOG_API_KEY, {
+  host: POSTHOG_DEFAULT_HOST,
+});
 
 const ClaudeAuthStatusResponse = Schema.Struct({
   email: Schema.String,
-});
-
-const getClaudeCodeEmail = Effect.fn("getClaudeCodeEmail")(function* () {
-  const spawner = yield* ChildProcessSpawner;
-  const stdout = yield* spawner
-    .string(ChildProcess.make("claude", ["auth", "status"]))
-    .pipe(Effect.timeout("5 seconds"));
-  const status = yield* Schema.decodeEffect(Schema.fromJsonString(ClaudeAuthStatusResponse))(
-    stdout,
-  );
-  return status.email;
-});
-
-const getGitEmail = Effect.fn("getGitEmail")(function* () {
-  const spawner = yield* ChildProcessSpawner;
-  const email = yield* spawner.string(ChildProcess.make("git", ["config", "user.email"])).pipe(
-    Effect.timeout("5 seconds"),
-    Effect.map((output) => output.trim()),
-  );
-  if (email.length === 0) {
-    return yield* Effect.fail("empty");
-  }
-  return email;
-});
-
-const getGitName = Effect.fn("getGitName")(function* () {
-  const spawner = yield* ChildProcessSpawner;
-  const name = yield* spawner.string(ChildProcess.make("git", ["config", "user.name"])).pipe(
-    Effect.timeout("5 seconds"),
-    Effect.map((output) => output.trim()),
-  );
-  if (name.length === 0) {
-    return yield* Effect.fail("empty");
-  }
-  return name;
 });
 
 // ---------------------------------------------------------------------------
@@ -87,7 +54,10 @@ export class AnalyticsProvider extends ServiceMap.Service<
       Effect.sync(() => {
         posthogClient.identify({
           distinctId: params.distinctId,
-          properties: { email: params.email, ...(params.name ? { name: params.name } : {}) },
+          properties: {
+            email: params.email,
+            ...(params.name ? { name: params.name } : {}),
+          },
         });
       }),
     flush: Effect.tryPromise({
@@ -120,12 +90,42 @@ export class AnalyticsProvider extends ServiceMap.Service<
 export class Analytics extends ServiceMap.Service<Analytics>()("@expect/Analytics", {
   make: Effect.gen(function* () {
     const provider = yield* AnalyticsProvider;
+    const spawner = yield* ChildProcessSpawner;
 
-    const distinctId = yield* Effect.tryPromise({
-      try: () => machineId(),
-      catch: () => "unknown",
-    });
+    const distinctId = yield* Effect.tryPromise(() => machineId()).pipe(Effect.orDie);
     const projectId = hash(process.cwd());
+
+    const getClaudeCodeEmail = Effect.fn("getClaudeCodeEmail")(function* () {
+      const stdout = yield* spawner
+        .string(ChildProcess.make("claude", ["auth", "status"]))
+        .pipe(Effect.timeout("5 seconds"));
+      const status = yield* Schema.decodeEffect(Schema.fromJsonString(ClaudeAuthStatusResponse))(
+        stdout,
+      );
+      return status.email;
+    });
+
+    const getGitEmail = Effect.fn("getGitEmail")(function* () {
+      const email = yield* spawner.string(ChildProcess.make("git", ["config", "user.email"])).pipe(
+        Effect.timeout("5 seconds"),
+        Effect.map((output) => output.trim()),
+      );
+      if (email.length === 0) {
+        return yield* Effect.fail("empty");
+      }
+      return email;
+    });
+
+    const getGitName = Effect.fn("getGitName")(function* () {
+      const name = yield* spawner.string(ChildProcess.make("git", ["config", "user.name"])).pipe(
+        Effect.timeout("5 seconds"),
+        Effect.map((output) => output.trim()),
+      );
+      if (name.length === 0) {
+        return yield* Effect.fail("empty");
+      }
+      return name;
+    });
 
     yield* Effect.all({
       email: getClaudeCodeEmail().pipe(
@@ -137,7 +137,7 @@ export class Analytics extends ServiceMap.Service<Analytics>()("@expect/Analytic
     }).pipe(
       Effect.tap(({ email, name }) => provider.identify({ distinctId, email, name })),
       Effect.catchCause(() => Effect.void),
-      Effect.forkDetach,
+      Effect.forkScoped,
     );
 
     const capture = <K extends keyof EventMap>(

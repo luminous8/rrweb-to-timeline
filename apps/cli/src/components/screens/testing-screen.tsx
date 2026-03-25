@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Box, Static, Text, useInput } from "ink";
 import figures from "figures";
-import { DateTime, Option } from "effect";
+import { Cause, DateTime, Option } from "effect";
 import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import { useAtom, useAtomValue } from "@effect/atom-react";
@@ -98,7 +98,10 @@ const markLastCallRunning = (
   const lastEvent = events.at(-1);
   const isLastDone = lastEvent?._tag === "ToolResult";
   const result = [...calls];
-  result[result.length - 1] = { ...result[result.length - 1], isRunning: !isLastDone };
+  result[result.length - 1] = {
+    ...result[result.length - 1],
+    isRunning: !isLastDone,
+  };
   return result;
 };
 
@@ -517,143 +520,152 @@ export const TestingScreen = ({
           </Box>
         )}
       </Static>
-      <Box flexDirection="column" width="100%" paddingY={1} paddingX={1}>
-        <Box>
-          <Logo />
-          <Text wrap="truncate">
-            {" "}
-            <Text color={COLORS.DIM}>{figures.pointerSmall}</Text>{" "}
-            <Text color={COLORS.TEXT}>{instruction}</Text>
-          </Text>
-        </Box>
-
-        {liveReplayUrl && isExecuting && (
-          <Box marginTop={0}>
-            <Text color={COLORS.DIM}>
-              {"  "}Press <Text color={COLORS.PRIMARY}>o</Text> to open live preview
+      <Box flexDirection="column" width="100%">
+        <Box flexDirection="column" width="100%" paddingY={1} paddingX={1}>
+          <Box>
+            <Logo />
+            <Text wrap="truncate">
+              {" "}
+              <Text color={COLORS.DIM}>{figures.pointerSmall}</Text>{" "}
+              <Text color={COLORS.TEXT}>{instruction}</Text>
             </Text>
           </Box>
-        )}
 
-        {expanded ? (
-          <Box flexDirection="column" marginTop={1}>
-            {visibleExpandedRows}
-          </Box>
-        ) : (
-          <>
-            {totalCount === 0 &&
-              isExecuting &&
-              (() => {
-                const toolCalls = executedPlan
-                  ? getPlanningToolCalls(executedPlan.events, false)
-                  : [];
-                return (
-                  <Box marginTop={1} flexDirection="column">
-                    <Box>
-                      <Spinner />
-                      <Text> </Text>
-                      <TextShimmer
-                        text={`Starting${figures.ellipsis} ${elapsedTimeLabel}`}
-                        baseColor={theme.shimmerBase}
-                        highlightColor={theme.shimmerHighlight}
-                      />
-                    </Box>
-                    {toolCalls.map((tool, toolIndex) => (
-                      <ToolCallBlock key={toolIndex} display={tool} indent={"  "} />
-                    ))}
-                  </Box>
-                );
-              })()}
+          {liveReplayUrl && isExecuting && (
+            <Box marginTop={0}>
+              <Text color={COLORS.DIM}>
+                {"  "}Press <Text color={COLORS.PRIMARY}>o</Text> to open live preview
+              </Text>
+            </Box>
+          )}
 
+          {expanded ? (
             <Box flexDirection="column" marginTop={1}>
-              {(executedPlan?.steps ?? []).map((step: TestPlanStep, stepIndex: number) => {
-                const label = Option.isSome(step.summary) ? step.summary.value : step.title;
-                const stepElapsedMs = getStepElapsedMs(step);
-                const stepElapsedLabel =
-                  stepElapsedMs !== undefined ? formatElapsedTime(stepElapsedMs) : undefined;
-                const num = `${stepIndex + 1}.`;
-
-                if (step.status === "active") {
+              {visibleExpandedRows}
+            </Box>
+          ) : (
+            <>
+              {totalCount === 0 &&
+                isExecuting &&
+                (() => {
                   const toolCalls = executedPlan
-                    ? getActiveStepToolCalls(executedPlan.events, false)
+                    ? getPlanningToolCalls(executedPlan.events, false)
                     : [];
                   return (
-                    <Box key={step.id} flexDirection="column">
+                    <Box marginTop={1} flexDirection="column">
                       <Box>
-                        <Text color={COLORS.DIM}>
-                          {"  "}
-                          {num}{" "}
-                        </Text>
                         <Spinner />
                         <Text> </Text>
                         <TextShimmer
-                          text={`${step.title} ${elapsedTimeLabel}`}
+                          text={`Starting${figures.ellipsis} ${elapsedTimeLabel}`}
                           baseColor={theme.shimmerBase}
                           highlightColor={theme.shimmerHighlight}
                         />
                       </Box>
                       {toolCalls.map((tool, toolIndex) => (
-                        <ToolCallBlock key={toolIndex} display={tool} indent={"     "} />
+                        <ToolCallBlock key={toolIndex} display={tool} indent={"  "} />
                       ))}
                     </Box>
                   );
-                }
+                })()}
 
-                if (step.status === "passed") {
+              <Box flexDirection="column" marginTop={1}>
+                {(executedPlan?.steps ?? []).map((step: TestPlanStep, stepIndex: number) => {
+                  const label = Option.isSome(step.summary) ? step.summary.value : step.title;
+                  const stepElapsedMs = getStepElapsedMs(step);
+                  const stepElapsedLabel =
+                    stepElapsedMs !== undefined ? formatElapsedTime(stepElapsedMs) : undefined;
+                  const num = `${stepIndex + 1}.`;
+
+                  if (step.status === "active") {
+                    const toolCalls = executedPlan
+                      ? getActiveStepToolCalls(executedPlan.events, false)
+                      : [];
+                    return (
+                      <Box key={step.id} flexDirection="column">
+                        <Box>
+                          <Text color={COLORS.DIM}>
+                            {"  "}
+                            {num}{" "}
+                          </Text>
+                          <Spinner />
+                          <Text> </Text>
+                          <TextShimmer
+                            text={`${step.title} ${elapsedTimeLabel}`}
+                            baseColor={theme.shimmerBase}
+                            highlightColor={theme.shimmerHighlight}
+                          />
+                        </Box>
+                        {toolCalls.map((tool, toolIndex) => (
+                          <ToolCallBlock key={toolIndex} display={tool} indent={"     "} />
+                        ))}
+                      </Box>
+                    );
+                  }
+
+                  if (step.status === "passed") {
+                    return (
+                      <Text key={step.id}>
+                        <Text color={COLORS.DIM}>
+                          {"  "}
+                          {num}
+                        </Text>
+                        <Text color={COLORS.GREEN}>
+                          {" "}
+                          {figures.tick} {cliTruncate(label, TESTING_TOOL_TEXT_CHAR_LIMIT)}
+                        </Text>
+                        {stepElapsedLabel && <Text color={COLORS.DIM}> {stepElapsedLabel}</Text>}
+                      </Text>
+                    );
+                  }
+
+                  if (step.status === "failed") {
+                    return (
+                      <Text key={step.id}>
+                        <Text color={COLORS.DIM}>
+                          {"  "}
+                          {num}
+                        </Text>
+                        <Text color={COLORS.RED}>
+                          {" "}
+                          {figures.cross} {cliTruncate(label, TESTING_TOOL_TEXT_CHAR_LIMIT)}
+                        </Text>
+                        {stepElapsedLabel && <Text color={COLORS.DIM}> {stepElapsedLabel}</Text>}
+                      </Text>
+                    );
+                  }
+
                   return (
-                    <Text key={step.id}>
-                      <Text color={COLORS.DIM}>
-                        {"  "}
-                        {num}
-                      </Text>
-                      <Text color={COLORS.GREEN}>
-                        {" "}
-                        {figures.tick} {cliTruncate(label, TESTING_TOOL_TEXT_CHAR_LIMIT)}
-                      </Text>
-                      {stepElapsedLabel && <Text color={COLORS.DIM}> {stepElapsedLabel}</Text>}
+                    <Text key={step.id} color={COLORS.DIM}>
+                      {"  "}
+                      {num} {figures.circle} {step.title}
                     </Text>
                   );
-                }
+                })}
+              </Box>
+            </>
+          )}
 
-                if (step.status === "failed") {
-                  return (
-                    <Text key={step.id}>
-                      <Text color={COLORS.DIM}>
-                        {"  "}
-                        {num}
-                      </Text>
-                      <Text color={COLORS.RED}>
-                        {" "}
-                        {figures.cross} {cliTruncate(label, TESTING_TOOL_TEXT_CHAR_LIMIT)}
-                      </Text>
-                      {stepElapsedLabel && <Text color={COLORS.DIM}> {stepElapsedLabel}</Text>}
-                    </Text>
-                  );
-                }
-
-                return (
-                  <Text key={step.id} color={COLORS.DIM}>
-                    {"  "}
-                    {num} {figures.circle} {step.title}
-                  </Text>
-                );
-              })}
+          {showCancelConfirmation && (
+            <Box marginTop={1}>
+              <Text color={COLORS.YELLOW}>
+                Stop run? <Text color={COLORS.PRIMARY}>enter</Text> to stop,{" "}
+                <Text color={COLORS.PRIMARY}>esc</Text> to dismiss
+              </Text>
             </Box>
-          </>
-        )}
-
-        {showCancelConfirmation && (
-          <Box marginTop={1}>
-            <Text color={COLORS.YELLOW}>
-              Stop run? <Text color={COLORS.PRIMARY}>enter</Text> to stop,{" "}
-              <Text color={COLORS.PRIMARY}>esc</Text> to dismiss
-            </Text>
-          </Box>
-        )}
+          )}
+        </Box>
 
         {AsyncResult.builder(executionResult)
-          .onError((error) => (
-            <ErrorMessage message={error instanceof Error ? error.message : String(error)} />
+          .onError((error) => <ErrorMessage type="error" error={error} />)
+          .onDefect((defect) => (
+            <ErrorMessage
+              type="defect"
+              error={{
+                _tag: "Defect",
+                message: Cause.pretty(Cause.fail(defect)),
+              }}
+            />
           ))
           .orNull()}
       </Box>

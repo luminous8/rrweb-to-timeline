@@ -13,7 +13,7 @@ import {
 import { useColors } from "../theme-context";
 import { Clickable } from "../ui/clickable";
 import { Input } from "../ui/input";
-import { ErrorMessage } from "../ui/error-message";
+import { InlineError } from "../ui/error-message";
 import { RuledBox } from "../ui/ruled-box";
 import { Spinner } from "../ui/spinner";
 import { Logo } from "../ui/logo";
@@ -346,7 +346,7 @@ export const MainMenu = ({ gitState }: MainMenuProps) => {
         )}
       </Box>
 
-      <ErrorMessage message={errorMessage} />
+      <InlineError message={errorMessage} />
     </Box>
   );
 };

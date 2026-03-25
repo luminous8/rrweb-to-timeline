@@ -52,7 +52,7 @@ export class FlowStorage extends ServiceMap.Service<FlowStorage>()("@supervisor/
 
     const getFlowsDirectory = Effect.gen(function* () {
       const repoRoot = yield* GitRepoRoot;
-      const stateDir = yield* ensureStateDir(repoRoot);
+      const stateDir = yield* ensureStateDir(fileSystem, repoRoot);
       return path.join(stateDir, FLOW_DIRECTORY_NAME);
     });
 

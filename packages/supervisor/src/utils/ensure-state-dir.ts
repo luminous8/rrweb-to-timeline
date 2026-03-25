@@ -2,8 +2,10 @@ import { Effect, FileSystem } from "effect";
 import * as path from "node:path";
 import { EXPECT_STATE_DIR } from "../constants";
 
-export const ensureStateDir = Effect.fn("ensureStateDir")(function* (baseDir: string) {
-  const fileSystem = yield* FileSystem.FileSystem;
+export const ensureStateDir = Effect.fn("ensureStateDir")(function* (
+  fileSystem: FileSystem.FileSystem,
+  baseDir: string,
+) {
   const stateDir = path.join(baseDir, EXPECT_STATE_DIR);
 
   yield* fileSystem

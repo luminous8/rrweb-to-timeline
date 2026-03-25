@@ -1,10 +1,19 @@
 import { request as httpRequest } from "node:http";
 import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { Hono } from "hono";
 import { proxy } from "hono/proxy";
 import { serve } from "@hono/node-server";
+
+export class ReplayProxyStartError extends Schema.ErrorClass<ReplayProxyStartError>(
+  "ReplayProxyStartError",
+)({
+  _tag: Schema.tag("ReplayProxyStartError"),
+  cause: Schema.String,
+}) {
+  message = `Failed to start replay proxy: ${this.cause}`;
+}
 
 interface StartReplayProxyOptions {
   readonly replayHost: string;
@@ -167,7 +176,7 @@ export const startReplayProxy = Effect.fn("startReplayProxy")(function* (
 
   const serverHandle = yield* Effect.try({
     try: () => serve({ fetch: app.fetch, port: 0 }),
-    catch: (cause) => new Error(`Failed to start replay proxy: ${cause}`),
+    catch: (cause) => new ReplayProxyStartError({ cause: String(cause) }),
   });
 
   serverHandle.on("upgrade", (request, socket, head) => {

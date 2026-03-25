@@ -199,3 +199,119 @@ export const executeFn = cliAtomRuntime.fn<ExecuteInput>()((input, ctx) =>
     Effect.provide(NodeServices.layer),
   ),
 );
+
+export const executeAtomFn = cliAtomRuntime.fn(
+  Effect.fnUntraced(
+    function* (input: ExecuteInput, ctx: Atom.FnContext) {
+      const reporter = yield* Reporter;
+      const executor = yield* Executor;
+      const analytics = yield* Analytics;
+      const git = yield* Git;
+
+      const runStartedAt = Date.now();
+
+      const liveViewPort = pickRandomPort();
+      const liveViewUrl = `http://localhost:${liveViewPort}`;
+
+      let replayUrl: string | undefined;
+
+      if (input.replayHost) {
+        const proxyHandle = yield* startReplayProxy({
+          replayHost: input.replayHost,
+          liveViewUrl,
+        });
+        replayUrl = `${proxyHandle.url}/replay?live=true`;
+
+        yield* Effect.logInfo("Replay viewer available", { replayUrl });
+        yield* Effect.sync(() => input.onReplayUrl?.(replayUrl!));
+      }
+
+      const executeOptions: ExecuteOptions = {
+        ...input.options,
+        liveViewUrl,
+      };
+
+      yield* analytics.capture("run:started", { plan_id: "direct" });
+
+      const finalExecuted = yield* executor.execute(executeOptions).pipe(
+        Stream.tap((executed) =>
+          Effect.gen(function* () {
+            input.onUpdate(executed);
+            yield* pushStepState(liveViewUrl, toViewerRunState(executed));
+          }),
+        ),
+        Stream.runLast,
+        Effect.map((option) =>
+          option._tag === "Some"
+            ? option.value
+            : new ExecutedTestPlan({
+                ...input.options,
+                id: "" as never,
+                changesFor: input.options.changesFor,
+                currentBranch: "",
+                diffPreview: "",
+                fileStats: [],
+                instruction: input.options.instruction,
+                baseUrl: undefined as never,
+                isHeadless: input.options.isHeadless,
+                requiresCookies: input.options.requiresCookies,
+                title: input.options.instruction,
+                rationale: "Direct execution",
+                steps: [],
+                events: [],
+              }),
+        ),
+      );
+
+      const artifacts = extractCloseArtifacts(finalExecuted.events);
+
+      if (replayUrl) {
+        const proxyBase = replayUrl.split("/replay")[0];
+        yield* Effect.tryPromise(() =>
+          fetch(`${liveViewUrl}/latest.json`).then(async (response) => {
+            if (!response.ok) return;
+            const allEvents = await response.json();
+            await fetch(`${proxyBase}/latest.json`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(allEvents),
+            });
+          }),
+        ).pipe(Effect.catchCause(() => Effect.void));
+
+        yield* pushStepState(proxyBase, toViewerRunState(finalExecuted));
+      }
+
+      const report = yield* reporter.report(finalExecuted);
+
+      const passedCount = report.steps.filter(
+        (step) => report.stepStatuses.get(step.id)?.status === "passed",
+      ).length;
+      const failedCount = report.steps.filter(
+        (step) => report.stepStatuses.get(step.id)?.status === "failed",
+      ).length;
+
+      yield* analytics.capture("run:completed", {
+        plan_id: finalExecuted.id ?? "direct",
+        passed: passedCount,
+        failed: failedCount,
+        step_count: finalExecuted.steps.length,
+        file_count: 0,
+        duration_ms: Date.now() - runStartedAt,
+      });
+
+      if (report.status === "passed") {
+        yield* git.saveTestedFingerprint();
+      }
+
+      return {
+        executedPlan: finalExecuted,
+        report,
+        replayUrl: replayUrl ?? artifacts.localReplayUrl,
+        localReplayUrl: artifacts.localReplayUrl,
+        videoUrl: artifacts.videoUrl,
+      } satisfies ExecutionResult;
+    },
+    Effect.annotateLogs({ fn: "executeAtomFn" }),
+  ),
+);

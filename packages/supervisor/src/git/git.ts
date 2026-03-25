@@ -14,8 +14,7 @@ import {
   FileStat,
   GitState,
 } from "@expect/shared/models";
-import { TESTED_FINGERPRINT_FILE } from "../constants";
-import { ensureStateDir } from "../utils/ensure-state-dir";
+import { EXPECT_STATE_DIR, TESTED_FINGERPRINT_FILE } from "../constants";
 import { GitError, FindRepoRootError } from "./errors";
 
 // ── GitRepoRoot context service ──────────────────────────────────────
@@ -295,6 +294,28 @@ export class Git extends ServiceMap.Service<Git>()("@supervisor/Git", {
         .update(NULL_SEPARATOR)
         .update(staged)
         .digest("hex");
+    });
+
+    /** @todo(rasmus): cleanup */
+    const ensureStateDir = Effect.fn("ensureStateDir")(function* (baseDir: string) {
+      const stateDir = path.join(baseDir, EXPECT_STATE_DIR);
+
+      yield* fileSystem
+        .makeDirectory(stateDir, { recursive: true })
+        .pipe(Effect.catchTag("PlatformError", () => Effect.void));
+
+      const gitignorePath = path.join(stateDir, ".gitignore");
+      const gitignoreExists = yield* fileSystem
+        .exists(gitignorePath)
+        .pipe(Effect.catchTag("PlatformError", () => Effect.succeed(false)));
+
+      if (!gitignoreExists) {
+        yield* fileSystem
+          .writeFileString(gitignorePath, "*\n")
+          .pipe(Effect.catchTag("PlatformError", () => Effect.void));
+      }
+
+      return stateDir;
     });
 
     const getFingerprintPath = Effect.gen(function* () {
