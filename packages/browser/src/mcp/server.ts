@@ -283,7 +283,19 @@ export const createBrowserMcpServer = <E>(
           const session = yield* McpSession;
           const result = yield* session.close();
           if (!result) return textResult("No browser open.");
-          return textResult("Browser closed.");
+          const lines = ["Browser closed."];
+          if (result.tmpReplaySessionPath) {
+            lines.push(`rrweb replay: ${result.tmpReplaySessionPath}`);
+          }
+          if (result.tmpReportPath) {
+            lines.push(`rrweb report: ${result.tmpReportPath}`);
+          }
+          if (result.tmpVideoPath) {
+            lines.push(`Playwright video: ${result.tmpVideoPath}`);
+          } else if (result.videoPath) {
+            lines.push(`Playwright video: ${result.videoPath}`);
+          }
+          return textResult(lines.join("\n"));
         }),
       ),
   );

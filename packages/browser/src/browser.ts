@@ -12,6 +12,8 @@ import {
   NAVIGATION_DETECT_DELAY_MS,
   OVERLAY_CONTAINER_ID,
   POST_NAVIGATION_SETTLE_MS,
+  REPLAY_PLAYER_HEIGHT_PX,
+  REPLAY_PLAYER_WIDTH_PX,
   REF_PREFIX,
   SNAPSHOT_TIMEOUT_MS,
 } from "./constants";
@@ -178,8 +180,19 @@ export class Browser extends ServiceMap.Service<Browser>()("@browser/Browser", {
             ? defaultBrowserContext.preferredProfile.locale
             : undefined;
 
+        const contextOptions: Parameters<typeof browser.newContext>[0] = {};
+        if (profileLocale) {
+          contextOptions.locale = profileLocale;
+        }
+        if (options.videoOutputDir) {
+          contextOptions.recordVideo = {
+            dir: options.videoOutputDir,
+            size: { width: REPLAY_PLAYER_WIDTH_PX, height: REPLAY_PLAYER_HEIGHT_PX },
+          };
+        }
+
         const context = yield* Effect.tryPromise({
-          try: () => browser.newContext(profileLocale ? { locale: profileLocale } : undefined),
+          try: () => browser.newContext(contextOptions),
           catch: toBrowserLaunchError,
         });
 

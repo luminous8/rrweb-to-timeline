@@ -414,16 +414,19 @@ export const TestingScreen = ({
     savedFlow,
     requiresCookies,
     baseUrls,
+    replayHost,
   ]);
 
   const replayUrl = isExecutionComplete ? executionResult.value.replayUrl : undefined;
+  const localReplayUrl = isExecutionComplete ? executionResult.value.localReplayUrl : undefined;
+  const videoUrl = isExecutionComplete ? executionResult.value.videoUrl : undefined;
 
   useEffect(() => {
     if (isExecutionComplete && executedPlan && report) {
       usePlanExecutionStore.getState().setExecutedPlan(executedPlan);
-      setScreen(Screen.Results({ report, replayUrl }));
+      setScreen(Screen.Results({ report, replayUrl, localReplayUrl, videoUrl }));
     }
-  }, [isExecutionComplete, executedPlan, report, replayUrl, setScreen]);
+  }, [isExecutionComplete, executedPlan, report, replayUrl, localReplayUrl, videoUrl, setScreen]);
 
   const goToMain = () => {
     usePlanExecutionStore.getState().setExecutedPlan(undefined);
@@ -493,7 +496,7 @@ export const TestingScreen = ({
       }
       if (executedPlan && report) {
         usePlanExecutionStore.getState().setExecutedPlan(executedPlan);
-        setScreen(Screen.Results({ report, replayUrl }));
+        setScreen(Screen.Results({ report, replayUrl, localReplayUrl, videoUrl }));
         return;
       }
       goToMain();

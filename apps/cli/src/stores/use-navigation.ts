@@ -20,7 +20,7 @@ export type Screen = Data.TaggedEnum<{
     requiresCookies?: boolean;
     baseUrls?: readonly string[];
   };
-  Results: { report: TestReport; replayUrl?: string };
+  Results: { report: TestReport; replayUrl?: string; localReplayUrl?: string; videoUrl?: string };
   SavedFlowPicker: {};
 }>;
 export const Screen = Data.taggedEnum<Screen>();

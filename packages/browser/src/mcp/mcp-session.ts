@@ -55,7 +55,14 @@ export interface OpenResult {
 export interface CloseResult {
   readonly replaySessionPath: string | undefined;
   readonly reportPath: string | undefined;
+  readonly videoPath: string | undefined;
+  readonly tmpReplaySessionPath: string | undefined;
+  readonly tmpReportPath: string | undefined;
+  readonly tmpVideoPath: string | undefined;
 }
+
+const TMP_ARTIFACT_OUTPUT_DIRECTORY = "/tmp/expect-replays";
+const PLAYWRIGHT_VIDEO_SUBDIRECTORY = "playwright";
 
 const setupPageTracking = (page: Page, sessionData: BrowserSessionData) => {
   if (sessionData.trackedPages.has(page)) return;
@@ -146,11 +153,24 @@ export class McpSession extends ServiceMap.Service<McpSession>()("@browser/McpSe
       const preExtracted = options.cookies ? yield* Ref.get(preExtractedCookiesRef) : undefined;
       const cookiesOption =
         preExtracted && preExtracted.length > 0 ? preExtracted : options.cookies;
+      const videoOutputDir = path.join(
+        TMP_ARTIFACT_OUTPUT_DIRECTORY,
+        PLAYWRIGHT_VIDEO_SUBDIRECTORY,
+      );
+
+      yield* fileSystem
+        .makeDirectory(videoOutputDir, { recursive: true })
+        .pipe(
+          Effect.catchCause((cause) =>
+            Effect.logDebug("Failed to create Playwright video directory", { cause }),
+          ),
+        );
 
       const pageResult = yield* browserService.createPage(url, {
         headed: options.headed,
         cookies: cookiesOption,
         waitUntil: options.waitUntil,
+        videoOutputDir,
       });
 
       const sessionData: BrowserSessionData = {
@@ -273,6 +293,17 @@ export class McpSession extends ServiceMap.Service<McpSession>()("@browser/McpSe
 
       let replaySessionPath: string | undefined;
       let reportPath: string | undefined;
+      let videoPath: string | undefined;
+      let tmpReplaySessionPath: string | undefined;
+      let tmpReportPath: string | undefined;
+      let tmpVideoPath: string | undefined;
+      const pageVideo = activeSession.page.video();
+      const artifactBaseName = activeSession.replayOutputPath
+        ? path.basename(
+            activeSession.replayOutputPath,
+            path.extname(activeSession.replayOutputPath),
+          )
+        : `session-${Date.now()}`;
 
       yield* Effect.gen(function* () {
         if (!activeSession.page.isClosed()) {
@@ -344,6 +375,51 @@ export class McpSession extends ServiceMap.Service<McpSession>()("@browser/McpSe
                 Effect.logDebug("Failed to write ndjson.js wrapper", { cause }),
               ),
             );
+
+          const tmpReplayPath = path.join(
+            TMP_ARTIFACT_OUTPUT_DIRECTORY,
+            `${replayBaseName}.ndjson`,
+          );
+          const tmpReportFilePath = path.join(
+            TMP_ARTIFACT_OUTPUT_DIRECTORY,
+            `${replayBaseName}.html`,
+          );
+          const tmpNdjsonJsPath = `${tmpReplayPath}.js`;
+
+          yield* fileSystem
+            .makeDirectory(TMP_ARTIFACT_OUTPUT_DIRECTORY, { recursive: true })
+            .pipe(
+              Effect.catchCause((cause) =>
+                Effect.logDebug("Failed to create /tmp artifact directory", { cause }),
+              ),
+            );
+          yield* fileSystem.copyFile(resolvedReplayOutputPath, tmpReplayPath).pipe(
+            Effect.tap(() =>
+              Effect.sync(() => {
+                tmpReplaySessionPath = tmpReplayPath;
+              }),
+            ),
+            Effect.catchCause((cause) =>
+              Effect.logDebug("Failed to copy replay to /tmp", { cause }),
+            ),
+          );
+          yield* fileSystem.copyFile(htmlReportPath, tmpReportFilePath).pipe(
+            Effect.tap(() =>
+              Effect.sync(() => {
+                tmpReportPath = tmpReportFilePath;
+              }),
+            ),
+            Effect.catchCause((cause) =>
+              Effect.logDebug("Failed to copy report to /tmp", { cause }),
+            ),
+          );
+          yield* fileSystem
+            .copyFile(ndjsonJsPath, tmpNdjsonJsPath)
+            .pipe(
+              Effect.catchCause((cause) =>
+                Effect.logDebug("Failed to copy ndjson.js to /tmp", { cause }),
+              ),
+            );
         }
       }).pipe(
         Effect.catchCause((cause) => Effect.logDebug("Failed during close cleanup", { cause })),
@@ -353,7 +429,48 @@ export class McpSession extends ServiceMap.Service<McpSession>()("@browser/McpSe
         Effect.catchCause((cause) => Effect.logDebug("Failed to close browser", { cause })),
       );
 
-      return { replaySessionPath, reportPath } satisfies CloseResult;
+      if (pageVideo) {
+        videoPath = yield* Effect.tryPromise(() => pageVideo.path()).pipe(
+          Effect.catchCause((cause) =>
+            Effect.logDebug("Failed to resolve Playwright video path", { cause }).pipe(
+              Effect.as(undefined),
+            ),
+          ),
+        );
+
+        if (videoPath) {
+          const tmpVideoFilePath = path.join(
+            TMP_ARTIFACT_OUTPUT_DIRECTORY,
+            `${artifactBaseName}.webm`,
+          );
+          yield* fileSystem
+            .makeDirectory(TMP_ARTIFACT_OUTPUT_DIRECTORY, { recursive: true })
+            .pipe(
+              Effect.catchCause((cause) =>
+                Effect.logDebug("Failed to create /tmp artifact directory", { cause }),
+              ),
+            );
+          yield* fileSystem.copyFile(videoPath, tmpVideoFilePath).pipe(
+            Effect.tap(() =>
+              Effect.sync(() => {
+                tmpVideoPath = tmpVideoFilePath;
+              }),
+            ),
+            Effect.catchCause((cause) =>
+              Effect.logDebug("Failed to copy Playwright video to /tmp", { cause }),
+            ),
+          );
+        }
+      }
+
+      return {
+        replaySessionPath,
+        reportPath,
+        videoPath,
+        tmpReplaySessionPath,
+        tmpReportPath,
+        tmpVideoPath,
+      } satisfies CloseResult;
     });
 
     return {

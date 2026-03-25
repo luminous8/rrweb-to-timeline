@@ -20,6 +20,8 @@ import { formatElapsedTime } from "../../utils/format-elapsed-time";
 interface ResultsScreenProps {
   report: TestReport;
   replayUrl?: string;
+  localReplayUrl?: string;
+  videoUrl?: string;
 }
 
 const getStepElapsedMs = (step: TestPlanStep): number | undefined => {
@@ -36,7 +38,12 @@ const getTotalElapsedMs = (steps: readonly TestPlanStep[]): number => {
   return totalMs;
 };
 
-export const ResultsScreen = ({ report, replayUrl }: ResultsScreenProps) => {
+export const ResultsScreen = ({
+  report,
+  replayUrl,
+  localReplayUrl,
+  videoUrl,
+}: ResultsScreenProps) => {
   const COLORS = useColors();
   const setScreen = useNavigationStore((state) => state.setScreen);
   const [statusMessage, setStatusMessage] = useState<{ text: string; color: string } | undefined>(
@@ -106,6 +113,12 @@ export const ResultsScreen = ({ report, replayUrl }: ResultsScreenProps) => {
   const statusIcon = isPassed ? figures.tick : figures.cross;
   const statusLabel = isPassed ? "Passed" : "Failed";
   const totalElapsedMs = getTotalElapsedMs(report.steps);
+  const displayedReplayUrl = replayUrl ?? localReplayUrl;
+  const showLocalReplayLine =
+    Boolean(replayUrl) &&
+    Boolean(localReplayUrl) &&
+    replayUrl !== localReplayUrl &&
+    localReplayUrl !== undefined;
 
   return (
     <Box flexDirection="column" width="100%" paddingY={1} paddingX={1}>
@@ -207,12 +220,34 @@ export const ResultsScreen = ({ report, replayUrl }: ResultsScreenProps) => {
         </Box>
       )}
 
-      {replayUrl && (
+      {displayedReplayUrl && (
         <Box flexDirection="column" paddingX={1} marginTop={1}>
           <Text color={COLORS.DIM}>
             Replay:{" "}
             <Text color={COLORS.PRIMARY} bold>
-              {replayUrl}
+              {displayedReplayUrl}
+            </Text>
+          </Text>
+        </Box>
+      )}
+
+      {showLocalReplayLine && (
+        <Box flexDirection="column" paddingX={1}>
+          <Text color={COLORS.DIM}>
+            Local Replay:{" "}
+            <Text color={COLORS.PRIMARY} bold>
+              {localReplayUrl}
+            </Text>
+          </Text>
+        </Box>
+      )}
+
+      {videoUrl && (
+        <Box flexDirection="column" paddingX={1}>
+          <Text color={COLORS.DIM}>
+            Video:{" "}
+            <Text color={COLORS.PRIMARY} bold>
+              {videoUrl}
             </Text>
           </Text>
         </Box>
