@@ -2,8 +2,7 @@ import { execSync } from "node:child_process";
 import { createInterface } from "node:readline";
 import pc from "picocolors";
 
-const SKILL_COMMAND =
-  "npx skills add https://github.com/millionco/expect --skill expect-cli";
+const SKILL_COMMAND = "npx skills add https://github.com/millionco/expect --skill expect-cli";
 
 const log = (message: string) => console.log(message);
 const step = (message: string) => log(`${pc.green(">")} ${message}`);
