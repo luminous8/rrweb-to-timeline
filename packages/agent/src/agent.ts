@@ -2,6 +2,7 @@ import { Effect, FileSystem, Layer, Option, Schema, ServiceMap, Stream } from "e
 import {
   AcpAdapter,
   AcpClient,
+  type AcpProviderUnauthenticatedError,
   type AcpSessionCreateError,
   type AcpStreamError,
   type SessionId,
@@ -17,8 +18,13 @@ export class Agent extends ServiceMap.Service<
   {
     readonly stream: (
       options: AgentStreamOptions,
-    ) => Stream.Stream<AcpSessionUpdate, AcpStreamError | AcpSessionCreateError>;
-    readonly createSession: (cwd: string) => Effect.Effect<SessionId, AcpSessionCreateError>;
+    ) => Stream.Stream<
+      AcpSessionUpdate,
+      AcpStreamError | AcpSessionCreateError | AcpProviderUnauthenticatedError
+    >;
+    readonly createSession: (
+      cwd: string,
+    ) => Effect.Effect<SessionId, AcpSessionCreateError | AcpProviderUnauthenticatedError>;
   }
 >()("@expect/Agent") {
   static layerAcp = Layer.effect(Agent)(

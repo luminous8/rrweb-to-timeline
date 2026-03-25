@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import * as acp from "@agentclientprotocol/sdk";
@@ -68,8 +69,11 @@ export class AcpAdapterNotFoundError extends Schema.ErrorClass<AcpAdapterNotFoun
 )({
   _tag: Schema.tag("AcpAdapterNotFoundError"),
   packageName: Schema.String,
+  cause: Schema.Unknown,
 }) {
-  message = `ACP adapter not found: ${this.packageName}`;
+  message = `ACP adapter not found: ${this.packageName}. Error: ${Cause.pretty(
+    Cause.fail(this.cause),
+  )}`;
 }
 
 export class AcpAdapter extends ServiceMap.Service<
@@ -95,33 +99,53 @@ export class AcpAdapter extends ServiceMap.Service<
           env: {},
         });
       },
-      catch: () =>
+      catch: (cause) =>
         new AcpAdapterNotFoundError({
           packageName: "@zed-industries/codex-acp",
+          cause,
         }),
     }),
   );
 
   static layerClaude = Layer.effect(AcpAdapter)(
-    Effect.try({
-      try: () => {
-        const require = createRequire(
-          typeof __filename !== "undefined" ? __filename : import.meta.url,
-        );
-        const binPath = require.resolve("@zed-industries/claude-agent-acp/dist/index.js");
-        return AcpAdapter.of({
-          provider: "claude",
-          bin: process.execPath,
-          args: [binPath],
-          env: {},
-        });
-      },
-      catch: () =>
-        new AcpAdapterNotFoundError({
-          packageName: "@zed-industries/claude-agent-acp",
-        }),
+    Effect.gen(function* () {
+      const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
+      const AuthSchema = Schema.Struct({ loggedIn: Schema.Boolean });
+
+      /** @note(rasmus): assert authenticated */
+      yield* ChildProcess.make(`claude`, ["auth", "status"]).pipe(
+        spawner.string,
+        Effect.flatMap(Schema.decodeEffect(Schema.fromJsonString(AuthSchema))),
+        Effect.flatMap(({ loggedIn }) =>
+          loggedIn
+            ? Effect.void
+            : new AcpProviderUnauthenticatedError({
+                provider: "claude",
+              }).asEffect(),
+        ),
+      );
+
+      return yield* Effect.try({
+        try: () => {
+          const require = createRequire(
+            typeof __filename !== "undefined" ? __filename : import.meta.url,
+          );
+          const binPath = require.resolve("@zed-industries/claude-agent-acp/dist/index.js");
+          return AcpAdapter.of({
+            provider: "claude",
+            bin: process.execPath,
+            args: [binPath],
+            env: {},
+          });
+        },
+        catch: (cause) =>
+          new AcpAdapterNotFoundError({
+            packageName: "@zed-industries/claude-agent-acp",
+            cause,
+          }),
+      });
     }),
-  );
+  ).pipe(Layer.provide(NodeServices.layer));
 }
 
 export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClient", {
