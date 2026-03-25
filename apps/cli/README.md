@@ -3,7 +3,9 @@
 [![version](https://img.shields.io/npm/v/expect-cli?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/expect-cli)
 [![downloads](https://img.shields.io/npm/dt/expect-cli.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/expect-cli)
 
-Let agents test your code in a real browser. One command scans your unstaged changes or branch diff, generates a test plan, and runs it against a live browser.
+Let agents test your code in a real browser.
+
+One command scans your unstaged changes or branch diff, generates a test plan, and runs it against a live browser.
 
 ### **[See it in action →](https://expect.dev)**
 
