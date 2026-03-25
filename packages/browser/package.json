@@ -10,7 +10,7 @@
     "./runtime": "./src/runtime/index.ts"
   },
   "scripts": {
-    "build:runtime": "node scripts/build-runtime.js",
+    "build": "node scripts/build-runtime.js",
     "lint": "vp lint && tsc --noEmit",
     "format": "vp fmt",
     "format:check": "vp fmt --check",
