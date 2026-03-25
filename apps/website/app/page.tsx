@@ -91,7 +91,7 @@ const SUBMIT_BUTTON_PRESS_SCALE = 0.965;
 const SUBMIT_SEQUENCE_FADE_MS = LOAD_SEQUENCE_FADE_MS + 40;
 const REDIRECT_STEP_START_DELAY_MS = 320;
 const REDIRECT_FAILURE_MORPH_HOLD_MS = 280;
-const AUTO_REPLAY_DELAY_MS = 10000;
+const AUTO_REPLAY_DELAY_MS = 1000;
 const FIRST_FIELD_IDLE_SHADOW =
   "color(display-p3 0 0 0 / 16%) 0px 0px 0px 0.5px, color(display-p3 0 0 0 / 3%) 0px 1px 5px";
 const FIRST_FIELD_FOCUS_SHADOW =
@@ -1682,23 +1682,6 @@ export default function Home() {
                     </TerminalStepLabel>
                   </div>
                 </div>
-                <AnimatePresence>
-                  {terminalRedirectStepComplete && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      <Link
-                        href="/replay?demo=true"
-                        className={`${restartHardRegular.className} absolute bottom-3 left-3 right-3 flex items-center justify-center rounded-lg bg-[color(display-p3_0.965_0.965_0.965)] dark:bg-[color(display-p3_0.16_0.16_0.16)] py-1.5 [letter-spacing:0em] text-[11px]/4.5 text-[color(display-p3_0.361_0.361_0.361)] dark:text-[color(display-p3_0.65_0.65_0.65)] transition-colors duration-150 hover:bg-[color(display-p3_0.93_0.93_0.93)] dark:hover:bg-[color(display-p3_0.2_0.2_0.2)] hover:text-[color(display-p3_0.195_0.195_0.195)] dark:hover:text-[color(display-p3_0.881_0.881_0.881)]`}
-                        style={{ fontVariationSettings: '"CONN" 50, "wght" 400, "ital" 0' }}
-                      >
-                        See demo →
-                      </Link>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
                 <AnimatePresence initial={false}>
                   {!terminalLabelDismissed ? (
                     <motion.div
