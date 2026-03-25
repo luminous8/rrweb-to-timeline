@@ -1,5 +1,5 @@
 import { DateTime, Match, Option, Predicate, Schema, Struct } from "effect";
-import { getExecutionPrompt, getPlanningPrompt } from "./prompts.js";
+import { getExecutionPrompt, getPlanningPrompt } from "./prompts";
 
 const AcpToolCallStatus = Schema.Literals([
   "pending",

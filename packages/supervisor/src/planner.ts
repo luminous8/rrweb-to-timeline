@@ -1,10 +1,9 @@
 import * as path from "node:path";
-import * as crypto from "node:crypto";
 import { AcpSessionCreateError, AcpStreamError, Agent, AgentStreamOptions } from "@expect/agent";
 import { NodeServices } from "@effect/platform-node";
 import { Channel, Effect, FileSystem, Layer, Option, Schema, ServiceMap, Stream } from "effect";
 import { TestPlan, TestPlanJson, type TestPlanDraft } from "@expect/shared/models";
-import { EXPECT_STATE_DIR } from "./constants.js";
+import { EXPECT_STATE_DIR } from "./constants";
 
 export class PlanParseError extends Schema.ErrorClass<PlanParseError>("@supervisor/PlanParseError")(
   {

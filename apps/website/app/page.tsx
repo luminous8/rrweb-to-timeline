@@ -1,8 +1,6 @@
 "use client";
 
-import { useRef, useLayoutEffect, useState } from "react";
-// eslint-disable-next-line no-restricted-imports -- animation/DOM sync effects
-import { useEffect } from "react";
+import { useRef, useLayoutEffect, useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { useDelayedFlag } from "@/hooks/use-delayed-flag";
@@ -565,7 +563,7 @@ export default function Home() {
   const [cursorFieldPressScale, setCursorFieldPressScale] = useState(1);
   const [firstFieldUnlocked, setFirstFieldUnlocked] = useState(false);
   const [secondFieldUnlocked, setSecondFieldUnlocked] = useState(false);
-  const [pendingEditableFocusField, setPendingEditableFocusField] = useState<"first" | "second" | null>(null);
+  const pendingFocusFieldRef = useRef<"first" | "second" | null>(null);
   const [editableFocusedField, setEditableFocusedField] = useState<"first" | "second" | null>(null);
   const [editableFirstFieldValue, setEditableFirstFieldValue] = useState("");
   const [editableSecondFieldValue, setEditableSecondFieldValue] = useState("");
@@ -595,29 +593,6 @@ export default function Home() {
     void element.play().catch(() => {});
   };
 
-  const resetAnimation = () => {
-    firstEditableInputRef.current?.blur();
-    secondEditableInputRef.current?.blur();
-    setCursorTravels(null);
-    setFirstFieldBounds(null);
-    setSecondFieldBounds(null);
-    setSubmitButtonBounds(null);
-    setFirstFieldTouched(false);
-    setTypedFieldLength(0);
-    setSecondFieldTouched(false);
-    setSecondTypedFieldLength(0);
-    setSubmitButtonTouched(false);
-    setTerminalDragging(false);
-    setCursorFieldPressScale(1);
-    setFirstFieldUnlocked(false);
-    setSecondFieldUnlocked(false);
-    setPendingEditableFocusField(null);
-    setEditableFocusedField(null);
-    setEditableFirstFieldValue("");
-    setEditableSecondFieldValue("");
-    terminalKnifeSoundLastPlayAtRef.current = 0;
-    setAnimationRunId((current) => current + 1);
-  };
 
   const firstFieldFocused = useDelayedFlag(firstFieldTouched, FIRST_FIELD_FOCUS_DELAY_MS, animationRunId);
   const firstFieldTypingReady = useDelayedFlag(firstFieldFocused, FIRST_FIELD_TYPE_AFTER_FOCUS_DELAY_MS, animationRunId);
@@ -692,7 +667,9 @@ export default function Home() {
   const secondTypedFieldValue = SECOND_FIELD_VALUE.slice(0, secondTypedFieldLength);
   const firstFieldInputActive = firstFieldUnlocked || redirectTerminalIndicatorSuccessReady;
   const secondFieldInputActive = secondFieldUnlocked || redirectTerminalIndicatorSuccessReady;
-  const submitPillReady = (secondFieldInputActive ? editableSecondFieldValue.length : secondTypedFieldLength) >= SECOND_FIELD_SUBMIT_READY_LENGTH;
+  const displayedFirstFieldValue = firstFieldUnlocked ? editableFirstFieldValue : typedFieldValue;
+  const displayedSecondFieldValue = secondFieldUnlocked ? editableSecondFieldValue : secondTypedFieldValue;
+  const submitPillReady = (secondFieldInputActive ? displayedSecondFieldValue.length : secondTypedFieldLength) >= SECOND_FIELD_SUBMIT_READY_LENGTH;
   const firstFieldVisuallyFocused = firstFieldInputActive
     ? editableFocusedField === "first"
     : firstFieldFocused && !secondFieldFocused;
@@ -742,40 +719,51 @@ export default function Home() {
     successReady: terminalRedirectStepComplete,
   });
 
-  useEffect(() => {
-    if (firstFieldUnlocked) return;
-    setEditableFirstFieldValue(typedFieldValue);
-  }, [typedFieldValue, firstFieldUnlocked]);
-
-  useEffect(() => {
-    if (secondFieldUnlocked) return;
-    setEditableSecondFieldValue(secondTypedFieldValue);
-  }, [secondTypedFieldValue, secondFieldUnlocked]);
-
-  useEffect(() => {
-    if (!pendingEditableFocusField) return;
+  useLayoutEffect(() => {
+    const field = pendingFocusFieldRef.current;
+    if (!field) return;
     const targetInput =
-      pendingEditableFocusField === "first"
+      field === "first"
         ? firstEditableInputRef.current
         : secondEditableInputRef.current;
     if (!targetInput) return;
+    pendingFocusFieldRef.current = null;
     targetInput.focus();
     if (["text", "search", "url", "tel", "password"].includes(targetInput.type)) {
       const cursorPosition = targetInput.value.length;
       targetInput.setSelectionRange(cursorPosition, cursorPosition);
     }
-    setPendingEditableFocusField(null);
-  }, [pendingEditableFocusField, firstFieldInputActive, secondFieldInputActive]);
+  });
 
   useEffect(() => {
     if (!autoReplayReady || terminalDragging) return;
     const replayTimer = window.setTimeout(() => {
-      resetAnimation();
+      firstEditableInputRef.current?.blur();
+      secondEditableInputRef.current?.blur();
+      setCursorTravels(null);
+      setFirstFieldBounds(null);
+      setSecondFieldBounds(null);
+      setSubmitButtonBounds(null);
+      setFirstFieldTouched(false);
+      setTypedFieldLength(0);
+      setSecondFieldTouched(false);
+      setSecondTypedFieldLength(0);
+      setSubmitButtonTouched(false);
+      setTerminalDragging(false);
+      setCursorFieldPressScale(1);
+      setFirstFieldUnlocked(false);
+      setSecondFieldUnlocked(false);
+      pendingFocusFieldRef.current = null;
+      setEditableFocusedField(null);
+      setEditableFirstFieldValue("");
+      setEditableSecondFieldValue("");
+      terminalKnifeSoundLastPlayAtRef.current = 0;
+      setAnimationRunId((current) => current + 1);
     }, 0);
     return () => {
       window.clearTimeout(replayTimer);
     };
-  }, [autoReplayReady, terminalDragging, resetAnimation]);
+  }, [autoReplayReady, terminalDragging]);
 
   useEffect(() => {
     if (!firstFieldFocused) return;
@@ -998,7 +986,7 @@ export default function Home() {
                     setFirstFieldTouched(true);
                     setFirstFieldUnlocked(true);
                     setEditableFirstFieldValue(typedFieldValue);
-                    setPendingEditableFocusField("first");
+                    pendingFocusFieldRef.current = "first";
                   }}
                   initial={false}
                   animate={
@@ -1028,7 +1016,7 @@ export default function Home() {
                         ref={firstEditableInputRef}
                         aria-label="Email"
                         type="email"
-                        value={editableFirstFieldValue}
+                        value={displayedFirstFieldValue}
                         onChange={(event) => {
                           setFirstFieldUnlocked(true);
                           setEditableFirstFieldValue(event.currentTarget.value);
@@ -1064,7 +1052,7 @@ export default function Home() {
                     setSecondFieldTouched(true);
                     setSecondFieldUnlocked(true);
                     setEditableSecondFieldValue(secondTypedFieldValue);
-                    setPendingEditableFocusField("second");
+                    pendingFocusFieldRef.current = "second";
                   }}
                   initial={false}
                   animate={
@@ -1094,7 +1082,7 @@ export default function Home() {
                         ref={secondEditableInputRef}
                         aria-label="Password"
                         type="password"
-                        value={editableSecondFieldValue}
+                        value={displayedSecondFieldValue}
                         onChange={(event) => {
                           setSecondFieldUnlocked(true);
                           setEditableSecondFieldValue(event.currentTarget.value);

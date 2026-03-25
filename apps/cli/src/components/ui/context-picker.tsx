@@ -1,10 +1,10 @@
 import { Box, Text, useInput } from "ink";
-import { useColors } from "../theme-context.js";
-import { RuledBox } from "./ruled-box.js";
+import { useColors } from "../theme-context";
+import { RuledBox } from "./ruled-box";
 import { testContextId, type GitState, type TestContext } from "@expect/shared/models";
-import { getContextLabel, getContextDescription } from "../../utils/context-options.js";
-import { CONTEXT_PICKER_VISIBLE_COUNT } from "../../constants.js";
-import { stripMouseSequences } from "../../hooks/mouse-context.js";
+import { getContextLabel, getContextDescription } from "../../utils/context-options";
+import { CONTEXT_PICKER_VISIBLE_COUNT } from "../../constants";
+import { stripMouseSequences } from "../../hooks/mouse-context";
 import figures from "figures";
 
 interface ContextPickerProps {

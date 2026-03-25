@@ -1,7 +1,7 @@
 import { Effect, Layer, Option } from "effect";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import { AgentBackend } from "@expect/agent";
-import { layerCli } from "../layers.js";
+import { layerCli } from "../layers";
 
 export const agentProviderAtom = Atom.make<Option.Option<AgentBackend>>(Option.none());
 

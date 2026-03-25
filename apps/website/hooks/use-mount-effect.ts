@@ -1,8 +1,8 @@
 "use client";
 
-/* eslint-disable no-restricted-imports -- escape hatch for mount-only effects */
 import { useEffect } from "react";
 
 export const useMountEffect = (effect: () => void | (() => void)) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(effect, []);
 };

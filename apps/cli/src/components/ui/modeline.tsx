@@ -1,16 +1,16 @@
 import { Box, Text } from "ink";
-import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions.js";
+import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions";
 import stringWidth from "string-width";
-import { useColors, useThemeContext } from "../theme-context.js";
-import { HintBar, HINT_SEPARATOR, type HintSegment } from "./hint-bar.js";
+import { useColors, useThemeContext } from "../theme-context";
+import { HintBar, HINT_SEPARATOR, type HintSegment } from "./hint-bar";
 import { Option } from "effect";
-import { useNavigationStore, Screen } from "../../stores/use-navigation.js";
-import { usePreferencesStore } from "../../stores/use-preferences.js";
-import { usePlanStore, Plan } from "../../stores/use-plan-store.js";
-import { usePlanExecutionStore } from "../../stores/use-plan-execution-store.js";
-import { useGitState } from "../../hooks/use-git-state.js";
-import { Clickable } from "./clickable.js";
-import { TextShimmer } from "./text-shimmer.js";
+import { useNavigationStore, Screen } from "../../stores/use-navigation";
+import { usePreferencesStore } from "../../stores/use-preferences";
+import { usePlanStore, Plan } from "../../stores/use-plan-store";
+import { usePlanExecutionStore } from "../../stores/use-plan-execution-store";
+import { useGitState } from "../../hooks/use-git-state";
+import { Clickable } from "./clickable";
+import { TextShimmer } from "./text-shimmer";
 
 const useHintSegments = (screen: Screen): HintSegment[] => {
   const COLORS = useColors();

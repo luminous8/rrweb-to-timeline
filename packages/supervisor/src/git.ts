@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { GIT_TIMEOUT_MS } from "./constants.js";
+import { GIT_TIMEOUT_MS } from "./constants";
 
 const execGit = (cwd: string, command: string): string => {
   try {

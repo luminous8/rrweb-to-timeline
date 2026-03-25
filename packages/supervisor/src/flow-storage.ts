@@ -2,15 +2,15 @@ import { Effect, FileSystem, Layer, Option, ServiceMap } from "effect";
 import { NodeServices } from "@effect/platform-node";
 import * as path from "node:path";
 import { type TestPlan, changesForDisplayName } from "@expect/shared/models";
-import { formatSavedFlowFile, parseSavedFlowFile } from "./saved-flow-file.js";
-import type { SavedFlowFileData } from "./types.js";
+import { formatSavedFlowFile, parseSavedFlowFile } from "./saved-flow-file";
+import type { SavedFlowFileData } from "./types";
 import {
   EXPECT_STATE_DIR,
   FLOW_DIRECTORY_NAME,
   FLOW_DESCRIPTION_CHAR_LIMIT,
   SAVED_FLOW_FORMAT_VERSION,
-} from "./constants.js";
-import { GitRepoRoot } from "./git/git.js";
+} from "./constants";
+import { GitRepoRoot } from "./git/git";
 
 const slugify = (text: string): string =>
   text
@@ -95,8 +95,8 @@ export class FlowStorage extends ServiceMap.Service<FlowStorage>()("@supervisor/
 
         const parsed = yield* Effect.try({
           try: () => parseSavedFlowFile(content),
-          catch: () => undefined,
-        }).pipe(Effect.catchTag("UnknownException", () => Effect.succeed(undefined)));
+          catch: () => ({ _tag: "FlowParseError" as const }),
+        }).pipe(Effect.catchTag("FlowParseError", () => Effect.succeed(undefined)));
         if (parsed) flows.push(parsed);
       }
 

@@ -22,8 +22,8 @@ const NOOP_CONTEXT: MouseContextValue = { subscribeClick: () => NOOP_UNSUBSCRIBE
 const MouseContext = createContext<MouseContextValue>(NOOP_CONTEXT);
 
 const MOUSE_ENABLE = "\u001b[?1003l\u001b[?1002l\u001b[?1000h\u001b[?1006h";
-// oxlint-disable-next-line no-control-regex
 const ALL_TERMINAL_SEQUENCES =
+  // oxlint-disable-next-line no-control-regex
   /\x1b\[<(\d+);(\d+);(\d+)([Mm])|\x1b\[[\d;?<>=]*[A-Za-z~]|\[<[\d;]+[Mm]|\[\d+;\d+R|\[\?[\d;]+[a-z]/g;
 
 export const MouseProvider = ({ children }: { children: React.ReactNode }) => {

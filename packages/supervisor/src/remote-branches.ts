@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { PR_LIMIT } from "./constants.js";
+import { PR_LIMIT } from "./constants";
 
 const GH_PR_FIELDS = "headRefName,author,number,state,isDraft,updatedAt";
 

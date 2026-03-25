@@ -3,7 +3,7 @@ import { NodeServices } from "@effect/platform-node";
 import { ChildProcess } from "effect/unstable/process";
 import { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner";
 import { join } from "node:path";
-import { COMMENT_DIRECTORY_PREFIX, GITHUB_TIMEOUT_MS, PR_LIMIT } from "./constants.js";
+import { COMMENT_DIRECTORY_PREFIX, GITHUB_TIMEOUT_MS, PR_LIMIT } from "./constants";
 import { FileSystem } from "effect/FileSystem";
 import {
   FindPullRequestPayload,

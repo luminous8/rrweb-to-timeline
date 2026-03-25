@@ -19,22 +19,22 @@ import {
   PROGRESS_BAR_WIDTH,
   TESTING_TIMER_UPDATE_INTERVAL_MS,
   TESTING_TOOL_TEXT_CHAR_LIMIT,
-} from "../../constants.js";
-import { useColors } from "../theme-context.js";
-import { RuledBox } from "../ui/ruled-box.js";
-import { Spinner } from "../ui/spinner.js";
-import { TextShimmer } from "../ui/text-shimmer.js";
-import { usePlanStore, Plan } from "../../stores/use-plan-store.js";
-import { usePlanExecutionStore } from "../../stores/use-plan-execution-store.js";
-import { usePreferencesStore } from "../../stores/use-preferences.js";
-import { useNavigationStore, Screen } from "../../stores/use-navigation.js";
-import { ScreenHeading } from "../ui/screen-heading.js";
+} from "../../constants";
+import { useColors } from "../theme-context";
+import { RuledBox } from "../ui/ruled-box";
+import { Spinner } from "../ui/spinner";
+import { TextShimmer } from "../ui/text-shimmer";
+import { usePlanStore, Plan } from "../../stores/use-plan-store";
+import { usePlanExecutionStore } from "../../stores/use-plan-execution-store";
+import { usePreferencesStore } from "../../stores/use-preferences";
+import { useNavigationStore, Screen } from "../../stores/use-navigation";
+import { ScreenHeading } from "../ui/screen-heading";
 import cliTruncate from "cli-truncate";
-import { formatElapsedTime } from "../../utils/format-elapsed-time.js";
-import { Image } from "../ui/image.js";
-import { ErrorMessage } from "../ui/error-message.js";
-import { createPlanFn } from "../../data/planning-atom.js";
-import { executePlanFn, screenshotPathsAtom } from "../../data/execution-atom.js";
+import { formatElapsedTime } from "../../utils/format-elapsed-time";
+import { Image } from "../ui/image";
+import { ErrorMessage } from "../ui/error-message";
+import { createPlanFn } from "../../data/planning-atom";
+import { executePlanFn, screenshotPathsAtom } from "../../data/execution-atom";
 
 interface TestingScreenProps {
   changesFor: ChangesFor;

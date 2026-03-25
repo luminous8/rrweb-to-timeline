@@ -1,4 +1,4 @@
-import type { SavedFlowFileData } from "./types.js";
+import type { SavedFlowFileData } from "./types";
 
 export const formatSavedFlowFrontmatter = (data: SavedFlowFileData): string => {
   const lines: string[] = [

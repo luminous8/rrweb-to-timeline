@@ -4,17 +4,17 @@ import { Option } from "effect";
 import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
 import { useAtom } from "@effect/atom-react";
 import type { TestReport } from "@expect/supervisor";
-import { copyToClipboard } from "../../utils/copy-to-clipboard.js";
-import { useColors } from "../theme-context.js";
-import { RuledBox } from "../ui/ruled-box.js";
-import { ScreenHeading } from "../ui/screen-heading.js";
-import { Image } from "../ui/image.js";
-import { Clickable } from "../ui/clickable.js";
-import { usePostPrComment } from "../../data/github-mutations.js";
-import { useNavigationStore, Screen } from "../../stores/use-navigation.js";
-import { usePlanStore } from "../../stores/use-plan-store.js";
-import { usePlanExecutionStore } from "../../stores/use-plan-execution-store.js";
-import { saveFlowFn } from "../../data/flow-storage-atom.js";
+import { copyToClipboard } from "../../utils/copy-to-clipboard";
+import { useColors } from "../theme-context";
+import { RuledBox } from "../ui/ruled-box";
+import { ScreenHeading } from "../ui/screen-heading";
+import { Image } from "../ui/image";
+import { Clickable } from "../ui/clickable";
+import { usePostPrComment } from "../../data/github-mutations";
+import { useNavigationStore, Screen } from "../../stores/use-navigation";
+import { usePlanStore } from "../../stores/use-plan-store";
+import { usePlanExecutionStore } from "../../stores/use-plan-execution-store";
+import { saveFlowFn } from "../../data/flow-storage-atom";
 
 interface ResultsScreenProps {
   report: TestReport;

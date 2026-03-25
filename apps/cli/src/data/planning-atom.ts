@@ -3,7 +3,7 @@ import * as Atom from "effect/unstable/reactivity/Atom";
 import { Git, Planner, TestPlanDraft, DraftId } from "@expect/supervisor";
 import { Analytics } from "@expect/shared/observability";
 import { AcpSessionUpdate, ChangesFor } from "@expect/shared/models";
-import { cliAtomRuntime } from "./runtime.js";
+import { cliAtomRuntime } from "./runtime";
 
 interface CreatePlanInput {
   readonly changesFor: ChangesFor;

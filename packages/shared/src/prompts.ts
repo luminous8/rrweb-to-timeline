@@ -1,5 +1,5 @@
 import { Match, Option } from "effect";
-import type { ChangesFor, FileStat, TestPlanStep } from "./models.js";
+import type { ChangesFor, FileStat, TestPlanStep } from "./models";
 
 const PLANNER_CHANGED_FILE_LIMIT = 12;
 const PLANNER_MAX_STEP_COUNT = 8;

@@ -14,8 +14,8 @@ import {
   FileStat,
   GitState,
 } from "@expect/shared/models";
-import { TESTED_FINGERPRINT_FILE, EXPECT_STATE_DIR } from "../constants.js";
-import { GitError, FindRepoRootError } from "./errors.js";
+import { TESTED_FINGERPRINT_FILE, EXPECT_STATE_DIR } from "../constants";
+import { GitError, FindRepoRootError } from "./errors";
 
 // ── GitRepoRoot context service ──────────────────────────────────────
 

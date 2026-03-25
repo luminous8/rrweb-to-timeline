@@ -4,7 +4,7 @@ import { ExecutedTestPlan, Executor, Git, Reporter } from "@expect/supervisor";
 import { Analytics } from "@expect/shared/observability";
 import type { AgentBackend } from "@expect/agent";
 import type { TestPlan, TestReport } from "@expect/shared/models";
-import { cliAtomRuntime } from "./runtime.js";
+import { cliAtomRuntime } from "./runtime";
 
 interface ExecutePlanInput {
   readonly testPlan: TestPlan;

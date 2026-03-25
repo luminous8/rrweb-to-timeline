@@ -1,8 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-// eslint-disable-next-line no-restricted-imports -- external Web Audio API sync
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getAudioContext, decodeAudioData } from "@/lib/sound-engine";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import type {

@@ -13,9 +13,9 @@ import {
 import { Analytics } from "@expect/shared/observability";
 import type { AgentBackend } from "@expect/agent";
 import figures from "figures";
-import { VERSION } from "../constants.js";
-import { layerCli } from "../layers.js";
-import { playSound } from "./play-sound.js";
+import { VERSION } from "../constants";
+import { layerCli } from "../layers";
+import { playSound } from "./play-sound";
 
 interface HeadlessRunOptions {
   changesFor: ChangesFor;

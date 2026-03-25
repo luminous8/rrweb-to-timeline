@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { GitState, TestContext } from "@expect/shared/models";
-import { stripMouseSequences } from "./mouse-context.js";
+import { stripMouseSequences } from "./mouse-context";
 import {
   buildLocalContextOptions,
   fetchRemoteContextOptions,
   filterContextOptions,
-} from "../utils/context-options.js";
+} from "../utils/context-options";
 
 interface UseContextPickerOptions {
   gitState: GitState | null;

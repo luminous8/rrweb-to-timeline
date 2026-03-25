@@ -5,9 +5,9 @@ import {
   type AcpSessionCreateError,
   type AcpStreamError,
   type SessionId,
-} from "./acp-client.js";
+} from "./acp-client";
 import { AcpSessionUpdate } from "@expect/shared/models";
-import { AgentStreamOptions } from "./types.js";
+import { AgentStreamOptions } from "./types";
 import { NodeServices } from "@effect/platform-node";
 
 export type AgentBackend = "claude" | "codex";

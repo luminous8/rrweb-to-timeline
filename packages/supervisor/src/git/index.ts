@@ -1,5 +1,5 @@
-export { FindRepoRootError, GitError } from "./errors.js";
-export { Git, GitRepoRoot } from "./git.js";
+export { FindRepoRootError, GitError } from "./errors";
+export { Git, GitRepoRoot } from "./git";
 export {
   AgentProvider,
   Branch,

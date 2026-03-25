@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { promptHistoryStorage } from "@expect/supervisor";
 import type { AgentBackend } from "@expect/agent";
-import { FLOW_INPUT_HISTORY_LIMIT } from "../constants.js";
+import { FLOW_INPUT_HISTORY_LIMIT } from "../constants";
 
 interface PreferencesStore {
   agentBackend: AgentBackend;

@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions.js";
+import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions";
 import figures from "figures";
 import {
   BRANCH_NAME_COLUMN_WIDTH,
@@ -8,23 +8,23 @@ import {
   BRANCH_VISIBLE_COUNT,
   COMMIT_SELECTOR_WIDTH,
   TABLE_COLUMN_GAP,
-} from "../../constants.js";
-import { useColors } from "../theme-context.js";
-import { RuledBox } from "../ui/ruled-box.js";
-import { stripMouseSequences } from "../../hooks/mouse-context.js";
-import { Clickable } from "../ui/clickable.js";
-import { SearchBar } from "../ui/search-bar.js";
+} from "../../constants";
+import { useColors } from "../theme-context";
+import { RuledBox } from "../ui/ruled-box";
+import { stripMouseSequences } from "../../hooks/mouse-context";
+import { Clickable } from "../ui/clickable";
+import { SearchBar } from "../ui/search-bar";
 import { BRANCH_FILTERS, RemoteBranch, type BranchFilter } from "@expect/shared/models";
-import { useRemoteBranches } from "../../hooks/use-remote-branches.js";
-import { Spinner } from "../ui/spinner.js";
+import { useRemoteBranches } from "../../hooks/use-remote-branches";
+import { Spinner } from "../ui/spinner";
 import cliTruncate from "cli-truncate";
-import { visualPadEnd } from "../../utils/visual-pad-end.js";
-import { useScrollableList } from "../../hooks/use-scrollable-list.js";
-import { usePlanStore } from "../../stores/use-plan-store.js";
-import { useNavigationStore, Screen } from "../../stores/use-navigation.js";
+import { visualPadEnd } from "../../utils/visual-pad-end";
+import { useScrollableList } from "../../hooks/use-scrollable-list";
+import { usePlanStore } from "../../stores/use-plan-store";
+import { useNavigationStore, Screen } from "../../stores/use-navigation";
 import { checkoutBranch } from "@expect/supervisor";
-import { queryClient } from "../../query-client.js";
-import { ScreenHeading } from "../ui/screen-heading.js";
+import { queryClient } from "../../query-client";
+import { ScreenHeading } from "../ui/screen-heading";
 
 export const PrPickerScreen = () => {
   const [columns] = useStdoutDimensions();

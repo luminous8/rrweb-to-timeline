@@ -1,7 +1,7 @@
-export { Updates } from "./updates.js";
-export { Planner, PlanningError } from "./planner.js";
-export { Executor, ExecutionError } from "./executor.js";
-export { Reporter } from "./reporter.js";
+export { Updates } from "./updates";
+export { Planner, PlanningError } from "./planner";
+export { Executor, ExecutionError } from "./executor";
+export { Reporter } from "./reporter";
 export {
   AgentProvider,
   type ChangedFile,
@@ -22,15 +22,15 @@ export {
   TestPlanStep,
   TestReport,
   type UpdateContent,
-} from "./git/index.js";
-export { FlowStorage } from "./flow-storage.js";
-export type { SavedFlowFileData, SavedFlow, SavedFlowStep } from "./types.js";
-export { checkoutBranch, getLocalBranches } from "./git.js";
-export { Github, GitHubCommandError } from "./github.js";
-export { promptHistoryStorage } from "./prompt-history.js";
+} from "./git/index";
+export { FlowStorage } from "./flow-storage";
+export type { SavedFlowFileData, SavedFlow, SavedFlowStep } from "./types";
+export { checkoutBranch, getLocalBranches } from "./git";
+export { Github, GitHubCommandError } from "./github";
+export { promptHistoryStorage } from "./prompt-history";
 export {
   categorizeChangedFiles,
   formatFileCategories,
   type ChangedFileSummary,
   type FileCategory,
-} from "./utils/categorize-changed-files.js";
+} from "./utils/categorize-changed-files";

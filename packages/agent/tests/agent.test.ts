@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
 import { Effect, Layer, Option, Stream } from "effect";
-import { Agent } from "../src/agent.js";
-import { AgentStreamOptions } from "../src/types.js";
+import { Agent } from "../src/agent";
+import { AgentStreamOptions } from "../src/types";
 import { PlatformError } from "effect/PlatformError";
-import { AcpAdapterNotFoundError, AcpConnectionInitError } from "../src/acp-client.js";
+import { AcpAdapterNotFoundError, AcpConnectionInitError } from "../src/acp-client";
 
 const TEST_LAYERS: [
   string,

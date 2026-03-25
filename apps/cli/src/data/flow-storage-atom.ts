@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import { FlowStorage } from "@expect/supervisor";
 import type { TestPlan } from "@expect/shared/models";
-import { cliAtomRuntime } from "./runtime.js";
+import { cliAtomRuntime } from "./runtime";
 
 interface SaveFlowInput {
   readonly plan: TestPlan;
