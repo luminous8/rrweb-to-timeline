@@ -25,6 +25,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Expect",
     description: "Let agents test your code in a real browser.",
+    siteName: "Expect",
+    url: "https://www.expect.dev",
     images: [
       {
         url: "/og.png",
