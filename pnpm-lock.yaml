@@ -63,6 +63,9 @@ importers:
       detect-terminal:
         specifier: ^2.0.0
         version: 2.0.0
+      effect:
+        specifier: 4.0.0-beta.35
+        version: 4.0.0-beta.35
       figures:
         specifier: ^6.1.0
         version: 6.1.0
