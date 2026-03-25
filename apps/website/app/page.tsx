@@ -1495,7 +1495,7 @@ export default function Home() {
                     $
                   </span>
                   <span className="tracking-[-0.01em] text-[color(display-p3_0.195_0.195_0.195)] dark:text-[color(display-p3_0.881_0.881_0.881)]">
-                    expect-cli@latest init
+                    expect
                   </span>
                 </div>
                 <div className="flex items-center gap-[4px]">

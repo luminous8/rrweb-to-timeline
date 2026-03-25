@@ -13,29 +13,11 @@ Let agents test your code in a real browser. One command scans your unstaged cha
 npx -y expect-cli@latest init
 ```
 
-Or install globally:
+## Add skill
 
 ```bash
-npm install -g expect-cli
+npx skills add https://github.com/millionco/expect --skill expect-cli
 ```
-
-Then run from your project root:
-
-```bash
-expect
-```
-
-## Usage with coding agents
-
-Point your agent at expect and let it test your changes:
-
-```bash
-EXPECT_BASE_URL=http://localhost:3000 expect -m "Test the signup flow" -y
-```
-
-The `-y` flag skips plan review so agents can run non-interactively.
-
-Expect auto-detects agent environments (`CLAUDECODE`, `CURSOR_AGENT`, `CODEX_CI`, `CI`, etc.) and switches to headless mode.
 
 ## Commands
 
