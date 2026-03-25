@@ -85,8 +85,21 @@ export const TestingScreen = ({ changesFor, instruction, existingPlan }: Testing
   useEffect(() => {
     setRunStartedAt(Date.now());
 
+    const runPlan = async (plan: TestPlan) => {
+      const exit = await triggerExecute({
+        testPlan: plan,
+        agentBackend,
+        onUpdate: setExecutedPlan,
+      });
+      if (exit._tag === "Success") {
+        const { executedPlan, report } = exit.value;
+        usePlanExecutionStore.getState().setExecutedPlan(executedPlan);
+        setScreen(Screen.Results({ report }));
+      }
+    };
+
     if (existingPlan) {
-      executePlan(existingPlan);
+      runPlan(existingPlan);
       return;
     }
 
@@ -117,7 +130,7 @@ export const TestingScreen = ({ changesFor, instruction, existingPlan }: Testing
           }),
         ],
       });
-      executePlan(syntheticPlan);
+      runPlan(syntheticPlan);
       return;
     }
 
@@ -144,7 +157,7 @@ export const TestingScreen = ({ changesFor, instruction, existingPlan }: Testing
       triggerCreatePlan(Atom.Interrupt);
       setPlanningStatus("");
     };
-  }, []);
+  }, [existingPlan, triggerCreatePlan, triggerExecute, agentBackend, changesFor, skipPlanning, instruction, setScreen]);
 
   const goToMain = () => {
     usePlanStore.getState().setPlan(undefined);
@@ -162,19 +175,6 @@ export const TestingScreen = ({ changesFor, instruction, existingPlan }: Testing
   }, [runStartedAt, isExecutingPlan, isPlanning]);
 
   const awaitingApproval = !existingPlan && Boolean(testPlan) && !executionResult.waiting;
-
-  async function executePlan(plan: TestPlan) {
-    const exit = await triggerExecute({
-      testPlan: plan,
-      agentBackend,
-      onUpdate: setExecutedPlan,
-    });
-    if (exit._tag === "Success") {
-      const { executedPlan, report } = exit.value;
-      usePlanExecutionStore.getState().setExecutedPlan(executedPlan);
-      setScreen(Screen.Results({ report }));
-    }
-  }
 
   useInput((input, key) => {
     const normalizedInput = input.toLowerCase();
@@ -225,11 +225,14 @@ export const TestingScreen = ({ changesFor, instruction, existingPlan }: Testing
   const planToRender = executedPlan ?? testPlan;
 
   const completedCount = planToRender?.steps
-    ? planToRender.steps.filter((step) => step.status === "passed" || step.status === "failed")
-        .length
+    ? planToRender.steps.filter(
+        (step: TestPlanStep) => step.status === "passed" || step.status === "failed",
+      ).length
     : 0;
   const totalCount = planToRender?.steps ? planToRender.steps.length : 0;
-  const currentActiveStep = planToRender?.steps?.find((step) => step.status === "active");
+  const currentActiveStep = planToRender?.steps?.find(
+    (step: TestPlanStep) => step.status === "active",
+  );
   const runStatusLabel = isPlanning
     ? "Planning"
     : currentActiveStep
@@ -271,7 +274,7 @@ export const TestingScreen = ({ changesFor, instruction, existingPlan }: Testing
         </Box>
 
         <Box flexDirection="column" marginTop={1} paddingX={1}>
-          {(planToRender?.steps ?? []).map((step, stepIndex) => {
+          {(planToRender?.steps ?? []).map((step: TestPlanStep, stepIndex: number) => {
             const stepPrefix = `Step ${stepIndex + 1}`;
             const label = Option.isSome(step.summary) ? step.summary.value : step.title;
             const stepElapsedMs = getStepElapsedMs(step);
