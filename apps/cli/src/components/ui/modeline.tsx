@@ -13,6 +13,7 @@ import { usePlanExecutionStore } from "../../stores/use-plan-execution-store";
 import { useGitState, type GitState } from "../../hooks/use-git-state";
 import { useProjectPreferencesStore } from "../../stores/use-project-preferences";
 import { usePreferencesStore } from "../../stores/use-preferences";
+import { useUpdateCheck } from "../../hooks/use-update-check";
 import { Clickable } from "./clickable";
 import { TextShimmer } from "./text-shimmer";
 
@@ -172,7 +173,20 @@ export const Modeline = () => {
   const [columns] = useStdoutDimensions();
   const { data: gitState } = useGitState();
   const screen = useNavigationStore((state) => state.screen);
-  const allSegments = useHintSegments(screen, gitState);
+  const { latestVersion, updateAvailable } = useUpdateCheck();
+  const baseSegments = useHintSegments(screen, gitState);
+
+  const allSegments = updateAvailable
+    ? [
+        ...baseSegments,
+        {
+          key: "ctrl+u",
+          label: `v${latestVersion} available`,
+          cta: true,
+          color: theme.warning,
+        },
+      ]
+    : baseSegments;
 
   const keybinds = allSegments.filter((segment) => !segment.cta);
   const rightWidth = stringWidth(getHintText(keybinds));

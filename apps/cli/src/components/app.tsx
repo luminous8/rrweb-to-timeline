@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Box, useInput } from "ink";
+import { Box, useApp, useInput } from "ink";
+import { spawnSync } from "node:child_process";
 import { MouseProvider } from "../hooks/mouse-context";
 import { PrPickerScreen } from "./screens/pr-picker-screen";
 import { CookieSyncConfirmScreen } from "./screens/cookie-sync-confirm-screen";
@@ -12,8 +13,10 @@ import { Modeline } from "./ui/modeline";
 import { useNavigationStore, Screen } from "../stores/use-navigation";
 import { usePlanExecutionStore } from "../stores/use-plan-execution-store";
 import { useGitState } from "../hooks/use-git-state";
+import { useUpdateCheck } from "../hooks/use-update-check";
 import { clearInkDisplay } from "../utils/clear-ink-display";
 import { useStdoutDimensions } from "../hooks/use-stdout-dimensions";
+import { ALT_SCREEN_OFF, NPM_PACKAGE_NAME } from "../constants";
 import { AgentBackend } from "@expect/agent";
 import { useAtomSet } from "@effect/atom-react";
 import { agentProviderAtom } from "../data/runtime";
@@ -49,6 +52,9 @@ export const App = ({ agent }: { agent: AgentBackend }) => {
     }
   };
 
+  const { updateAvailable } = useUpdateCheck();
+  const { exit } = useApp();
+
   const [, setRefreshTick] = useState(0);
   const [, rows] = useStdoutDimensions();
 
@@ -56,6 +62,14 @@ export const App = ({ agent }: { agent: AgentBackend }) => {
     if (key.ctrl && input === "l") {
       clearInkDisplay();
       setRefreshTick((previous) => previous + 1);
+      return;
+    }
+    if (key.ctrl && input === "u" && updateAvailable) {
+      exit();
+      process.stdout.write(ALT_SCREEN_OFF);
+      spawnSync("npm", ["install", "-g", `${NPM_PACKAGE_NAME}@latest`], {
+        stdio: "inherit",
+      });
       return;
     }
     if (key.escape && screen._tag !== "Main") {

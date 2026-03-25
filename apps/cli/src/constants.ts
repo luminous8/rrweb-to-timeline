@@ -36,6 +36,10 @@ export const MAX_PORT = 65535;
 export const EPHEMERAL_PORT_START = 32768;
 export const LISTENING_PORTS_REFETCH_INTERVAL_MS = 5000;
 
+export const NPM_PACKAGE_NAME = "expect-cli";
+export const UPDATE_CHECK_STALE_MS = 3_600_000;
+export const UPDATE_CHECK_TIMEOUT_MS = 5_000;
+
 export const LOCK_FILE_TO_AGENT: Record<string, string> = {
   "pnpm-lock.yaml": "pnpm",
   "pnpm-workspace.yaml": "pnpm",
