@@ -334,6 +334,7 @@ export class Git extends ServiceMap.Service<Git>()("@supervisor/Git", {
           hasBranchCommits: false,
           branchCommitCount: 0,
           fileStats: [],
+          workingTreeFileStats: [],
           fingerprint: undefined,
           savedFingerprint: undefined,
         });
@@ -365,6 +366,7 @@ export class Git extends ServiceMap.Service<Git>()("@supervisor/Git", {
         hasBranchCommits: recentCommits.length > 0,
         branchCommitCount: recentCommits.length,
         fileStats: branchFileStats,
+        workingTreeFileStats,
         fingerprint,
         savedFingerprint,
       });

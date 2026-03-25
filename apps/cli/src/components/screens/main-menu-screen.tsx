@@ -216,6 +216,46 @@ export const MainMenu = ({ gitState }: MainMenuProps) => {
         <Logo />
       </Box>
 
+      {gitState?.hasUntestedChanges && (
+        <Box
+          paddingX={1}
+          paddingY={1}
+          marginBottom={1}
+          backgroundColor={COLORS.BANNER_BG}
+          width="100%"
+          flexDirection="column"
+          gap={0}
+        >
+          {(() => {
+            const stats = gitState.workingTreeFileStats;
+            const totalAdded = stats.reduce((sum, stat) => sum + stat.added, 0);
+            const totalRemoved = stats.reduce((sum, stat) => sum + stat.removed, 0);
+            return (
+              <Box>
+                <Text color={COLORS.YELLOW} bold>
+                  {figures.warning} Untested changes detected
+                </Text>
+                {stats.length > 0 && (
+                  <>
+                    <Text color={COLORS.DIM}>
+                      {" "}
+                      {stats.length} file{stats.length === 1 ? "" : "s"}{" "}
+                    </Text>
+                    {totalAdded > 0 && <Text color={COLORS.GREEN}>+{totalAdded}</Text>}
+                    {totalAdded > 0 && totalRemoved > 0 && <Text color={COLORS.DIM}> </Text>}
+                    {totalRemoved > 0 && <Text color={COLORS.RED}>-{totalRemoved}</Text>}
+                  </>
+                )}
+              </Box>
+            );
+          })()}
+          <Text color={COLORS.DIM}>
+            Describe what to test and hit <Text color={COLORS.YELLOW}>enter</Text> to verify your
+            changes.
+          </Text>
+        </Box>
+      )}
+
       <Box flexDirection="column" width="100%">
         <Box paddingX={1}>
           {!gitState && <Spinner message="loading context" />}

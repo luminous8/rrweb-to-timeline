@@ -248,6 +248,7 @@ export class GitState extends Schema.Class<GitState>("@supervisor/GitState")({
   hasBranchCommits: Schema.Boolean,
   branchCommitCount: Schema.Number,
   fileStats: Schema.Array(FileStat),
+  workingTreeFileStats: Schema.Array(FileStat),
   fingerprint: Schema.UndefinedOr(Schema.String),
   savedFingerprint: Schema.UndefinedOr(Schema.String),
 }) {

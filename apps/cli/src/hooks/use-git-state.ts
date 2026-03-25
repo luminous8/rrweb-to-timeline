@@ -16,6 +16,7 @@ const NON_GIT_STATE = new GitState({
   hasBranchCommits: false,
   branchCommitCount: 0,
   fileStats: [],
+  workingTreeFileStats: [],
   fingerprint: undefined,
   savedFingerprint: undefined,
 });
