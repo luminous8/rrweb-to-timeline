@@ -31,8 +31,8 @@ jobs:
         run: pnpm install --frozen-lockfile
         env:
           GITHUB_ACTIONS: "1"
-      - name: Build
-        run: pnpm build
+      - name: Build browser runtime
+        run: pnpm --filter @expect/browser run build
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - name: Run E2E tests
