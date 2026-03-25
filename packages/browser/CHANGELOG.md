@@ -1,5 +1,13 @@
 # @expect/browser
 
+## 0.0.9
+
+### Patch Changes
+
+- email -> machine id & NO_TELEMETRY
+- Updated dependencies
+  - @expect/cookies@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes

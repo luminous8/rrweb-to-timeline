@@ -1,5 +1,15 @@
 # @expect/supervisor
 
+## 0.0.9
+
+### Patch Changes
+
+- email -> machine id & NO_TELEMETRY
+- Updated dependencies
+  - @expect/agent@0.0.9
+  - @expect/browser@0.0.9
+  - @expect/shared@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes

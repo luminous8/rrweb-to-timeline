@@ -1,5 +1,11 @@
 # video
 
+## 0.1.7
+
+### Patch Changes
+
+- email -> machine id & NO_TELEMETRY
+
 ## 0.1.6
 
 ### Patch Changes

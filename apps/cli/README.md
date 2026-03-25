@@ -42,6 +42,14 @@ Examples:
   $ expect-cli --target unstaged                        test unstaged changes
 ```
 
+## Disable telemetry
+
+Set `NO_TELEMTRY=1` to disable analytics events.
+
+```bash
+NO_TELEMTRY=1 expect-cli
+```
+
 ## Resources & Contributing Back
 
 Want to try it out? Check out [our demo](https://expect.dev).

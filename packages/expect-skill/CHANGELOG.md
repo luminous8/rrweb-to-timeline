@@ -1,5 +1,11 @@
 # @expect/skill
 
+## 0.0.9
+
+### Patch Changes
+
+- email -> machine id & NO_TELEMETRY
+
 ## 0.0.8
 
 ### Patch Changes
