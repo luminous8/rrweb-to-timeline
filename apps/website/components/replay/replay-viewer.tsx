@@ -306,8 +306,6 @@ export const ReplayViewer = ({
     const iframe = wrapper.querySelector("iframe");
     if (!iframe) return undefined;
 
-    cleanupIdleObserverRef.current = setupIdleSpeedObserver(cursorEl);
-
     const backdrop = backdropRef.current;
     const zoomContainer = backdrop.parentElement;
 
@@ -323,10 +321,7 @@ export const ReplayViewer = ({
 
       if (!recordedWidth || !recordedHeight || !containerWidth || !containerHeight) return;
 
-      const fitScale = Math.min(
-        containerWidth / recordedWidth,
-        containerHeight / recordedHeight,
-      );
+      const fitScale = Math.min(containerWidth / recordedWidth, containerHeight / recordedHeight);
 
       const scaledWidth = recordedWidth * fitScale;
       const scaledHeight = recordedHeight * fitScale;
@@ -360,6 +355,9 @@ export const ReplayViewer = ({
     let cleanupCursorZoom: (() => void) | undefined;
 
     const cursorEl = wrapper.querySelector(".replayer-mouse") as HTMLElement | undefined;
+    if (cursorEl) {
+      cleanupIdleObserverRef.current = setupIdleSpeedObserver(cursorEl);
+    }
     if (cursorEl && zoomContainer) {
       cleanupCursorZoom = createCursorZoom(zoomContainer, backdrop, cursorEl, {
         mapCursor: (x, y) => {
@@ -577,7 +575,9 @@ export const ReplayViewer = ({
                   onClick={() => seekTo(totalTime)}
                   className="ml-2 inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-red-500/10 px-2.5 py-1 transition-opacity hover:bg-red-500/20 active:scale-[0.97]"
                 >
-                  <span className={`size-1.5 rounded-full bg-red-500 ${isAtLiveEdge ? "animate-pulse" : ""}`} />
+                  <span
+                    className={`size-1.5 rounded-full bg-red-500 ${isAtLiveEdge ? "animate-pulse" : ""}`}
+                  />
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-red-500">
                     Live
                   </span>
