@@ -5,12 +5,7 @@ import { Effect, FileSystem, Layer, ServiceMap } from "effect";
 import { NodeServices } from "@effect/platform-node";
 import type { ChangedFile, TestCoverageReport } from "@expect/shared/models";
 import { GitRepoRoot } from "./git/git";
-import {
-  SKIP_DIRECTORIES,
-  SOURCE_EXTENSIONS,
-  TEST_FILE_CONTENT_SIZE_LIMIT_BYTES,
-  TEST_FILE_SCAN_LIMIT,
-} from "./constants";
+import { SKIP_DIRECTORIES, SOURCE_EXTENSIONS, TEST_FILE_SCAN_LIMIT } from "./constants";
 
 const IMPORT_PATTERNS = [
   /from\s+["']([^"']+)["']/g,
@@ -185,33 +180,10 @@ const buildImportGraph = (
     return edges as ReadonlyMap<string, ReadonlySet<string>>;
   });
 
-const scanTestFiles = (
-  rootDir: string,
-  allFiles: readonly string[],
-  fileSystem: FileSystem.FileSystem,
-) =>
-  Effect.gen(function* () {
-    const testFilePaths = allFiles
-      .filter((filePath) => !isInSkippedDirectory(filePath) && isTestFile(filePath))
-      .slice(0, TEST_FILE_SCAN_LIMIT);
-
-    const results = yield* Effect.forEach(
-      testFilePaths,
-      (relativePath) =>
-        Effect.gen(function* () {
-          const fullPath = path.join(rootDir, relativePath);
-          const stat = yield* fileSystem.stat(fullPath);
-          if (stat.size > TEST_FILE_CONTENT_SIZE_LIMIT_BYTES) return undefined;
-          const content = yield* fileSystem.readFileString(fullPath);
-          return { relativePath, content };
-        }).pipe(Effect.catchTag("PlatformError", () => Effect.succeed(undefined))),
-      { concurrency: 10 },
-    );
-
-    return results.filter(
-      (result): result is { relativePath: string; content: string } => result !== undefined,
-    );
-  });
+const findTestFiles = (allFiles: readonly string[]): readonly string[] =>
+  allFiles
+    .filter((filePath) => !isInSkippedDirectory(filePath) && isTestFile(filePath))
+    .slice(0, TEST_FILE_SCAN_LIMIT);
 
 export class TestCoverage extends ServiceMap.Service<TestCoverage>()("@supervisor/TestCoverage", {
   make: Effect.gen(function* () {
@@ -225,21 +197,16 @@ export class TestCoverage extends ServiceMap.Service<TestCoverage>()("@superviso
       const repoRoot = yield* GitRepoRoot;
       const allFiles = yield* listTrackedFiles(repoRoot);
 
-      const [edges, testFiles] = yield* Effect.all(
-        [
-          buildImportGraph(repoRoot, allFiles, fileSystem),
-          scanTestFiles(repoRoot, allFiles, fileSystem),
-        ],
-        { concurrency: "unbounded" },
-      );
+      const testFilePaths = findTestFiles(allFiles);
+      const edges = yield* buildImportGraph(repoRoot, allFiles, fileSystem);
 
       const coveredBy = new Map<string, string[]>();
-      for (const testFile of testFiles) {
-        const closure = getTransitiveDependencies(edges, testFile.relativePath);
-        closure.add(testFile.relativePath);
+      for (const testFilePath of testFilePaths) {
+        const closure = getTransitiveDependencies(edges, testFilePath);
+        closure.add(testFilePath);
         for (const dep of closure) {
           const existing = coveredBy.get(dep) ?? [];
-          existing.push(testFile.relativePath);
+          existing.push(testFilePath);
           coveredBy.set(dep, existing);
         }
       }
@@ -266,7 +233,7 @@ export class TestCoverage extends ServiceMap.Service<TestCoverage>()("@superviso
         coveredCount,
         totalCount,
         percent,
-        testFileCount: testFiles.length,
+        testFileCount: testFilePaths.length,
         graphEdgeCount: edges.size,
       });
 
