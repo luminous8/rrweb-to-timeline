@@ -1752,7 +1752,7 @@ export default function Home() {
         {...stagger(2)}
         className="flex w-full max-w-82.75 justify-start sm:w-82.75 sm:max-w-none"
       >
-        <Description className="mt-[11px]">
+        <Description className="mt-[11px] gap-[20px]" action={<ViewDemoButton />}>
           One command scans your unstaged changes or branch diff, then generates a test plan, and
           runs it against a live browser.
         </Description>
@@ -1762,7 +1762,7 @@ export default function Home() {
         className="flex w-full max-w-82.75 justify-start sm:w-82.75 sm:max-w-none"
       >
         <div
-          className={`${testSignifierRegular.className} mt-12 mb-[0.5px] h-fit w-full max-w-66.75 tracking-[-0.02em] text-black dark:text-[color(display-p3_0.92_0.92_0.92)] text-[18px]/6.25 sm:w-66.75 sm:max-w-none`}
+          className={`${testSignifierRegular.className} mt-10 mb-[0.5px] h-fit w-full max-w-66.75 tracking-[-0.02em] text-black dark:text-[color(display-p3_0.92_0.92_0.92)] text-[18px]/6.25 sm:w-66.75 sm:max-w-none`}
         >
           Installation
         </div>
@@ -2176,15 +2176,40 @@ function CommandRow({ command, fade }: { command: string; fade?: boolean }) {
   );
 }
 
-function Description({ children, className }: { children: React.ReactNode; className?: string }) {
+function ViewDemoButton() {
   return (
-    <div
-      className={`${restartHardRegular.className} w-76 h-14.5 [letter-spacing:0em] text-[color(display-p3_0.361_0.361_0.361)] dark:text-[color(display-p3_0.67_0.67_0.67)] whitespace-pre-wrap text-[13px]/5.25 ${className ?? ""}`}
-      style={{ fontVariationSettings: '"CONN" 50, "wght" 400, "ital" 0' }}
+    <Link
+      href="/replay?demo=true"
+      className="flex size-fit flex-col items-start gap-0 rounded-full bg-[color(display-p3_0.982_0.982_0.982)] px-3.5 py-1.5 antialiased [font-synthesis:none] [background-image:linear-gradient(180deg,color(display-p3_1_1_1/65%)_0%,color(display-p3_0.982_0.982_0.982)_82.16%,color(display-p3_1_1_1/0%)_100%)] [box-shadow:color(display-p3_1_1_1)_0px_0px_9px_inset,color(display-p3_0_0_0/16%)_0px_0px_0px_0.5px] dark:bg-[color(display-p3_0.135_0.135_0.135)] dark:[background-image:linear-gradient(180deg,color(display-p3_0.165_0.165_0.165)_0%,color(display-p3_0.12_0.12_0.12)_82.16%,color(display-p3_0.095_0.095_0.095)_100%)] dark:[box-shadow:color(display-p3_0.08_0.08_0.08)_0px_0px_9px_inset,color(display-p3_1_1_1/12%)_0px_0px_0px_0.5px]"
     >
-      {children}
-      <br />
-      <br />
+      <div
+        className={`${restartHardRegular.className} h-4.5 w-fit shrink-0 [letter-spacing:0em] text-[13px]/4.5 text-[color(display-p3_0.033_0.033_0.033)] dark:text-[color(display-p3_0.881_0.881_0.881)]`}
+        style={{ fontVariationSettings: '"CONN" 50, "wght" 400, "ital" 0' }}
+      >
+        View demo
+      </div>
+    </Link>
+  );
+}
+
+function Description({
+  children,
+  className,
+  action,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className={cn("flex flex-col items-start", action ? "gap-[11px]" : undefined, className)}>
+      <div
+        className={`${restartHardRegular.className} w-76 h-14.5 [letter-spacing:0em] text-[color(display-p3_0.361_0.361_0.361)] dark:text-[color(display-p3_0.67_0.67_0.67)] whitespace-pre-wrap text-[13px]/5.25`}
+        style={{ fontVariationSettings: '"CONN" 50, "wght" 400, "ital" 0' }}
+      >
+        {children}
+      </div>
+      {action}
     </div>
   );
 }
