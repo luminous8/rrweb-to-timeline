@@ -65,7 +65,7 @@ await generateText({ model: resumed, prompt: "Now fix the bug you found" });
 
 ## How it works
 
-Both providers implement `LanguageModelV3` with `doGenerate` (non-streaming) and `doStream` (streaming). The agent SDKs execute tools autonomously — tool calls and results are emitted as `tool-call` and `tool-result` content with `providerExecuted: true`.
+Both providers implement `LanguageModelV3` with `doGenerate` (non-streaming) and `doStream` (streaming). The agent SDKs execute tools autonomously - tool calls and results are emitted as `tool-call` and `tool-result` content with `providerExecuted: true`.
 
 | SDK event                   | AI SDK content                                   |
 | --------------------------- | ------------------------------------------------ |
