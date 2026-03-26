@@ -84,11 +84,17 @@ export class AnalyticsProvider extends ServiceMap.Service<
 export class Analytics extends ServiceMap.Service<Analytics>()("@expect/Analytics", {
   make: Effect.gen(function* () {
     const provider = yield* AnalyticsProvider;
-    const noTelemetryValue = yield* Config.option(Config.string("NO_TELEMTRY"));
-    const telemetryDisabled = Option.match(noTelemetryValue, {
-      onNone: () => false,
-      onSome: (value) => value === "1",
-    });
+    const noTelemetryValue = yield* Config.option(Config.string("NO_TELEMETRY"));
+    const noTelemetryLegacy = yield* Config.option(Config.string("NO_TELEMTRY"));
+    const telemetryDisabled =
+      Option.match(noTelemetryValue, {
+        onNone: () => false,
+        onSome: (value) => value === "1",
+      }) ||
+      Option.match(noTelemetryLegacy, {
+        onNone: () => false,
+        onSome: (value) => value === "1",
+      });
 
     const distinctId = yield* Effect.tryPromise(() => machineId()).pipe(Effect.orDie);
     const projectId = hash(process.cwd());
