@@ -1,5 +1,11 @@
 # expect-cli
 
+## 0.0.10
+
+### Patch Changes
+
+- fix
+
 ## 0.0.9
 
 ### Patch Changes
