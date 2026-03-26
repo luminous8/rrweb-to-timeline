@@ -15,24 +15,26 @@ export interface Colors {
   ERROR_BG: string;
 }
 
+const noColor = "NO_COLOR" in process.env;
+
 export const theme = {
-  primary: "whiteBright",
-  secondary: "gray",
-  accent: "white",
-  error: "red",
-  warning: "yellow",
-  success: "green",
-  info: "gray",
-  text: "white",
-  textMuted: "gray",
-  border: "gray",
-  borderActive: "white",
-  borderSubtle: "blackBright",
-  shimmerBase: "#555555",
-  shimmerHighlight: "#ffffff",
-  inputBg: "#1e1e1e",
-  bannerBg: "#332b00",
-  errorBg: "#330b0b",
+  primary: noColor ? "" : "whiteBright",
+  secondary: noColor ? "" : "gray",
+  accent: noColor ? "" : "white",
+  error: noColor ? "" : "red",
+  warning: noColor ? "" : "yellow",
+  success: noColor ? "" : "green",
+  info: noColor ? "" : "gray",
+  text: noColor ? "" : "white",
+  textMuted: noColor ? "" : "gray",
+  border: noColor ? "" : "gray",
+  borderActive: noColor ? "" : "white",
+  borderSubtle: noColor ? "" : "blackBright",
+  shimmerBase: noColor ? "" : "#555555",
+  shimmerHighlight: noColor ? "" : "#ffffff",
+  inputBg: noColor ? "" : "#1e1e1e",
+  bannerBg: noColor ? "" : "#332b00",
+  errorBg: noColor ? "" : "#330b0b",
 };
 
 export const COLORS: Colors = {

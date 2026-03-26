@@ -9,8 +9,8 @@ export const Logo = () => {
   return (
     <Box>
       <Text color={COLORS.BORDER}>
-        <Text color="red">{figures.cross}</Text>
-        <Text color="green">{figures.tick}</Text>
+        <Text color={COLORS.RED}>{figures.cross}</Text>
+        <Text color={COLORS.GREEN}>{figures.tick}</Text>
         <Text bold color={COLORS.PRIMARY}>
           {" Expect"}
         </Text>

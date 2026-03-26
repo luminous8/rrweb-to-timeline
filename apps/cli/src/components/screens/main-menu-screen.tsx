@@ -10,7 +10,7 @@ import {
   Screen,
   screenForTestingOrPortPicker,
 } from "../../stores/use-navigation";
-import { useColors } from "../theme-context";
+import { useColors, COLORS } from "../theme-context";
 import { Clickable } from "../ui/clickable";
 import { Input } from "../ui/input";
 import { InlineError } from "../ui/error-message";
@@ -37,9 +37,9 @@ const COVERAGE_THRESHOLD_MEDIUM = 40;
 const COVERAGE_BAR_WIDTH = 10;
 
 const coverageColor = (percent: number): string => {
-  if (percent >= COVERAGE_THRESHOLD_HIGH) return "green";
-  if (percent >= COVERAGE_THRESHOLD_MEDIUM) return "yellow";
-  return "#e06c50";
+  if (percent >= COVERAGE_THRESHOLD_HIGH) return COLORS.GREEN;
+  if (percent >= COVERAGE_THRESHOLD_MEDIUM) return COLORS.YELLOW;
+  return COLORS.RED;
 };
 
 const coverageBannerBg = (percent: number): string => {

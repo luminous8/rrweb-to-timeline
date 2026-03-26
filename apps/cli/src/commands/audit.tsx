@@ -6,6 +6,7 @@ import figures from "figures";
 import { isRunningInAgent } from "../utils/is-running-in-agent";
 import { isHeadless } from "../utils/is-headless";
 import { runAudit, type PackageAuditResult, type ScriptResult } from "../utils/audit";
+import { COLORS } from "../components/theme-context";
 
 interface PackageStatus {
   scripts: string[];
@@ -26,9 +27,9 @@ const AuditDisplay = ({ statusMap }: { statusMap: Map<string, PackageStatus> }) 
             {status.done && (
               <Text>
                 {status.completed.every((result) => result.passed) ? (
-                  <Text color="green">{figures.tick}</Text>
+                  <Text color={COLORS.GREEN}>{figures.tick}</Text>
                 ) : (
-                  <Text color="red">{figures.cross}</Text>
+                  <Text color={COLORS.RED}>{figures.cross}</Text>
                 )}
               </Text>
             )}
@@ -44,9 +45,9 @@ const AuditDisplay = ({ statusMap }: { statusMap: Map<string, PackageStatus> }) 
               <Text>
                 {"  "}
                 {result.passed ? (
-                  <Text color="green">{figures.tick}</Text>
+                  <Text color={COLORS.GREEN}>{figures.tick}</Text>
                 ) : (
-                  <Text color="red">{figures.cross}</Text>
+                  <Text color={COLORS.RED}>{figures.cross}</Text>
                 )}{" "}
                 {result.script}
               </Text>
@@ -90,17 +91,17 @@ const AuditSummary = ({ results }: { results: PackageAuditResult[] }) => {
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold color={totalFailed > 0 ? "red" : "green"}>
+      <Text bold color={totalFailed > 0 ? COLORS.RED : COLORS.GREEN}>
         {summary}
       </Text>
       {totalFailed > 0 && (
-        <Text color="yellow">
+        <Text color={COLORS.YELLOW}>
           Run <Text bold>expect</Text> to test your changes in a real browser and catch issues
           before they ship.
         </Text>
       )}
       {totalFailed === 0 && (
-        <Text color="green">
+        <Text color={COLORS.GREEN}>
           Looking good! Run <Text bold>expect</Text> to verify your changes work end-to-end in the
           browser.
         </Text>
