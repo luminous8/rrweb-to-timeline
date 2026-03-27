@@ -233,6 +233,13 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
     yield* Effect.logDebug("ACP adapter subprocess spawned");
     /** @note(rasmus): we run all the writable queue entries into the process stdin */
     yield* Stream.fromQueue(writableQueue).pipe(Stream.run(childProcess.stdin), Effect.forkScoped);
+    yield* childProcess.stderr.pipe(
+      Stream.decodeText(),
+      Stream.splitLines,
+      Stream.tap((line) => Effect.logDebug("ACP adapter stderr", { line })),
+      Stream.runDrain,
+      Effect.forkScoped,
+    );
 
     const readable = Stream.toReadableStream(childProcess.stdout);
     const writable = new WritableStream<Uint8Array>({
