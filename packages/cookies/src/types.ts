@@ -146,4 +146,3 @@ export const browserKeyOf = (browser: Browser): BrowserKey => {
   if (browser._tag === "FirefoxBrowser") return "firefox";
   return "safari";
 };
-
