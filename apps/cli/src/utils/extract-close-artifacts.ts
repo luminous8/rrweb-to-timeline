@@ -38,33 +38,20 @@ export const extractCloseArtifacts = (events: readonly ExecutionEvent[]): CloseA
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-  const replaySessionRaw = lines
-    .find((line) => line.startsWith(REPLAY_SESSION_PREFIX))
-    ?.replace(REPLAY_SESSION_PREFIX, "");
-  const replayPath = lines
-    .find((line) => line.startsWith(REPLAY_REPORT_PREFIX))
-    ?.replace(REPLAY_REPORT_PREFIX, "");
-  const videoPath = lines
-    .find((line) => line.startsWith(PLAYWRIGHT_VIDEO_PREFIX))
-    ?.replace(PLAYWRIGHT_VIDEO_PREFIX, "");
+  const extractValue = (prefix: string) => {
+    const raw = lines.find((line) => line.startsWith(prefix))?.replace(prefix, "").trim();
+    return raw && raw.length > 0 ? raw : undefined;
+  };
 
-  const localReplayUrl =
-    replayPath && replayPath.trim().length > 0 ? pathToFileURL(replayPath.trim()).href : undefined;
-  const videoUrl =
-    videoPath && videoPath.trim().length > 0 ? pathToFileURL(videoPath.trim()).href : undefined;
-
-  const trimmedReplayPath = replayPath?.trim();
-  const trimmedVideoPath = videoPath?.trim();
-  const trimmedReplaySessionPath = replaySessionRaw?.trim();
+  const replaySessionPath = extractValue(REPLAY_SESSION_PREFIX);
+  const replayPath = extractValue(REPLAY_REPORT_PREFIX);
+  const videoPath = extractValue(PLAYWRIGHT_VIDEO_PREFIX);
 
   return {
-    localReplayUrl,
-    videoUrl,
-    replayPath: trimmedReplayPath && trimmedReplayPath.length > 0 ? trimmedReplayPath : undefined,
-    videoPath: trimmedVideoPath && trimmedVideoPath.length > 0 ? trimmedVideoPath : undefined,
-    replaySessionPath:
-      trimmedReplaySessionPath && trimmedReplaySessionPath.length > 0
-        ? trimmedReplaySessionPath
-        : undefined,
+    localReplayUrl: replayPath ? pathToFileURL(replayPath).href : undefined,
+    videoUrl: videoPath ? pathToFileURL(videoPath).href : undefined,
+    replayPath,
+    videoPath,
+    replaySessionPath,
   };
 };

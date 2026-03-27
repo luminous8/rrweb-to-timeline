@@ -117,19 +117,25 @@ interface ReplayOptions {
   readonly onProgress?: (percent: number) => void;
 }
 
+const closeContext = (context: import("playwright").BrowserContext) =>
+  Effect.promise(() => context.close()).pipe(Effect.catchCause(() => Effect.void));
+
 const replayToVideo = Effect.fn("RrVideo.replayToVideo")(function* (
   browser: Browser,
   options: ReplayOptions,
 ) {
-  const context = yield* Effect.tryPromise({
-    try: () =>
-      browser.newContext({
-        viewport: options.scaledViewport,
-        recordVideo: { dir: options.tempVideoDir, size: options.scaledViewport },
-      }),
-    catch: (cause) =>
-      new RrVideoConvertError({ cause: `Failed to create browser context: ${String(cause)}` }),
-  });
+  const context = yield* Effect.acquireRelease(
+    Effect.tryPromise({
+      try: () =>
+        browser.newContext({
+          viewport: options.scaledViewport,
+          recordVideo: { dir: options.tempVideoDir, size: options.scaledViewport },
+        }),
+      catch: (cause) =>
+        new RrVideoConvertError({ cause: `Failed to create browser context: ${String(cause)}` }),
+    }),
+    closeContext,
+  );
 
   const page = yield* Effect.tryPromise({
     try: () => context.newPage(),
@@ -181,13 +187,9 @@ const replayToVideo = Effect.fn("RrVideo.replayToVideo")(function* (
   });
 
   const videoPath = yield* Effect.tryPromise({
-    try: async () => {
-      const recordedPath = (await page.video()?.path()) ?? "";
-      await context.close();
-      return recordedPath;
-    },
+    try: async () => (await page.video()?.path()) ?? "",
     catch: (cause) =>
-      new RrVideoConvertError({ cause: `Failed to finalize video: ${String(cause)}` }),
+      new RrVideoConvertError({ cause: `Failed to get video path: ${String(cause)}` }),
   });
 
   if (!videoPath) {
@@ -195,7 +197,7 @@ const replayToVideo = Effect.fn("RrVideo.replayToVideo")(function* (
   }
 
   return videoPath;
-});
+}, Effect.scoped);
 
 export class RrVideo extends ServiceMap.Service<RrVideo>()("@expect/browser/RrVideo", {
   make: Effect.gen(function* () {
@@ -272,9 +274,9 @@ export class RrVideo extends ServiceMap.Service<RrVideo>()("@expect/browser/RrVi
         Effect.catchTag("PlatformError", () => Effect.void),
       );
 
-      yield* fileSystem.rename(tempVideoPath, options.outputPath).pipe(
+      yield* fileSystem.copyFile(tempVideoPath, options.outputPath).pipe(
         Effect.catchTag("PlatformError", (cause) =>
-          new RrVideoConvertError({ cause: `Failed to move video: ${cause}` }).asEffect(),
+          new RrVideoConvertError({ cause: `Failed to copy video: ${cause}` }).asEffect(),
         ),
       );
 

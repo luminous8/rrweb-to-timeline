@@ -270,7 +270,9 @@ export const runHeadless = (options: HeadlessRunOptions) =>
           }
         }
 
-        const stepSummaryPath = yield* Config.option(Config.string("GITHUB_STEP_SUMMARY"));
+        const stepSummaryPath = isGitHubActions
+          ? yield* Config.option(Config.string("GITHUB_STEP_SUMMARY"))
+          : Option.none<string>();
         if (Option.isSome(stepSummaryPath)) {
           const badge = report.status === "passed" ? "**Result: PASSED**" : "**Result: FAILED**";
           const artifactLines: string[] = [];
