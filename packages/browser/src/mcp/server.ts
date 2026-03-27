@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 import { Effect, type ManagedRuntime } from "effect";
 import { evaluateRuntime } from "../utils/evaluate-runtime";
 import { McpSession } from "./mcp-session";
+import { DEFAULT_SWIPE_DURATION_MS } from "../ios/constants";
 
 const textResult = (text: string) => ({
   content: [{ type: "text" as const, text }],
@@ -48,7 +49,8 @@ export const createBrowserMcpServer = <E>(
     "open",
     {
       title: "Open URL",
-      description: "Navigate to a URL, launching a browser if needed.",
+      description:
+        "Navigate to a URL, launching a browser if needed. Set 'device' to an iOS simulator name (e.g. 'iPhone 16 Pro') to open in Safari on an iOS Simulator via Appium.",
       inputSchema: {
         url: z.string().describe("URL to navigate to"),
         headed: z.boolean().optional().describe("Show browser window"),
@@ -60,12 +62,31 @@ export const createBrowserMcpServer = <E>(
           .enum(["load", "domcontentloaded", "networkidle", "commit"])
           .optional()
           .describe("Wait strategy"),
+        device: z
+          .string()
+          .optional()
+          .describe(
+            "iOS simulator device name (e.g. 'iPhone 16 Pro'). Opens Safari on iOS Simulator instead of desktop Chromium. Requires Xcode and Appium.",
+          ),
       },
     },
-    ({ url, headed, cookies, waitUntil }) =>
+    ({ url, headed, cookies, waitUntil, device }) =>
       runMcp(
         Effect.gen(function* () {
           const session = yield* McpSession;
+
+          if (device) {
+            if (session.hasIosSession()) {
+              const ios = yield* session.requireIosSession();
+              yield* ios.client.navigate(url);
+              return textResult(`Navigated to ${url} on iOS Simulator`);
+            }
+            const result = yield* session.openIos(url, device);
+            return textResult(
+              `Opened ${url} on iOS Simulator (${result.device}, UDID: ${result.udid})`,
+            );
+          }
+
           if (session.hasSession()) {
             yield* session.navigate(url, { waitUntil });
             return textResult(`Navigated to ${url}`);
@@ -141,6 +162,13 @@ export const createBrowserMcpServer = <E>(
       runMcp(
         Effect.gen(function* () {
           const session = yield* McpSession;
+
+          if (session.hasIosSession()) {
+            const ios = yield* session.requireIosSession();
+            const base64 = yield* ios.client.screenshot();
+            return imageResult(base64);
+          }
+
           const page = yield* session.requirePage();
           const resolvedMode = mode ?? "screenshot";
 
@@ -265,6 +293,116 @@ export const createBrowserMcpServer = <E>(
           const hasMetrics = metrics.fcp || metrics.lcp || metrics.inp;
           if (!hasMetrics) return textResult("No performance metrics available yet.");
           return jsonResult(metrics);
+        }),
+      ),
+  );
+
+  server.registerTool(
+    "ios_devices",
+    {
+      title: "List iOS Devices",
+      description:
+        "List available iOS simulators and connected real devices. Use this to find device names for the 'open' tool's 'device' parameter.",
+      annotations: { readOnlyHint: true },
+      inputSchema: {},
+    },
+    () =>
+      runMcp(
+        Effect.gen(function* () {
+          const session = yield* McpSession;
+          const devices = yield* session.listIosDevices();
+          if (devices.length === 0) {
+            return textResult(
+              "No iOS devices found. Make sure Xcode is installed with iOS simulators.",
+            );
+          }
+          return jsonResult(devices);
+        }),
+      ),
+  );
+
+  server.registerTool(
+    "tap",
+    {
+      title: "Tap (iOS)",
+      description: "Perform a touch tap at the given coordinates on the iOS Simulator.",
+      inputSchema: {
+        x: z.number().describe("X coordinate to tap"),
+        y: z.number().describe("Y coordinate to tap"),
+      },
+    },
+    ({ x, y }) =>
+      runMcp(
+        Effect.gen(function* () {
+          const session = yield* McpSession;
+          const ios = yield* session.requireIosSession();
+          yield* ios.tap(x, y);
+          return textResult(`Tapped at (${x}, ${y})`);
+        }),
+      ),
+  );
+
+  server.registerTool(
+    "swipe",
+    {
+      title: "Swipe (iOS)",
+      description:
+        "Perform a swipe gesture on the iOS Simulator from start coordinates to end coordinates.",
+      inputSchema: {
+        startX: z.number().describe("Starting X coordinate"),
+        startY: z.number().describe("Starting Y coordinate"),
+        endX: z.number().describe("Ending X coordinate"),
+        endY: z.number().describe("Ending Y coordinate"),
+        duration: z.number().optional().describe("Swipe duration in milliseconds (default: 300)"),
+      },
+    },
+    ({ startX, startY, endX, endY, duration }) =>
+      runMcp(
+        Effect.gen(function* () {
+          const session = yield* McpSession;
+          const ios = yield* session.requireIosSession();
+          yield* ios.swipe(startX, startY, endX, endY, duration ?? DEFAULT_SWIPE_DURATION_MS);
+          return textResult(`Swiped from (${startX}, ${startY}) to (${endX}, ${endY})`);
+        }),
+      ),
+  );
+
+  server.registerTool(
+    "ios_execute",
+    {
+      title: "Execute JavaScript (iOS)",
+      description:
+        "Execute JavaScript in the Safari context on the iOS Simulator. Returns the result as JSON.",
+      inputSchema: {
+        script: z.string().describe("JavaScript code to execute in Safari"),
+      },
+    },
+    ({ script }) =>
+      runMcp(
+        Effect.gen(function* () {
+          const session = yield* McpSession;
+          const ios = yield* session.requireIosSession();
+          const result = yield* ios.client.executeScript(script);
+          if (result === undefined) return textResult("OK");
+          return jsonResult(result);
+        }),
+      ),
+  );
+
+  server.registerTool(
+    "ios_source",
+    {
+      title: "Page Source (iOS)",
+      description: "Get the HTML page source from Safari on the iOS Simulator.",
+      annotations: { readOnlyHint: true },
+      inputSchema: {},
+    },
+    () =>
+      runMcp(
+        Effect.gen(function* () {
+          const session = yield* McpSession;
+          const ios = yield* session.requireIosSession();
+          return textResult(yield* ios.client.getPageSource());
         }),
       ),
   );

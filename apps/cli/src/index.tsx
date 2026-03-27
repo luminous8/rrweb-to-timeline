@@ -3,7 +3,7 @@ import { Command } from "commander";
 import { render } from "ink";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { App } from "./components/app";
-import { ALT_SCREEN_OFF, ALT_SCREEN_ON, VERSION } from "./constants";
+import { ALT_SCREEN_OFF, ALT_SCREEN_ON, CI_EXECUTION_TIMEOUT_MS, VERSION } from "./constants";
 import { ChangesFor, Git } from "@expect/supervisor";
 import { runHeadless } from "./utils/run-test";
 import { runInit } from "./commands/init";
@@ -37,6 +37,8 @@ interface CommanderOpts {
   headed?: boolean;
   noCookies?: boolean;
   replayHost?: string;
+  ci?: boolean;
+  timeout?: number;
 }
 
 const program = new Command()
@@ -51,6 +53,8 @@ const program = new Command()
   .option("--verbose", "enable verbose logging")
   .option("--headed", "show a visible browser window during tests")
   .option("--no-cookies", "skip system browser cookie extraction")
+  .option("--ci", "force CI mode: headless, no cookies, auto-yes, 30-minute timeout")
+  .option("--timeout <ms>", "execution timeout in milliseconds", parseInt)
   .option("--replay-host <url>", "website host for live replay viewer", "https://expect.dev")
   .addHelpText(
     "after",
@@ -131,13 +135,22 @@ const seedStores = (opts: CommanderOpts, changesFor: ChangesFor) => {
 };
 
 const runHeadlessForTarget = async (target: Target, opts: CommanderOpts) => {
+  const ciMode = opts.ci || isRunningInAgent() || isHeadless();
+  const timeoutMs = opts.timeout
+    ? Option.some(opts.timeout)
+    : ciMode
+      ? Option.some(CI_EXECUTION_TIMEOUT_MS)
+      : Option.none();
+
   const { changesFor } = await resolveChangesFor(target);
   return runHeadless({
     changesFor,
     instruction: opts.message ?? DEFAULT_INSTRUCTION,
     agent: opts.agent ?? "claude",
     verbose: opts.verbose ?? false,
-    headed: opts.headed ?? false,
+    headed: ciMode ? false : (opts.headed ?? false),
+    ci: ciMode,
+    timeoutMs,
   });
 };
 
@@ -170,7 +183,7 @@ program.action(async () => {
     program.error(`Unknown target: ${target}. Use ${TARGETS.join(", ")}.`);
   }
 
-  if (isRunningInAgent() || isHeadless()) return runHeadlessForTarget(target, opts);
+  if (opts.ci || isRunningInAgent() || isHeadless()) return runHeadlessForTarget(target, opts);
 
   const hasDirectOptions = Boolean(opts.message || opts.flow || opts.yes);
 
