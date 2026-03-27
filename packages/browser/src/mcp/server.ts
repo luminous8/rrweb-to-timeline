@@ -5,6 +5,7 @@ import { Effect, type ManagedRuntime } from "effect";
 import { evaluateRuntime } from "../utils/evaluate-runtime";
 import { McpSession } from "./mcp-session";
 import { DEFAULT_SWIPE_DURATION_MS } from "../ios/constants";
+import { autoDiscoverCdp } from "../cdp-discovery";
 
 const textResult = (text: string) => ({
   content: [{ type: "text" as const, text }],
@@ -50,7 +51,7 @@ export const createBrowserMcpServer = <E>(
     {
       title: "Open URL",
       description:
-        "Navigate to a URL, launching a browser if needed. Set 'device' to an iOS simulator name (e.g. 'iPhone 16 Pro') to open in Safari on an iOS Simulator via Appium.",
+        "Navigate to a URL, launching a browser if needed. Set 'device' to an iOS simulator name (e.g. 'iPhone 16 Pro') to open in Safari on an iOS Simulator via Appium. Set 'cdp' to a WebSocket URL (e.g. 'ws://localhost:9222/devtools/browser/...') to connect to an already-running Chrome via CDP instead of launching a new browser.",
       inputSchema: {
         url: z.string().describe("URL to navigate to"),
         headed: z.boolean().optional().describe("Show browser window"),
@@ -68,9 +69,15 @@ export const createBrowserMcpServer = <E>(
           .describe(
             "iOS simulator device name (e.g. 'iPhone 16 Pro'). Opens Safari on iOS Simulator instead of desktop Chromium. Requires Xcode and Appium.",
           ),
+        cdp: z
+          .string()
+          .optional()
+          .describe(
+            "CDP WebSocket endpoint URL to connect to an existing Chrome instance (e.g. 'ws://localhost:9222/devtools/browser/...'). Use 'auto' to auto-discover a running Chrome.",
+          ),
       },
     },
-    ({ url, headed, cookies, waitUntil, device }) =>
+    ({ url, headed, cookies, waitUntil, device, cdp }) =>
       runMcp(
         Effect.gen(function* () {
           const session = yield* McpSession;
@@ -91,9 +98,19 @@ export const createBrowserMcpServer = <E>(
             yield* session.navigate(url, { waitUntil });
             return textResult(`Navigated to ${url}`);
           }
-          const result = yield* session.open(url, { headed, cookies, waitUntil });
+
+          let cdpUrl: string | undefined;
+          if (cdp === "auto") {
+            cdpUrl = yield* autoDiscoverCdp();
+            yield* Effect.logInfo("Auto-discovered CDP endpoint", { cdpUrl });
+          } else if (cdp) {
+            cdpUrl = cdp;
+          }
+
+          const result = yield* session.open(url, { headed, cookies, waitUntil, cdpUrl });
+          const cdpSuffix = cdpUrl ? ` (connected via CDP: ${cdpUrl})` : "";
           return textResult(
-            `Opened ${url}` +
+            `Opened ${url}${cdpSuffix}` +
               (result.injectedCookieCount > 0
                 ? ` (${result.injectedCookieCount} cookies synced from local browser)`
                 : ""),

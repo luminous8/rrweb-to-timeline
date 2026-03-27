@@ -17,7 +17,12 @@ import {
   REF_PREFIX,
   SNAPSHOT_TIMEOUT_MS,
 } from "./constants";
-import { BrowserLaunchError, NavigationError, SnapshotTimeoutError } from "./errors";
+import {
+  BrowserLaunchError,
+  CdpConnectionError,
+  NavigationError,
+  SnapshotTimeoutError,
+} from "./errors";
 import { toActionError } from "./utils/action-error";
 import { compactTree } from "./utils/compact-tree";
 import { createLocator } from "./utils/create-locator";
@@ -183,17 +188,27 @@ export class Browser extends ServiceMap.Service<Browser>()("@browser/Browser", {
       url: string | undefined,
       options: CreatePageOptions = {},
     ) {
-      yield* Effect.annotateCurrentSpan({ url: url ?? "about:blank" });
+      yield* Effect.annotateCurrentSpan({ url: url ?? "about:blank", cdp: Boolean(options.cdpUrl) });
 
-      const browser = yield* Effect.tryPromise({
-        try: () =>
-          chromium.launch({
-            headless: !options.headed,
-            executablePath: options.executablePath,
-            args: options.headed ? [] : HEADLESS_CHROMIUM_ARGS,
-          }),
-        catch: toBrowserLaunchError,
-      });
+      const cdpEndpoint = options.cdpUrl;
+      const browser = cdpEndpoint
+        ? yield* Effect.tryPromise({
+            try: () => chromium.connectOverCDP(cdpEndpoint),
+            catch: (cause) =>
+              new CdpConnectionError({
+                endpointUrl: cdpEndpoint,
+                cause: cause instanceof Error ? cause.message : String(cause),
+              }),
+          })
+        : yield* Effect.tryPromise({
+            try: () =>
+              chromium.launch({
+                headless: !options.headed,
+                executablePath: options.executablePath,
+                args: options.headed ? [] : HEADLESS_CHROMIUM_ARGS,
+              }),
+            catch: toBrowserLaunchError,
+          });
 
       const setupPage = Effect.gen(function* () {
         const defaultBrowserContext =
@@ -217,17 +232,34 @@ export class Browser extends ServiceMap.Service<Browser>()("@browser/Browser", {
           };
         }
 
-        const context = yield* Effect.tryPromise({
-          try: () => browser.newContext(contextOptions),
-          catch: toBrowserLaunchError,
-        });
+        const isCdpConnected = Boolean(cdpEndpoint);
+        const existingContexts = isCdpConnected ? browser.contexts() : [];
+        const context =
+          existingContexts.length > 0
+            ? existingContexts[0]!
+            : yield* Effect.tryPromise({
+                try: () => browser.newContext(contextOptions),
+                catch: toBrowserLaunchError,
+              });
 
         yield* Effect.tryPromise({
           try: () => context.addInitScript(RUNTIME_SCRIPT),
           catch: toBrowserLaunchError,
         });
 
-        if (options.cookies) {
+        if (isCdpConnected && existingContexts.length > 0) {
+          const existingPages = context.pages();
+          for (const existingPage of existingPages) {
+            yield* Effect.tryPromise({
+              try: () => existingPage.evaluate(RUNTIME_SCRIPT),
+              catch: toBrowserLaunchError,
+            }).pipe(
+              Effect.catchTag("BrowserLaunchError", () => Effect.void),
+            );
+          }
+        }
+
+        if (options.cookies && !isCdpConnected) {
           const cookies = Array.isArray(options.cookies)
             ? options.cookies
             : yield* extractDefaultBrowserCookies(
@@ -240,10 +272,14 @@ export class Browser extends ServiceMap.Service<Browser>()("@browser/Browser", {
           });
         }
 
-        const page = yield* Effect.tryPromise({
-          try: () => context.newPage(),
-          catch: toBrowserLaunchError,
-        });
+        const existingPages = context.pages();
+        const page =
+          isCdpConnected && existingPages.length > 0
+            ? existingPages[0]!
+            : yield* Effect.tryPromise({
+                try: () => context.newPage(),
+                catch: toBrowserLaunchError,
+              });
 
         if (url) {
           yield* Effect.tryPromise({
@@ -260,11 +296,12 @@ export class Browser extends ServiceMap.Service<Browser>()("@browser/Browser", {
       });
 
       return yield* setupPage.pipe(
-        Effect.tapError(() =>
-          Effect.tryPromise(() => browser.close()).pipe(
+        Effect.tapError(() => {
+          if (cdpEndpoint) return Effect.void;
+          return Effect.tryPromise(() => browser.close()).pipe(
             Effect.catchTag("UnknownError", () => Effect.void),
-          ),
-        ),
+          );
+        }),
       );
     });
 

@@ -26,6 +26,7 @@ import {
   EXPECT_LIVE_VIEW_URL_ENV_NAME,
   EXPECT_COOKIE_BROWSERS_ENV_NAME,
   EXPECT_REPLAY_OUTPUT_ENV_NAME,
+  EXPECT_CDP_URL_ENV_NAME,
 } from "./constants";
 import { McpSessionNotOpenError } from "./errors";
 import { startLiveViewServer, type LiveViewHandle } from "./live-view-server";
@@ -68,6 +69,7 @@ export interface OpenOptions {
   headed?: boolean;
   cookies?: boolean;
   waitUntil?: "load" | "domcontentloaded" | "networkidle" | "commit";
+  cdpUrl?: string;
 }
 
 export interface OpenResult {
@@ -127,6 +129,8 @@ export class McpSession extends ServiceMap.Service<McpSession>()("@browser/McpSe
     const cookieBrowsersConfig = yield* Config.option(
       Config.string(EXPECT_COOKIE_BROWSERS_ENV_NAME),
     );
+    const cdpUrlConfig = yield* Config.option(Config.string(EXPECT_CDP_URL_ENV_NAME));
+    const defaultCdpUrl = Option.getOrUndefined(cdpUrlConfig);
     const cookieBrowserKeys = Option.match(cookieBrowsersConfig, {
       onNone: () => [] as string[],
       onSome: (value) => value.split(",").filter(Boolean),
@@ -213,6 +217,7 @@ export class McpSession extends ServiceMap.Service<McpSession>()("@browser/McpSe
         cookies: cookiesOption,
         waitUntil: options.waitUntil,
         videoOutputDir,
+        cdpUrl: options.cdpUrl ?? defaultCdpUrl,
       });
 
       const sessionData: BrowserSessionData = {

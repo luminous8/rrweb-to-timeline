@@ -99,6 +99,23 @@ export class SessionLoadError extends Schema.ErrorClass<SessionLoadError>("Sessi
   message = `Failed to load session from ${this.path}: ${this.cause}`;
 }
 
+export class CdpDiscoveryError extends Schema.ErrorClass<CdpDiscoveryError>("CdpDiscoveryError")({
+  _tag: Schema.tag("CdpDiscoveryError"),
+  cause: Schema.String,
+}) {
+  message = `CDP discovery failed: ${this.cause}`;
+}
+
+export class CdpConnectionError extends Schema.ErrorClass<CdpConnectionError>(
+  "CdpConnectionError",
+)({
+  _tag: Schema.tag("CdpConnectionError"),
+  endpointUrl: Schema.String,
+  cause: Schema.String,
+}) {
+  message = `Failed to connect to CDP endpoint ${this.endpointUrl}: ${this.cause}`;
+}
+
 export type ActionError =
   | RefAmbiguousError
   | RefBlockedError

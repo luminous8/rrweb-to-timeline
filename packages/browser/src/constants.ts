@@ -53,3 +53,7 @@ export const RRWEB_CHECKOUT_INTERVAL_MS = 10_000;
 
 export const REPLAY_PLAYER_WIDTH_PX = 960;
 export const REPLAY_PLAYER_HEIGHT_PX = 540;
+
+export const CDP_DISCOVERY_TIMEOUT_MS = 2_000;
+export const CDP_PORT_PROBE_TIMEOUT_MS = 500;
+export const CDP_COMMON_PORTS = [9222, 9229] as const;

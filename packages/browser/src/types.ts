@@ -47,6 +47,7 @@ export interface CreatePageOptions {
   cookies?: boolean | Cookie[];
   waitUntil?: "load" | "domcontentloaded" | "networkidle" | "commit";
   videoOutputDir?: string;
+  cdpUrl?: string;
 }
 
 export interface AnnotatedScreenshotOptions extends SnapshotOptions {
