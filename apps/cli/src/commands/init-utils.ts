@@ -1,4 +1,4 @@
-import { exec } from "node:child_process";
+import { spawn } from "node:child_process";
 import { isRunningInAgent } from "../utils/is-running-in-agent";
 import { isHeadless } from "../utils/is-headless";
 
@@ -32,8 +32,15 @@ const INSTALL_TIMEOUT_MS = 10_000;
 
 export const tryRun = (command: string): Promise<boolean> =>
   new Promise((resolve) => {
-    const child = exec(command, { timeout: INSTALL_TIMEOUT_MS }, (error) => {
-      resolve(Boolean(!error));
+    const child = spawn(command, {
+      shell: true,
+      stdio: "ignore",
+      timeout: INSTALL_TIMEOUT_MS,
     });
-    child.stdin?.end();
+    child.on("close", (code) => {
+      resolve(code === 0);
+    });
+    child.on("error", () => {
+      resolve(false);
+    });
   });
