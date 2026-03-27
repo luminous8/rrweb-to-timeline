@@ -1,5 +1,17 @@
 # video
 
+## 0.1.12
+
+### Patch Changes
+
+- fix
+
+## 0.1.11
+
+### Patch Changes
+
+- fix
+
 ## 0.1.10
 
 ### Patch Changes
