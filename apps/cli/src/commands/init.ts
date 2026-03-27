@@ -1,4 +1,3 @@
-import { exec } from "node:child_process";
 import { detectAvailableAgents } from "@expect/agent";
 import figures from "figures";
 import pc from "picocolors";
@@ -7,10 +6,16 @@ import { highlighter } from "../utils/highlighter";
 import { logger } from "../utils/logger";
 import { prompts } from "../utils/prompts";
 import { spinner } from "../utils/spinner";
-import { isRunningInAgent } from "../utils/is-running-in-agent";
-import { isHeadless } from "../utils/is-headless";
+import { runAddSkill } from "./add-skill";
+import { runAddGithubAction } from "./add-github-action";
+import {
+  type PackageManager,
+  detectNonInteractive,
+  detectPackageManager,
+  tryRun,
+} from "./init-utils";
 
-type PackageManager = "npm" | "pnpm" | "yarn" | "bun" | "vp";
+export { detectAvailableAgents };
 
 const GLOBAL_INSTALL_COMMANDS: Record<PackageManager, string> = {
   npm: "npm install -g expect-cli@latest",
@@ -19,42 +24,6 @@ const GLOBAL_INSTALL_COMMANDS: Record<PackageManager, string> = {
   bun: "bun add -g expect-cli@latest",
   vp: "vp install -g expect-cli@latest",
 };
-
-const SKILL_COMMANDS: Record<PackageManager, string> = {
-  npm: "npx -y skills add https://github.com/millionco/expect --skill expect -y",
-  pnpm: "pnpm dlx skills add https://github.com/millionco/expect --skill expect -y",
-  yarn: "npx -y skills add https://github.com/millionco/expect --skill expect -y",
-  bun: "bunx skills add https://github.com/millionco/expect --skill expect -y",
-  vp: "npx -y skills add https://github.com/millionco/expect --skill expect -y",
-};
-
-export { detectAvailableAgents };
-
-export const detectPackageManager = (): PackageManager => {
-  if (process.env.VITE_PLUS_CLI_BIN) return "vp";
-
-  const userAgent = process.env.npm_config_user_agent;
-  if (userAgent) {
-    if (userAgent.startsWith("pnpm")) return "pnpm";
-    if (userAgent.startsWith("yarn")) return "yarn";
-    if (userAgent.startsWith("bun")) return "bun";
-    if (userAgent.startsWith("npm")) return "npm";
-  }
-  return "npm";
-};
-
-const detectNonInteractive = (yesFlag: boolean): boolean =>
-  yesFlag || isRunningInAgent() || isHeadless();
-
-const INSTALL_TIMEOUT_MS = 10_000;
-
-const tryRun = (command: string): Promise<boolean> =>
-  new Promise((resolve) => {
-    const child = exec(command, { timeout: INSTALL_TIMEOUT_MS }, (error) => {
-      resolve(Boolean(!error));
-    });
-    child.stdin?.end();
-  });
 
 interface InitOptions {
   yes?: boolean;
@@ -105,29 +74,24 @@ export const runInit = async (options: InitOptions = {}) => {
 
   logger.break();
 
-  let installSkill = nonInteractive;
+  await runAddSkill({ yes: options.yes });
+
+  logger.break();
+
+  let setupGithubAction = nonInteractive;
 
   if (!nonInteractive) {
     const response = await prompts({
       type: "confirm",
-      name: "installSkill",
-      message: `Install the ${highlighter.info("expect")} skill for your coding agent?`,
+      name: "setupGithubAction",
+      message: `Set up ${highlighter.info("GitHub Actions")} for CI testing?`,
       initial: true,
     });
-    installSkill = response.installSkill;
+    setupGithubAction = response.setupGithubAction;
   }
 
-  if (installSkill) {
-    const skillCommand = SKILL_COMMANDS[packageManager];
-    const skillSpinner = spinner("Installing skill...").start();
-    const skillSuccess = await tryRun(skillCommand);
-
-    if (skillSuccess) {
-      skillSpinner.succeed("Skill installed.");
-    } else {
-      skillSpinner.fail("Failed to install skill.");
-      logger.dim(`  Run manually: ${highlighter.info(skillCommand)}`);
-    }
+  if (setupGithubAction) {
+    await runAddGithubAction({ yes: options.yes });
   }
 
   logger.break();

@@ -7,6 +7,8 @@ import { ALT_SCREEN_OFF, ALT_SCREEN_ON, CI_EXECUTION_TIMEOUT_MS, VERSION } from 
 import { ChangesFor, Git } from "@expect/supervisor";
 import { runHeadless } from "./utils/run-test";
 import { runInit } from "./commands/init";
+import { runAddGithubAction } from "./commands/add-github-action";
+import { runAddSkill } from "./commands/add-skill";
 import { runAuditCommand } from "./commands/audit";
 import { isRunningInAgent } from "./utils/is-running-in-agent";
 import { isHeadless } from "./utils/is-headless";
@@ -166,6 +168,24 @@ program
   .option("-y, --yes", "skip confirmation prompts")
   .action(async (opts: { yes?: boolean }) => {
     await runInit(opts);
+  });
+
+const addCommand = program.command("add").description("add integrations to your project");
+
+addCommand
+  .command("github-action")
+  .description("generate a GitHub Actions workflow for CI testing")
+  .option("-y, --yes", "use defaults without prompting")
+  .action(async (opts: { yes?: boolean }) => {
+    await runAddGithubAction(opts);
+  });
+
+addCommand
+  .command("skill")
+  .description("install the expect skill for your coding agent")
+  .option("-y, --yes", "skip confirmation prompts")
+  .action(async (opts: { yes?: boolean }) => {
+    await runAddSkill(opts);
   });
 
 program
