@@ -215,6 +215,7 @@ export const AgentProvider = Schema.Literals([
   "copilot",
   "gemini",
   "cursor",
+  "opencode",
 ] as const);
 export type AgentProvider = typeof AgentProvider.Type;
 
@@ -224,6 +225,7 @@ export const AGENT_PROVIDER_DISPLAY_NAMES: Record<AgentProvider, string> = {
   copilot: "GitHub Copilot",
   gemini: "Gemini",
   cursor: "Cursor",
+  opencode: "OpenCode",
 };
 const TOOL_CALL_DISPLAY_TEXT_CHAR_LIMIT = 80;
 

@@ -30,6 +30,7 @@ export const SessionId = Schema.String.pipe(Schema.brand("SessionId"));
 export type SessionId = typeof SessionId.Type;
 
 const ACP_STREAM_INACTIVITY_TIMEOUT_MS = 3 * 60 * 1000;
+const ACP_AUTH_CHECK_TIMEOUT = "3 seconds" as const;
 
 export class AcpStreamError extends Schema.ErrorClass<AcpStreamError>("AcpStreamError")({
   _tag: Schema.tag("AcpStreamError"),
@@ -72,6 +73,11 @@ export class AcpProviderNotInstalledError extends Schema.ErrorClass<AcpProviderN
       () =>
         "Cursor agent CLI is not installed. Install it from https://cursor.com/docs/cli/acp, or use Claude Code with `expect -a claude`.",
     ),
+    Match.when(
+      "opencode",
+      () =>
+        "OpenCode is not installed. Install it with `npm install -g opencode-ai`, or use Claude Code with `expect -a claude`.",
+    ),
     Match.orElse(
       () => "Your coding agent CLI is not installed. Please install it and then re-run expect.",
     ),
@@ -91,6 +97,10 @@ export class AcpProviderUnauthenticatedError extends Schema.ErrorClass<AcpProvid
     Match.when("copilot", () => "Please log in using `gh auth login`, and then re-run expect."),
     Match.when("gemini", () => "Please log in using `gemini auth login`, and then re-run expect."),
     Match.when("cursor", () => "Please log in using `agent login`, and then re-run expect."),
+    Match.when(
+      "opencode",
+      () => "Please log in using `opencode auth login`, and then re-run expect.",
+    ),
     Match.orElse(() => "Please sign in to your coding agent, and then re-run expect."),
   );
 }
@@ -338,7 +348,7 @@ export class AcpAdapter extends ServiceMap.Service<
       yield* ChildProcess.make("agent", ["--version"]).pipe(
         spawner.string,
         Effect.timeoutOrElse({
-          duration: "3 seconds",
+          duration: ACP_AUTH_CHECK_TIMEOUT,
           onTimeout: () => new AcpProviderNotInstalledError({ provider: "cursor" }).asEffect(),
         }),
         Effect.catchReason("PlatformError", "NotFound", () =>
@@ -357,7 +367,7 @@ export class AcpAdapter extends ServiceMap.Service<
             : new AcpProviderUnauthenticatedError({ provider: "cursor" }).asEffect(),
         ),
         Effect.timeoutOrElse({
-          duration: "3 seconds",
+          duration: ACP_AUTH_CHECK_TIMEOUT,
           onTimeout: () => new AcpProviderUnauthenticatedError({ provider: "cursor" }).asEffect(),
         }),
         Effect.catchTag("PlatformError", () =>
@@ -368,6 +378,49 @@ export class AcpAdapter extends ServiceMap.Service<
       return AcpAdapter.of({
         provider: "cursor",
         bin: "agent",
+        args: ["acp"],
+        env: {},
+      });
+    }),
+  ).pipe(Layer.provide(NodeServices.layer));
+
+  static layerOpencode = Layer.effect(AcpAdapter)(
+    Effect.gen(function* () {
+      const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
+
+      yield* ChildProcess.make("opencode", ["--version"]).pipe(
+        spawner.string,
+        Effect.timeoutOrElse({
+          duration: ACP_AUTH_CHECK_TIMEOUT,
+          onTimeout: () => new AcpProviderNotInstalledError({ provider: "opencode" }).asEffect(),
+        }),
+        Effect.catchReason("PlatformError", "NotFound", () =>
+          new AcpProviderNotInstalledError({ provider: "opencode" }).asEffect(),
+        ),
+        Effect.catchTag("PlatformError", () =>
+          new AcpProviderNotInstalledError({ provider: "opencode" }).asEffect(),
+        ),
+      );
+
+      yield* ChildProcess.make("opencode", ["auth", "list"]).pipe(
+        spawner.string,
+        Effect.flatMap((output) =>
+          output.trim().length > 0
+            ? Effect.void
+            : new AcpProviderUnauthenticatedError({ provider: "opencode" }).asEffect(),
+        ),
+        Effect.timeoutOrElse({
+          duration: ACP_AUTH_CHECK_TIMEOUT,
+          onTimeout: () => new AcpProviderUnauthenticatedError({ provider: "opencode" }).asEffect(),
+        }),
+        Effect.catchTag("PlatformError", () =>
+          new AcpProviderUnauthenticatedError({ provider: "opencode" }).asEffect(),
+        ),
+      );
+
+      return AcpAdapter.of({
+        provider: "opencode",
+        bin: "opencode",
         args: ["acp"],
         env: {},
       });
@@ -593,4 +646,5 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
   static layerCopilot = this.layer.pipe(Layer.provide(AcpAdapter.layerCopilot));
   static layerGemini = this.layer.pipe(Layer.provide(AcpAdapter.layerGemini));
   static layerCursor = this.layer.pipe(Layer.provide(AcpAdapter.layerCursor));
+  static layerOpencode = this.layer.pipe(Layer.provide(AcpAdapter.layerOpencode));
 }

@@ -45,7 +45,7 @@ export const runInit = async (options: InitOptions = {}) => {
 
   if (availableAgents.length === 0) {
     logger.error(
-      "No supported coding agent found. expect requires one of: Claude Code, Codex, GitHub Copilot, Gemini, or Cursor.",
+      "No supported coding agent found. expect requires one of: Claude Code, Codex, GitHub Copilot, Gemini, Cursor, or OpenCode.",
     );
     logger.break();
     logger.log(`  Install one to get started:`);
@@ -63,6 +63,9 @@ export const runInit = async (options: InitOptions = {}) => {
     );
     logger.log(
       `    ${highlighter.info("Cursor")}           ${highlighter.dim("https://cursor.com")}`,
+    );
+    logger.log(
+      `    ${highlighter.info("OpenCode")}         ${highlighter.dim("npm install -g opencode-ai")}`,
     );
     logger.break();
     process.exit(1);

@@ -26,7 +26,7 @@ Options:
   -m, --message <instruction>   natural language instruction for what to test
   -f, --flow <slug>             reuse a saved flow by slug
   -y, --yes                     skip plan review, run immediately
-  -a, --agent <provider>        agent provider to use (claude, codex, copilot, gemini, or cursor)
+  -a, --agent <provider>        agent provider to use (claude, codex, copilot, gemini, cursor, or opencode)
   -t, --target <target>         what to test: unstaged, branch, or changes (default: changes)
   --verbose                     enable verbose logging
   -v, --version                 print version
@@ -61,13 +61,14 @@ Pass `-y` to skip plan review and run headlessly in CI. Exits `0` on success, `1
 
 Expect works with the following coding agents via the [Agent Client Protocol (ACP)](https://agentclientprotocol.org):
 
-| Agent | Flag | Install |
-|-------|------|---------|
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `-a claude` | `npm install -g @anthropic-ai/claude-code` |
-| [Codex](https://github.com/openai/codex) | `-a codex` | `npm install -g @openai/codex` |
-| [GitHub Copilot](https://github.com/github/copilot) | `-a copilot` | `npm install -g @github/copilot` |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `-a gemini` | `npm install -g @google/gemini-cli` |
-| [Cursor](https://cursor.com) | `-a cursor` | [cursor.com](https://cursor.com) |
+| Agent                                                         | Flag          | Install                                    |
+| ------------------------------------------------------------- | ------------- | ------------------------------------------ |
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `-a claude`   | `npm install -g @anthropic-ai/claude-code` |
+| [Codex](https://github.com/openai/codex)                      | `-a codex`    | `npm install -g @openai/codex`             |
+| [GitHub Copilot](https://github.com/github/copilot)           | `-a copilot`  | `npm install -g @github/copilot`           |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli)     | `-a gemini`   | `npm install -g @google/gemini-cli`        |
+| [Cursor](https://cursor.com)                                  | `-a cursor`   | [cursor.com](https://cursor.com)           |
+| [OpenCode](https://github.com/opencode-ai/opencode)           | `-a opencode` | `npm install -g opencode-ai`               |
 
 Expect auto-detects which agents are installed on your `PATH`. If multiple are available, it defaults to the first one found. Use `-a <provider>` to pick a specific agent.
 
