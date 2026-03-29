@@ -51,7 +51,7 @@ type PackageJson = typeof PackageJsonSchema.Type;
 const hasDependency = (packageJson: PackageJson, name: string): boolean =>
   Boolean(
     (packageJson.dependencies && name in packageJson.dependencies) ||
-      (packageJson.devDependencies && name in packageJson.devDependencies),
+    (packageJson.devDependencies && name in packageJson.devDependencies),
   );
 
 const detectFramework = (packageJson: PackageJson | undefined): Framework => {
@@ -64,9 +64,7 @@ const detectFramework = (packageJson: PackageJson | undefined): Framework => {
   return "unknown";
 };
 
-const readPackageJson = Effect.fn("detectProject.readPackageJson")(function* (
-  projectRoot: string,
-) {
+const readPackageJson = Effect.fn("detectProject.readPackageJson")(function* (projectRoot: string) {
   const fileSystem = yield* FileSystem.FileSystem;
   const packageJsonPath = join(projectRoot, "package.json");
 

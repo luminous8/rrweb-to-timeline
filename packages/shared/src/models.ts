@@ -770,19 +770,20 @@ export class ExecutedTestPlan extends TestPlan.extend<ExecutedTestPlan>(
 
     if (update.sessionUpdate === "agent_message_chunk") {
       if (update.content.type !== "text" || update.content.text === undefined) return this;
-      const lastEvent = this.events.at(-1);
+      const base = this.finalizeTextBlock();
+      const lastEvent = base.events.at(-1);
       if (lastEvent?._tag === "AgentText") {
         return new ExecutedTestPlan({
-          ...this,
+          ...base,
           events: [
-            ...this.events.slice(0, -1),
+            ...base.events.slice(0, -1),
             new AgentText({ text: lastEvent.text + update.content.text }),
           ],
         });
       }
       return new ExecutedTestPlan({
-        ...this,
-        events: [...this.events, new AgentText({ text: update.content.text })],
+        ...base,
+        events: [...base.events, new AgentText({ text: update.content.text })],
       });
     }
 
@@ -857,7 +858,7 @@ export class ExecutedTestPlan extends TestPlan.extend<ExecutedTestPlan>(
 
   finalizeTextBlock(): ExecutedTestPlan {
     const lastEvent = this.events.at(-1);
-    if (lastEvent?._tag !== "AgentText") return this;
+    if (lastEvent?._tag !== "AgentText" && lastEvent?._tag !== "AgentThinking") return this;
     const foundMarkers = lastEvent.text
       .split("\n")
       .map(parseMarker)
@@ -1052,6 +1053,8 @@ export class TestReport extends ExecutedTestPlan.extend<TestReport>("@supervisor
   }
 
   get status(): "passed" | "failed" {
+    const runFinished = this.events.find((event) => event._tag === "RunFinished");
+    if (runFinished?._tag === "RunFinished" && runFinished.status === "failed") return "failed";
     const statuses = this.stepStatuses;
     for (const { status } of statuses.values()) {
       if (status === "failed") return "failed";

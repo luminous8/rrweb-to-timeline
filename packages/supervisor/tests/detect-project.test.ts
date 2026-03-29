@@ -127,20 +127,14 @@ describe("detectProject", () => {
 
   it("detects custom port from vite.config.ts", async () => {
     writePackageJson({ devDependencies: { vite: "5.0.0" } });
-    writeFile(
-      "vite.config.ts",
-      `export default defineConfig({ server: { port: 9000 } })`,
-    );
+    writeFile("vite.config.ts", `export default defineConfig({ server: { port: 9000 } })`);
     const result = await run(tempDir);
     expect(result.customPort).toBe(9000);
   });
 
   it("detects custom port from vite.config.mjs", async () => {
     writePackageJson({ devDependencies: { vite: "5.0.0" } });
-    writeFile(
-      "vite.config.mjs",
-      `export default { server: { port: 7777 } }`,
-    );
+    writeFile("vite.config.mjs", `export default { server: { port: 7777 } }`);
     const result = await run(tempDir);
     expect(result.customPort).toBe(7777);
   });
@@ -150,20 +144,14 @@ describe("detectProject", () => {
       devDependencies: { vite: "5.0.0" },
       scripts: { dev: "vite --port 8080" },
     });
-    writeFile(
-      "vite.config.ts",
-      `export default defineConfig({ server: { port: 9000 } })`,
-    );
+    writeFile("vite.config.ts", `export default defineConfig({ server: { port: 9000 } })`);
     const result = await run(tempDir);
     expect(result.customPort).toBe(8080);
   });
 
   it("does not scan vite config for non-vite frameworks", async () => {
     writePackageJson({ dependencies: { next: "14.0.0" } });
-    writeFile(
-      "vite.config.ts",
-      `export default defineConfig({ server: { port: 9000 } })`,
-    );
+    writeFile("vite.config.ts", `export default defineConfig({ server: { port: 9000 } })`);
     const result = await run(tempDir);
     expect(result.customPort).toBeUndefined();
   });

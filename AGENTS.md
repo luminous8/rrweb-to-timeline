@@ -24,10 +24,6 @@
 
 See `.specs/` for implementation specs.
 
-# Expect
-
-pnpm monorepo.
-
 ## Verify changes
 
 ```bash
@@ -51,12 +47,12 @@ pnpm check
 
 ```ts
 // GOOD - import directly from the source
-import { Companies } from "@/company/Companies";
-import { CompanyRepo } from "@/company/repos/CompanyRepo";
+import { Cookies } from "@expect/cookies/cookies";
+import { TestPlan } from "@expect/shared/test-plan";
 
 // BAD - don't create or use barrel files
-// src/company/index.ts that just does: export * from "./Companies"
-import { Companies } from "@/company";
+// src/cookies/index.ts that just does: export * from "./cookies"
+import { Cookies } from "@expect/cookies";
 ```
 
 # Writing Effect Guide
@@ -195,27 +191,27 @@ Reserve the error channel for recoverable, expected errors (e.g. `BrowserNotFoun
 
 ### Never use Effect.mapError — use Effect.catchTag instead
 
-**Critical**: Almost never use `Effect.mapError`. It blindly maps ALL errors to a new error type, which destroys the error domain. If a schema decoding error or SQL connection error happens, `mapError` would incorrectly turn it into e.g. "Company not found".
+**Critical**: Almost never use `Effect.mapError`. It blindly maps ALL errors to a new error type, which destroys the error domain. If a schema decoding error or platform error happens, `mapError` would incorrectly turn it into e.g. "Browser not found".
 
 **BAD — `Effect.mapError` blindly maps everything:**
 
 ```ts
-// This turns SchemaError, SqlError, AND NoSuchElementError all into
-// CompanyNotFoundError — completely wrong for schema/SQL errors
-companyRepo
-  .findById(companyId)
-  .pipe(Effect.mapError(() => new CompanyNotFoundError({ companyId })));
+// This turns SchemaError, PlatformError, AND NoSuchElementError all into
+// BrowserNotFoundError — completely wrong for schema/platform errors
+browserDetector
+  .findBrowser(browserName)
+  .pipe(Effect.mapError(() => new BrowserNotFoundError({ browserName })));
 ```
 
 **GOOD — `Effect.catchTag` handles only the specific error:**
 
 ```ts
-// Only catches NoSuchElementError, leaving SchemaError/SqlError untouched
-companyRepo.findById(companyId).pipe(
+// Only catches NoSuchElementError, leaving SchemaError/PlatformError untouched
+browserDetector.findBrowser(browserName).pipe(
   Effect.catchTag("NoSuchElementError", () =>
-    new CompanyNotFoundError({
-      companyId,
-      message: `Company not found: ${companyId}`,
+    new BrowserNotFoundError({
+      browserName,
+      message: `Browser not found: ${browserName}`,
     }).asEffect(),
   ),
 );
@@ -224,13 +220,13 @@ companyRepo.findById(companyId).pipe(
 **Pattern for services:** Use `catchTag` for domain errors, then `catchTags` to die on infrastructure errors:
 
 ```ts
-const get = (companyId: CompanyId) =>
-  companyRepo.findById(companyId).pipe(
+const get = (browserName: string) =>
+  browserDetector.findBrowser(browserName).pipe(
     Effect.catchTag("NoSuchElementError", () =>
-      new CompanyNotFoundError({ companyId, message: `...` }).asEffect(),
+      new BrowserNotFoundError({ browserName, message: `...` }).asEffect(),
     ),
-    Effect.catchTags({ SqlError: Effect.die, SchemaError: Effect.die }),
-    Effect.withSpan("Companies.get"),
+    Effect.catchTags({ SchemaError: Effect.die }),
+    Effect.withSpan("Browsers.get"),
   );
 ```
 
@@ -458,8 +454,8 @@ Rules:
 - **Use Effect logging, never `console.log`** — All logging must go through `Effect.logInfo`, `Effect.logDebug`, `Effect.logWarning`, `Effect.logError`.
 - **Log mutations at Info level** — Any create, update, delete, or commit operation should log what happened with relevant IDs.
 - **Log high-frequency reads at Debug level** — Balance lookups, list queries, etc. use `Effect.logDebug` so they can be silenced in production.
-- **Annotate spans with contextual IDs** — Use `yield* Effect.annotateCurrentSpan({ blockId, accountId })` etc. in service functions that already have spans.
-- **Log in services, not repositories** — Repos already have spans via `spanPrefix`. Add logging where business meaning lives (the service layer).
+- **Annotate spans with contextual IDs** — Use `yield* Effect.annotateCurrentSpan({ sessionId, browser })` etc. in service functions that already have spans.
+- **Log in services, not in lower layers** — Add logging where business meaning lives (the service layer).
 - **Never log sensitive data** — No passwords, tokens, or full request/response payloads. Log IDs and metadata only.
 
 ```ts
