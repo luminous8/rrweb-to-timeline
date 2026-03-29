@@ -10,20 +10,9 @@ vi.mock("node:child_process", () => ({
   execSync: vi.fn(),
 }));
 
-vi.mock("@expect/agent", () => ({
+vi.mock("@expect/agent", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@expect/agent")>()),
   detectAvailableAgents: (...args: unknown[]) => mockDetectAvailableAgents(...args),
-  toSkillsCliName: (agent: string) => {
-    const map: Record<string, string> = {
-      claude: "claude-code",
-      codex: "codex",
-      copilot: "github-copilot",
-      gemini: "gemini-cli",
-      cursor: "cursor",
-      opencode: "opencode",
-      droid: "droid",
-    };
-    return map[agent] ?? agent;
-  },
 }));
 
 vi.mock("../src/utils/spinner", () => ({
