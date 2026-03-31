@@ -1,6 +1,6 @@
 ---
 name: expect
-description: Automatically run adversarial browser tests after every browser-facing code change. This skill activates whenever components, pages, forms, routes, API calls, styles, layouts, or any UI-related code is added or modified — no user prompt needed.
+description: After every browser-facing code change, automatically run adversarial browser tests. Do not wait for the user to ask — just run it.
 license: MIT
 metadata:
   author: millionco
