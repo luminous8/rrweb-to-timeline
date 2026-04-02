@@ -109,10 +109,8 @@ ${setupSteps}
 `;
 };
 
-const buildSetupSteps = (packageManager: PackageManager, install: string): string => {
-  switch (packageManager) {
-    case "pnpm":
-      return `
+const SETUP_TEMPLATES: Record<PackageManager, (install: string) => string> = {
+  pnpm: (install) => `
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
@@ -121,27 +119,24 @@ const buildSetupSteps = (packageManager: PackageManager, install: string): strin
           cache: pnpm
 
       - name: Install dependencies
-        run: ${install}`;
+        run: ${install}`,
 
-    case "bun":
-      return `
+  bun: (install) => `
       - uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: ${install}`;
+        run: ${install}`,
 
-    case "yarn":
-      return `
+  yarn: (install) => `
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: yarn
 
       - name: Install dependencies
-        run: ${install}`;
+        run: ${install}`,
 
-    case "deno":
-      return `
+  deno: (install) => `
       - uses: denoland/setup-deno@v2
 
       - uses: actions/setup-node@v4
@@ -149,20 +144,29 @@ const buildSetupSteps = (packageManager: PackageManager, install: string): strin
           node-version: 22
 
       - name: Install dependencies
-        run: ${install}`;
+        run: ${install}`,
 
-    case "npm":
-    case "vp":
-      return `
+  npm: (install) => `
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
       - name: Install dependencies
-        run: ${install}`;
-  }
+        run: ${install}`,
+
+  vp: (install) => `
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: ${install}`,
 };
+
+const buildSetupSteps = (packageManager: PackageManager, install: string) =>
+  SETUP_TEMPLATES[packageManager](install);
 
 export const runAddGithubAction = async (options: AddGithubActionOptions = {}) => {
   const nonInteractive = detectNonInteractive(options.yes ?? false);

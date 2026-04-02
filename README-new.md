@@ -5,7 +5,7 @@
 
 **Expect** tests your app in a browser so you don't have to. Works with Claude Code, Codex, [and more](https://github.com/millionco/expect#supported-agents)
 
-- Run `/expect` inside Claude Code or Codex.
+- Run `/expect` inside Claude Code, Codex, [and more](https://github.com/millionco/expect#supported-agents)
 - Spawns agents to simulating real logged-in users to find issues and regressions.
 - No more writing Playwright by hand + get video recordings and GitHub Action out of the box.
 
