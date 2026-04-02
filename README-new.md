@@ -7,16 +7,25 @@ Give your coding agent a browser.
 
 Expect tests your app so you don't have to. Works with Claude Code, Codex CLI, and Cursor.
 
-- **Catch regressions before your users do.**
-  - Your agent reads the diff, generates a test plan, and runs it against your app in a real browser.
-- **Test with your real login sessions.**
-  - Expect extracts cookies from Chrome, Firefox, and Safari so tests run as you (not as a logged-out stranger).
-- **Get a video recording of every test run.**
-  - See exactly what happened, share it with your team (no "works on my machine").
-- **Zero test files to write or maintain.**
-  - No selectors, no assertions, no test framework. Describe what to test in plain English.
-- **Run on every PR in CI.**
-  - Add the GitHub Action and every pull request gets browser-tested automatically before merge (no manual setup).
+**Catch regressions before your users do.**
+
+- Your agent reads the diff, generates a test plan, and runs it against your app in a real browser.
+
+**Test with your real login sessions.**
+
+- Expect extracts cookies from Chrome, Firefox, and Safari so tests run as you (not as a logged-out stranger).
+
+**Get a video recording of every test run.**
+
+- See exactly what happened, share it with your team (no "works on my machine").
+
+**Zero test files to write or maintain.**
+
+- No selectors, no assertions, no test framework. Describe what to test in plain English.
+
+**Run on every PR in CI.**
+
+- Add the GitHub Action and every pull request gets browser-tested automatically before merge (no manual setup).
 
 ### **[See it in action →](https://expect.dev)**
 
