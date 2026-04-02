@@ -127,8 +127,7 @@ export const runInit = async (options: InitOptions = {}) => {
       "npx",
       ["playwright", "install", "--with-deps", "chromium", "webkit", "firefox"],
       {
-        shell: true,
-        stdio: "inherit",
+        stdio: ["ignore", "inherit", "ignore"],
         timeout: PLAYWRIGHT_INSTALL_TIMEOUT_MS,
       },
     );
