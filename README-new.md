@@ -7,11 +7,11 @@ Give your agent a browser.
 
 **Expect** tests your app so you don't have to. Works with Claude Code, Codex, [and more](https://github.com/millionco/expect#supported-agents)
 
-- Point it at a branch or unstaged changes. Expect figures out what to test and validates it in a real browser.
-- Authenticated sessions using your actual browser cookies. No mock logins.
-- Video recording of every run. Watch every click instead of trusting a text summary.
-- Zero test files. Describe what to test in plain English. Nothing to keep in sync.
-- CI ready. Add the GitHub Action and every PR gets browser-tested before merge.
+- Point it at a branch or unstaged changes and Expect validates them in a real browser.
+- Authenticated sessions using cookies from your actual browser.
+- Video recording of every click and navigation.
+- Zero test files — describe what to test in plain English.
+- Add the GitHub Action to browser-test every PR before merge.
 
 ### **[See it in action →](https://expect.dev)**
 
