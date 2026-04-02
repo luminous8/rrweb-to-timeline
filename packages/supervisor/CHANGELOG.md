@@ -1,5 +1,15 @@
 # @expect/supervisor
 
+## 0.0.21
+
+### Patch Changes
+
+- fix
+- Updated dependencies
+  - @expect/agent@0.0.21
+  - @expect/browser@0.0.21
+  - @expect/shared@0.0.21
+
 ## 0.0.20
 
 ### Patch Changes
