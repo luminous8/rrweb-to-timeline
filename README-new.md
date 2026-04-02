@@ -3,15 +3,20 @@
 [![version](https://img.shields.io/npm/v/expect-cli?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/expect-cli)
 [![downloads](https://img.shields.io/npm/dt/expect-cli.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/expect-cli)
 
-Expect is a skill that lets agents test your code in a real browser (Claude Code, Codex CLI, Cursor).
+Give your coding agent a browser.
 
-Great for:
+Expect tests your app so you don't have to. Works with Claude Code, Codex CLI, and Cursor.
 
-- Catch UI regressions and design papercuts before merging
-- Validate form flows and multi-step wizards end-to-end
-- Test auth and permissions with real login sessions
-- Smoke test deployments across browsers
-- Run visual sanity checks in CI on every PR
+- **Catch regressions before your users do.**
+  - Your agent reads the diff, generates a test plan, and runs it against your app in a real browser.
+- **Test with your real login sessions.**
+  - Expect extracts cookies from Chrome, Firefox, and Safari so tests run as you (not as a logged-out stranger).
+- **Get a video recording of every test run.**
+  - See exactly what happened, share it with your team (no "works on my machine").
+- **Zero test files to write or maintain.**
+  - No selectors, no assertions, no test framework. Describe what to test in plain English.
+- **Run on every PR in CI.**
+  - Add the GitHub Action and every pull request gets browser-tested automatically before merge (no manual setup).
 
 ### **[See it in action →](https://expect.dev)**
 
