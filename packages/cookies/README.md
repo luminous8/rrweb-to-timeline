@@ -65,6 +65,7 @@ const { cookies, warnings } = await extractCookies({
 });
 ```
 
+
 | Option             | Type                | Default                                              | Description                    |
 | ------------------ | ------------------- | ---------------------------------------------------- | ------------------------------ |
 | `url`              | `string`            | required                                             | URL to match cookies against   |
@@ -73,6 +74,7 @@ const { cookies, warnings } = await extractCookies({
 | `includeExpired`   | `boolean`           | `false`                                              | Include expired cookies        |
 | `timeoutMs`        | `number`            | `5000`                                               | Keychain/DPAPI command timeout |
 | `onKeychainAccess` | `(browser) => void` | -                                                    | Fires before credential prompt |
+
 
 Supported browsers: `chrome` `edge` `brave` `arc` `dia` `helium` `chromium` `vivaldi` `opera` `ghost` `sidekick` `yandex` `iridium` `thorium` `sigmaos` `wavebox` `comet` `blisk` `firefox` `safari`
 
@@ -85,9 +87,11 @@ const allProfiles = detectBrowserProfiles();
 const chromeOnly = detectBrowserProfiles({ browser: "chrome" });
 ```
 
+
 | Option    | Type      | Default | Description                  |
 | --------- | --------- | ------- | ---------------------------- |
 | `browser` | `Browser` | all     | Filter to a specific browser |
+
 
 Returns `BrowserProfile[]`.
 
@@ -102,10 +106,12 @@ const { cookies, warnings } = await extractProfileCookies({
 });
 ```
 
+
 | Option    | Type             | Default  | Description                          |
 | --------- | ---------------- | -------- | ------------------------------------ |
 | `profile` | `BrowserProfile` | required | Profile from `detectBrowserProfiles` |
 | `port`    | `number`         | `9222`   | CDP debugging port (Chromium only)   |
+
 
 ### `extractAllProfileCookies(profiles)`
 
@@ -119,6 +125,7 @@ const { cookies, warnings } = await extractAllProfileCookies(profiles);
 
 All helpers take a plain `Cookie[]` as input.
 
+
 | Function                          | Returns              | Description                                            |
 | --------------------------------- | -------------------- | ------------------------------------------------------ |
 | `matchCookies(cookies, url)`      | `Cookie[]`           | Cookies matching domain, path, secure flag, and expiry |
@@ -126,6 +133,7 @@ All helpers take a plain `Cookie[]` as input.
 | `toCookieHeader(cookies)`         | `string`             | Format all cookies as a header string (no matching)    |
 | `toPlaywrightCookies(cookies)`    | `PlaywrightCookie[]` | Playwright format (sameSite defaults to `"Lax"`)       |
 | `toPuppeteerCookies(cookies)`     | `PuppeteerCookie[]`  | Puppeteer format                                       |
+
 
 ### `detectDefaultBrowser()`
 
@@ -170,6 +178,7 @@ interface BrowserInfo {
 
 ### SQLite vs Profile Extraction
 
+
 |                            | SQLite                   | Profile                               |
 | -------------------------- | ------------------------ | ------------------------------------- |
 | Speed                      | Fast (no browser launch) | ~3s startup (Chromium), fast (others) |
@@ -177,6 +186,7 @@ interface BrowserInfo {
 | Firefox/Safari             | Yes                      | Yes                                   |
 | Requires browser installed | No (reads DB files)      | Yes                                   |
 | Cookie decryption          | Manual (keychain/DPAPI)  | Chromium handles it / not needed      |
+
 
 ---
 
@@ -191,14 +201,14 @@ Reads cookie databases without launching a browser. Each step below happens for 
 1. Locate the database. Each browser has a known path per platform (e.g. `~/Library/Application Support/Google/Chrome/Default/Network/Cookies` on macOS). If the path doesn't exist, the browser is skipped with a warning.
 2. Copy to a temp directory. The database file and its WAL/SHM sidecars are copied so reads never conflict with a running browser.
 3. Decrypt (Chromium only). Cookie values may be encrypted in `encrypted_value`. The decryption method depends on the OS:
-   - macOS - password from Keychain → PBKDF2-SHA1 (1003 iterations, salt `"saltysalt"`) → AES-128-CBC.
-   - Linux - password from `secret-tool` (fallback `"peanuts"`) → PBKDF2-SHA1 (1 iteration) → AES-128-CBC. Multiple key candidates are tried.
-   - Windows - encrypted key from `Local State` → unwrap with DPAPI via PowerShell → AES-256-GCM.
-   - Databases with meta version ≥ 24 prepend a 32-byte hash to the plaintext, which is stripped after decryption.
+  - macOS - password from Keychain → PBKDF2-SHA1 (1003 iterations, salt `"saltysalt"`) → AES-128-CBC.
+  - Linux - password from `secret-tool` (fallback `"peanuts"`) → PBKDF2-SHA1 (1 iteration) → AES-128-CBC. Multiple key candidates are tried.
+  - Windows - encrypted key from `Local State` → unwrap with DPAPI via PowerShell → AES-256-GCM.
+  - Databases with meta version ≥ 24 prepend a 32-byte hash to the plaintext, which is stripped after decryption.
 4. Query and parse.
-   - Chromium - SQL query on `cookies` table, filtered by host. Plaintext values are used directly; encrypted values go through step 3.
-   - Firefox - SQL query on `moz_cookies` in `cookies.sqlite`. Values are stored in plaintext. The default profile is found by preferring directories containing `default-release`.
-   - Safari - binary format (`Cookies.binarycookies`) parsed by walking its page/record structure. Each record contains flags, domain, name, path, value, and a Mac-epoch expiration. macOS only.
+  - Chromium - SQL query on `cookies` table, filtered by host. Plaintext values are used directly; encrypted values go through step 3.
+  - Firefox - SQL query on `moz_cookies` in `cookies.sqlite`. Values are stored in plaintext. The default profile is found by preferring directories containing `default-release`.
+  - Safari - binary format (`Cookies.binarycookies`) parsed by walking its page/record structure. Each record contains flags, domain, name, path, value, and a Mac-epoch expiration. macOS only.
 5. Normalize. Expiration is converted to Unix seconds, sameSite is mapped to `"Strict" | "Lax" | "None"`, and leading dots are stripped from domains.
 6. Deduplicate. Cookies are keyed by `name|domain|path`. First occurrence wins.
 7. Clean up. Temp directories are removed.
@@ -224,3 +234,4 @@ Both strategies return an `ExtractResult` containing a plain `Cookie[]` and any 
 - `toCookieHeader(cookies)` formats cookies as a `Cookie` header string.
 - `toPlaywrightCookies(cookies)` / `toPuppeteerCookies(cookies)` convert to the shapes expected by each automation library.
 - JSON serialization is just `JSON.stringify` / `JSON.parse` on the `Cookie[]`.
+
