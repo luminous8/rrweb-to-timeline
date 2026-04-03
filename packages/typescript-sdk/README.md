@@ -1,5 +1,7 @@
 # expect-sdk
 
+> **Alpha:** This package is currently in alpha. APIs may change between releases.
+
 **Expect** tests your app in a browser so you don't have to.
 
 - Spawns agents simulating real logged-in users to find issues and regressions.
