@@ -3,8 +3,6 @@
 [![version](https://img.shields.io/npm/v/expect-cli?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/expect-cli)
 [![downloads](https://img.shields.io/npm/dt/expect-cli.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/expect-cli)
 
-> **Alpha:** The Expect SDK is currently in alpha. APIs may change between releases.
-
 **Expect** tests your app in a browser so you don't have to.
 
 - Run `/expect` inside Claude Code, Codex, [and more](https://github.com/millionco/expect#supported-agents)

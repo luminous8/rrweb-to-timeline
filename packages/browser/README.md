@@ -1,7 +1,5 @@
 # @expect/browser
 
-> **Alpha:** This package is currently in alpha. APIs may change between releases.
-
 Launch Playwright pages with cookie injection, accessibility snapshots, and ref-based interaction.
 
 ## Install

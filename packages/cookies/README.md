@@ -1,7 +1,5 @@
 # @expect/cookies
 
-> **Alpha:** This package is currently in alpha. APIs may change between releases.
-
 Extract cookies from local browsers for use in automated testing.
 
 ## Install

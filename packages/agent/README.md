@@ -1,7 +1,5 @@
 # @expect/agent
 
-> **Alpha:** This package is currently in alpha. APIs may change between releases.
-
 AI SDK providers for Claude and Codex. Implements `LanguageModelV3` so both work with `generateText` and `streamText`.
 
 ## Install
