@@ -1,6 +1,9 @@
 {
   "name": "expect-sdk",
   "version": "0.0.23",
+  "publishConfig": {
+    "tag": "beta"
+  },
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
@@ -34,6 +37,9 @@
   },
   "peerDependencies": {
     "playwright": ">=1.50.0"
+  },
+  "publishConfig": {
+    "tag": "beta"
   },
   "peerDependenciesMeta": {
     "playwright": {
