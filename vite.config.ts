@@ -34,6 +34,6 @@ export default defineConfig({
   fmt: {
     semi: true,
     singleQuote: false,
-    ignorePatterns: ["archive", ".next", "dist"],
+    ignorePatterns: ["archive", ".next", "dist", ".changeset"],
   },
 });
