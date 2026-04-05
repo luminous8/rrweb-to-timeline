@@ -1,13 +1,13 @@
-# <img src="https://github.com/millionco/testie/blob/main/apps/website/public/icon.svg?raw=true" width="60" align="center" /> Expect
+# Expect
 
-[![version](https://img.shields.io/npm/v/expect-cli?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/expect-cli)
-[![downloads](https://img.shields.io/npm/dt/expect-cli.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/expect-cli)
+[version](https://npmjs.com/package/expect-cli)
+[downloads](https://npmjs.com/package/expect-cli)
 
 **Expect** tests your app in a browser so you don't have to.
 
 - Run `/expect` inside Claude Code, Codex, [and more](https://github.com/millionco/expect#supported-agents)
 - Spawns agents to simulating real logged-in users to find issues and regressions.
-- No more writing Playwright by hand or token-hungry computer use tools. <!-- needs proof? benchmark -->
+- No more writing Playwright by hand or token-hungry computer use tools.
 - Get video recordings and GitHub Actions out of the box.
 
 ### **[Demo →](https://expect.dev)**
@@ -52,8 +52,6 @@ Coming soon. Email [aiden@million.dev](mailto:aiden@million.dev) if you have que
 
 ## Options
 
-<!-- Keep this table in sync with apps/cli/src/index.tsx -->
-
 | Flag                          | Description                                                                            | Default              |
 | ----------------------------- | -------------------------------------------------------------------------------------- | -------------------- |
 | `-m, --message <instruction>` | Natural language instruction for what to test                                          | -                    |
@@ -94,7 +92,7 @@ Find a bug? Head over to our [issue tracker](https://github.com/millionco/expect
 
 We expect all contributors to abide by the terms of our [Code of Conduct](https://github.com/millionco/expect/blob/main/.github/CODE_OF_CONDUCT.md).
 
-[**→ Start contributing on GitHub**](https://github.com/millionco/expect/blob/main/CONTRIBUTING.md)
+**[→ Start contributing on GitHub](https://github.com/millionco/expect/blob/main/CONTRIBUTING.md)**
 
 ### License
 
