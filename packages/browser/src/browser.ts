@@ -5,7 +5,6 @@ import type { Locator, Page } from "playwright";
 import type { BrowserEngine } from "./types";
 import { Array as Arr, Effect, Layer, Option, ServiceMap } from "effect";
 
-const cookiesLayer = Layer.mergeAll(layerLive, Cookies.layer);
 import {
   AGENT_OVERLAY_CONTAINER_ID,
   CONTENT_ROLES,
@@ -46,6 +45,7 @@ import type {
 import type { ScrollContainerResult } from "./runtime/lib/scroll-detection";
 
 const BROWSER_ENGINES = { chromium, webkit, firefox } as const;
+const cookiesLayer = Layer.mergeAll(layerLive, Cookies.layer);
 
 const resolveBrowserType = (engine: BrowserEngine) => BROWSER_ENGINES[engine];
 
