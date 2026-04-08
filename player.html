@@ -9,97 +9,253 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-      background: #0a0a0a;
-      color: #e5e5e5;
+      background: #fafafa;
+      color: #1a1a1a;
       height: 100vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
-    .header {
-      padding: 16px 24px;
-      border-bottom: 1px solid #222;
-      display: flex;
-      align-items: center;
-      gap: 16px;
+
+    /* Steps sidebar */
+    .steps-panel {
+      width: 280px;
+      border-right: 1px solid #e5e5e5;
+      overflow-y: auto;
+      flex-shrink: 0;
+      background: #fff;
+      padding: 12px 0;
     }
-    .header h1 { font-size: 16px; font-weight: 600; }
-    .header .meta { font-size: 13px; color: #888; }
+    .step-item {
+      padding: 10px 16px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      cursor: pointer;
+      transition: background 0.12s;
+      border-left: 3px solid transparent;
+    }
+    .step-item:hover { background: #f5f5f5; }
+    .step-item.active {
+      background: #f0f4ff;
+      border-left-color: #3b82f6;
+    }
+    .step-item.passed .step-dot { background: #22c55e; }
+    .step-item.active .step-dot { background: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+    .step-item.future .step-dot { background: #d4d4d4; }
+    .step-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #d4d4d4;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .step-num {
+      font-size: 12px;
+      font-weight: 600;
+      color: #999;
+      min-width: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-item.active .step-num { color: #3b82f6; }
+    .step-item.passed .step-num { color: #22c55e; }
+    .step-title {
+      font-size: 13px;
+      line-height: 1.3;
+      color: #444;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .step-item.active .step-title { color: #1a1a1a; font-weight: 500; }
+
+    /* Main layout */
     .main {
       display: flex;
       flex: 1;
       overflow: hidden;
       min-height: 0;
     }
+
+    /* Player area */
+    .player-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }
     .player-container {
       flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-      background: #111;
+      padding: 20px;
+      background: linear-gradient(180deg, #f0f0f0 0%, #e8e8e8 100%);
+      position: relative;
       overflow: hidden;
-      min-width: 0;
     }
     .player-container .rr-player {
-      border-radius: 8px;
+      border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
     }
-    .timeline-panel {
-      width: 320px;
-      border-left: 1px solid #222;
-      overflow-y: auto;
-      flex-shrink: 0;
-    }
-    .timeline-panel h2 {
+
+    /* Active step overlay label */
+    .step-label-overlay {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
       font-size: 13px;
-      font-weight: 600;
-      padding: 16px 16px 8px;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      position: sticky;
-      top: 0;
-      background: #0a0a0a;
-      z-index: 1;
+      font-weight: 500;
+      max-width: 360px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      backdrop-filter: blur(8px);
+      transition: opacity 0.2s;
+      pointer-events: none;
     }
-    .action {
-      padding: 8px 16px;
+
+    /* Bottom bar: step info + playback bar with markers */
+    .bottom-bar {
+      background: #fff;
+      border-top: 1px solid #e5e5e5;
+      padding: 12px 20px;
+    }
+    .step-info {
+      font-size: 14px;
+      margin-bottom: 8px;
       display: flex;
-      gap: 12px;
-      align-items: baseline;
-      cursor: pointer;
-      border-left: 2px solid transparent;
-      transition: background 0.1s, border-color 0.1s;
+      align-items: center;
+      gap: 8px;
     }
-    .action:hover { background: #1a1a1a; }
-    .action.active {
-      background: #1a1a2a;
-      border-left-color: #5b8def;
+    .step-info .step-info-num {
+      color: #3b82f6;
+      font-weight: 600;
     }
-    .action .time {
-      font-size: 12px;
-      font-variant-numeric: tabular-nums;
-      color: #666;
-      min-width: 44px;
-      flex-shrink: 0;
+    .step-info .step-info-title {
+      color: #1a1a1a;
+      font-weight: 500;
     }
-    .action .label {
+    .step-info .step-info-time {
+      margin-left: auto;
       font-size: 13px;
-      color: #ccc;
+      color: #888;
+      font-variant-numeric: tabular-nums;
     }
-    .action.active .time { color: #5b8def; }
-    .action.active .label { color: #fff; }
-    .action .icon {
+    .playback-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .play-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: #1a1a1a;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.12s;
+    }
+    .play-btn:hover { background: #333; }
+    .play-btn svg { width: 16px; height: 16px; fill: #fff; }
+    .speed-btn {
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid #e5e5e5;
+      background: #fff;
+      color: #666;
       font-size: 12px;
-      min-width: 18px;
-      text-align: center;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+      transition: background 0.1s;
     }
+    .speed-btn:hover { background: #f5f5f5; }
+    .playback-bar {
+      position: relative;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+    .playback-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: #e5e5e5;
+      border-radius: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .playback-progress {
+      position: absolute;
+      left: 0;
+      height: 4px;
+      background: #d4d4d4;
+      border-radius: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      transition: width 0.1s linear;
+    }
+    .step-marker {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      z-index: 2;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .step-marker:hover {
+      transform: translate(-50%, -50%) scale(1.3);
+    }
+    .step-marker.passed {
+      background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
+    }
+    .step-marker.active {
+      background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      transform: translate(-50%, -50%) scale(1.2);
+    }
+    .step-marker.future {
+      background: #d4d4d4;
+      box-shadow: none;
+    }
+    .step-marker-num {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: #999;
+      font-weight: 600;
+    }
+
+    /* Drop overlay */
     .drop-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(10, 10, 10, 0.9);
+      background: rgba(250, 250, 250, 0.95);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -108,16 +264,16 @@
       opacity: 0;
       transition: opacity 0.15s;
     }
-    .drop-overlay.visible {
-      opacity: 1;
-    }
+    .drop-overlay.visible { opacity: 1; }
     .drop-overlay .inner {
-      border: 2px dashed #444;
+      border: 2px dashed #ccc;
       border-radius: 16px;
       padding: 48px 64px;
       text-align: center;
     }
     .drop-overlay .inner p { font-size: 18px; color: #888; }
+
+    /* Empty state */
     .empty-state {
       flex: 1;
       display: flex;
@@ -125,25 +281,41 @@
       align-items: center;
       justify-content: center;
       gap: 16px;
-      color: #666;
+      color: #888;
     }
     .empty-state p { font-size: 15px; }
     .empty-state code {
-      background: #1a1a1a;
+      background: #f0f0f0;
       padding: 2px 8px;
       border-radius: 4px;
       font-size: 13px;
     }
+
+    /* Header */
+    .header {
+      padding: 10px 20px;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+    }
+    .header h1 { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+    .header .meta { font-size: 12px; color: #999; }
     .file-input-label {
-      padding: 8px 16px;
-      background: #222;
+      margin-left: auto;
+      padding: 6px 12px;
+      background: #f0f0f0;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 13px;
-      color: #ccc;
+      font-size: 12px;
+      color: #666;
       transition: background 0.1s;
     }
-    .file-input-label:hover { background: #333; }
+    .file-input-label:hover { background: #e5e5e5; }
+
+    /* Hide rrweb-player default controller — we use our own */
+    .rr-player .rr-controller { display: none !important; }
   </style>
 </head>
 <body>
@@ -154,7 +326,6 @@
   <div class="header">
     <h1>rrweb Timeline Player</h1>
     <span class="meta" id="headerMeta"></span>
-    <div style="flex:1"></div>
     <label class="file-input-label">
       Open file…
       <input type="file" accept=".json,.jsonl" id="fileInput" style="display:none" />
@@ -170,28 +341,17 @@
 
   <script src="https://cdn.jsdelivr.net/npm/rrweb-player@latest/dist/index.js"></script>
   <script>
+    // --- rrweb constants & extraction (mirrors timeline.mjs) ---
     const RRWEB_EVENT_INCREMENTAL = 3;
     const RRWEB_EVENT_META = 4;
     const MOUSE_LABELS = { 2: "Clicked", 4: "Double-clicked", 8: "Right-clicked", 6: "Focused", 9: "Tapped" };
     const INPUT_DEBOUNCE = 500;
     const SCROLL_DEBOUNCE = 800;
+    const IDLE_GAP_MS = 15000;
 
     const formatTime = (ms) => {
       const s = Math.floor(ms / 1000);
       return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
-    };
-
-    const iconFor = (label) => {
-      if (label.startsWith("Navigated")) return "🌐";
-      if (label.startsWith("Clicked") || label.startsWith("Double") || label.startsWith("Right")) return "👆";
-      if (label.startsWith("Typed")) return "⌨️";
-      if (label.startsWith("Scrolled")) return "↕️";
-      if (label.startsWith("Resized")) return "↔️";
-      if (label.startsWith("Focused")) return "◎";
-      if (label.startsWith("Tapped")) return "👆";
-      if (label.startsWith("Dragged")) return "✋";
-      if (label.includes("media")) return "▶️";
-      return "•";
     };
 
     const extractActions = (events) => {
@@ -203,125 +363,364 @@
       for (const ev of events) {
         const rel = ev.timestamp - startTs;
         const d = ev.data;
-
         if (ev.type === RRWEB_EVENT_META && typeof d.href === "string") {
           try {
             const u = new URL(d.href);
             const path = u.pathname === "/" ? u.hostname : `${u.hostname}${u.pathname}`;
-            actions.push({ label: `Navigated to ${path}`, ms: rel });
+            actions.push({ type: "navigation", label: `Navigated to ${path}`, ms: rel, url: d.href });
           } catch {}
           continue;
         }
         if (ev.type !== RRWEB_EVENT_INCREMENTAL) continue;
-
         if (d.source === 2) {
           const l = MOUSE_LABELS[d.type];
-          if (l) actions.push({ label: l, ms: rel });
+          if (l) actions.push({ type: "click", label: l, ms: rel });
         } else if (d.source === 5) {
           if (ev.timestamp - lastInput > INPUT_DEBOUNCE) {
             const t = typeof d.text === "string" ? d.text : "";
             const disp = t.length > 30 ? t.slice(0, 30) + "…" : t;
-            actions.push({ label: disp ? `Typed "${disp}"` : "Typed input", ms: rel + 500 });
+            actions.push({ type: "input", label: disp ? `Typed "${disp}"` : "Typed input", ms: rel, text: t });
           }
           lastInput = ev.timestamp;
         } else if (d.source === 3) {
           if (ev.timestamp - lastScroll > SCROLL_DEBOUNCE) {
-            actions.push({ label: "Scrolled", ms: rel });
+            actions.push({ type: "scroll", label: "Scrolled", ms: rel });
           }
           lastScroll = ev.timestamp;
         } else if (d.source === 4) {
-          actions.push({ label: `Resized to ${d.width}×${d.height}`, ms: rel });
+          actions.push({ type: "resize", label: `Resized to ${d.width}x${d.height}`, ms: rel });
         } else if (d.source === 7) {
           const l = d.type === 0 ? "Played media" : d.type === 1 ? "Paused media" : null;
-          if (l) actions.push({ label: l, ms: rel });
+          if (l) actions.push({ type: "media", label: l, ms: rel });
         } else if (d.source === 12) {
-          actions.push({ label: "Dragged", ms: rel });
+          actions.push({ type: "drag", label: "Dragged", ms: rel });
         }
       }
       return actions;
     };
 
-    const parseEvents = (text, filename) => {
-      if (filename.endsWith(".jsonl")) {
-        return text.split("\n").filter(l => l.trim()).map(l => JSON.parse(l));
+    // --- Grouping logic (mirrors timeline.mjs) ---
+    const preProcess = (actions) => {
+      const result = [];
+      for (let i = 0; i < actions.length; i++) {
+        const a = actions[i];
+        if (a.type === "click" && a.label === "Focused" && result.length > 0 &&
+            result[result.length - 1].type === "click" && a.ms - result[result.length - 1].ms < 300) continue;
+        if (a.type === "navigation" && result.length > 0 &&
+            result[result.length - 1].type === "navigation" && result[result.length - 1].url === a.url) continue;
+        result.push(a);
       }
+      return result;
+    };
+
+    const pageNameFromUrl = (url) => {
+      try {
+        const u = new URL(url);
+        const segs = u.pathname.split("/").filter(Boolean);
+        if (segs.length === 0) return u.hostname;
+        for (let i = segs.length - 1; i >= 0; i--) {
+          if (!segs[i].match(/^[0-9a-f-]{20,}$/i) && segs[i].length < 40) return segs[i];
+        }
+        return u.hostname;
+      } catch { return "page"; }
+    };
+
+    const summarizeGroup = (group) => {
+      const inputs = group.filter(a => a.type === "input");
+      const navs = group.filter(a => a.type === "navigation");
+      const clicks = group.filter(a => a.type === "click" && a.label !== "Focused");
+      const scrolls = group.filter(a => a.type === "scroll");
+      const hasNav = navs.length > 0;
+      const pageName = hasNav ? pageNameFromUrl(navs[0].url) : undefined;
+
+      if (inputs.length >= 2) {
+        const types = inputs.map(i => {
+          if (i.text && i.text.includes("@")) return "email";
+          if (i.text && i.text.match(/^\*+$/)) return "password";
+          if (i.text && i.text.match(/^\d{4,8}$/)) return "verification code";
+          return null;
+        });
+        const u = [...new Set(types.filter(Boolean))];
+        if (u.includes("email") && u.includes("password")) return hasNav ? `Sign in on ${pageName}` : "Fill in credentials";
+        if (u.includes("verification code")) return "Enter verification code";
+        return hasNav ? `Fill form on ${pageName} (${inputs.length} fields)` : `Fill form (${inputs.length} fields)`;
+      }
+      if (inputs.length === 1) {
+        const t = inputs[0].text || "";
+        if (hasNav) return `Navigate to ${pageName} and enter text`;
+        if (t.includes("@")) return `Enter email "${t}"`;
+        if (t.match(/^\*+$/)) return "Enter password";
+        if (t.match(/^\d{4,8}$/)) return `Enter code "${t}"`;
+        return inputs[0].label;
+      }
+      if (hasNav) {
+        if (navs.length > 1) {
+          const last = pageNameFromUrl(navs[navs.length - 1].url);
+          if (last !== pageName) return `Navigate from ${pageName} to ${last}`;
+        }
+        if (scrolls.length > 2) return `Browse ${pageName}`;
+        if (clicks.length > 3) return `Interact with ${pageName}`;
+        return `Navigate to ${pageName}`;
+      }
+      if (scrolls.length >= 2 && scrolls.length >= clicks.length) return "Scroll and browse";
+      if (clicks.length > 0) return `Interact with page (${clicks.length} clicks)`;
+      return group[0].label;
+    };
+
+    const groupIntoSteps = (actions) => {
+      if (actions.length === 0) return [];
+      const processed = preProcess(actions);
+      const groups = [];
+      let cur = [];
+
+      const flush = () => { if (cur.length) { groups.push([...cur]); cur = []; } };
+
+      for (let i = 0; i < processed.length; i++) {
+        const a = processed[i];
+        const prev = cur[cur.length - 1];
+        const isNewNav = a.type === "navigation" && cur.length > 0 &&
+          !(cur.length === 1 && cur[0].type === "navigation" && a.ms - cur[0].ms < 2000);
+        const isGap = prev && a.ms - prev.ms > IDLE_GAP_MS;
+        if ((isNewNav || isGap) && cur.length > 0) flush();
+        cur.push(a);
+      }
+      flush();
+
+      // Merge tiny groups into neighbors
+      const merged = [];
+      for (const g of groups) {
+        const hasNav = g.some(a => a.type === "navigation");
+        const hasInput = g.some(a => a.type === "input");
+        const isTiny = g.length <= 3 && !hasNav && !hasInput;
+        if (isTiny && merged.length > 0) {
+          const prev = merged[merged.length - 1];
+          if (g[0].ms - prev[prev.length - 1].ms < IDLE_GAP_MS * 2) { prev.push(...g); continue; }
+        }
+        merged.push(g);
+      }
+
+      // Merge consecutive scroll/interact groups
+      const final = [];
+      for (const g of merged) {
+        const prev = final[final.length - 1];
+        if (prev) {
+          const pt = summarizeGroup(prev);
+          const tt = summarizeGroup(g);
+          const gap = g[0].ms - prev[prev.length - 1].ms;
+          if ((pt.startsWith("Scroll") && tt.startsWith("Scroll") && gap < IDLE_GAP_MS * 3) ||
+              (pt.startsWith("Interact") && tt.startsWith("Interact") && gap < IDLE_GAP_MS * 2)) {
+            prev.push(...g);
+            continue;
+          }
+        }
+        final.push(g);
+      }
+
+      return final.map((g, i) => ({
+        step: i + 1,
+        title: summarizeGroup(g),
+        startTimeMs: g[0].ms,
+        endTimeMs: g[g.length - 1].ms,
+      }));
+    };
+
+    // --- File parsing ---
+    const parseEvents = (text, filename) => {
+      if (filename.endsWith(".jsonl")) return text.split("\n").filter(l => l.trim()).map(l => JSON.parse(l));
       const parsed = JSON.parse(text);
       return Array.isArray(parsed) ? parsed : parsed.events;
     };
 
+    // --- Player ---
     let currentPlayer = null;
 
     const loadEvents = (events) => {
       if (events.length < 2) return;
 
       const mainArea = document.getElementById("mainArea");
-      const emptyState = document.getElementById("emptyState");
-      if (emptyState) emptyState.remove();
       mainArea.innerHTML = "";
 
       const duration = events[events.length - 1].timestamp - events[0].timestamp;
       const actions = extractActions(events);
+      const steps = groupIntoSteps(actions);
 
       document.getElementById("headerMeta").textContent =
-        `${formatTime(duration)} · ${actions.length} actions · ${events.length.toLocaleString()} raw events`;
+        `${formatTime(duration)} · ${steps.length} steps · ${events.length.toLocaleString()} events`;
 
-      // Player
+      // Steps panel (left sidebar)
+      const stepsPanel = document.createElement("div");
+      stepsPanel.className = "steps-panel";
+      mainArea.appendChild(stepsPanel);
+
+      const stepEls = [];
+      for (const step of steps) {
+        const el = document.createElement("div");
+        el.className = "step-item future";
+        el.innerHTML = `
+          <div class="step-dot"></div>
+          <span class="step-num">${step.step}</span>
+          <span class="step-title">${step.title}</span>
+        `;
+        el.addEventListener("click", () => currentPlayer.goto(step.startTimeMs));
+        stepsPanel.appendChild(el);
+        stepEls.push({ el, step });
+      }
+
+      // Player area (center)
+      const playerArea = document.createElement("div");
+      playerArea.className = "player-area";
+      mainArea.appendChild(playerArea);
+
       const playerContainer = document.createElement("div");
       playerContainer.className = "player-container";
-      mainArea.appendChild(playerContainer);
+      playerArea.appendChild(playerContainer);
+
+      // Step label overlay
+      const labelOverlay = document.createElement("div");
+      labelOverlay.className = "step-label-overlay";
+      labelOverlay.style.opacity = "0";
+      playerContainer.appendChild(labelOverlay);
 
       currentPlayer = new rrwebPlayer({
         target: playerContainer,
         props: {
           events,
-          width: 900,
-          height: 560,
+          width: 800,
+          height: 500,
           autoPlay: false,
           showController: true,
           speedOption: [1, 2, 4, 8],
         },
       });
 
-      // Timeline
-      const panel = document.createElement("div");
-      panel.className = "timeline-panel";
-      panel.innerHTML = `<h2>Timeline (${actions.length})</h2>`;
-      mainArea.appendChild(panel);
+      const replayer = currentPlayer.getReplayer();
 
-      const actionEls = [];
-      for (const action of actions) {
-        const el = document.createElement("div");
-        el.className = "action";
-        el.innerHTML = `
-          <span class="icon">${iconFor(action.label)}</span>
-          <span class="time">${formatTime(action.ms)}</span>
-          <span class="label">${action.label}</span>
-        `;
-        el.addEventListener("click", () => {
-          currentPlayer.goto(action.ms);
-        });
-        panel.appendChild(el);
-        actionEls.push({ el, ms: action.ms });
+      // Bottom bar with step markers
+      const bottomBar = document.createElement("div");
+      bottomBar.className = "bottom-bar";
+      playerArea.appendChild(bottomBar);
+
+      const stepInfo = document.createElement("div");
+      stepInfo.className = "step-info";
+      stepInfo.innerHTML = `
+        <span class="step-info-num" id="stepInfoNum"></span>
+        <span class="step-info-title" id="stepInfoTitle"></span>
+        <span class="step-info-time" id="stepInfoTime"></span>
+      `;
+      bottomBar.appendChild(stepInfo);
+
+      const PLAY_ICON = `<svg viewBox="0 0 16 16"><path d="M4 2.5v11l10-5.5z"/></svg>`;
+      const PAUSE_ICON = `<svg viewBox="0 0 16 16"><path d="M3 2h4v12H3zM9 2h4v12H9z"/></svg>`;
+      const SPEEDS = [1, 2, 4, 8];
+      let speedIdx = 0;
+      let isPlaying = false;
+
+      const controls = document.createElement("div");
+      controls.className = "playback-controls";
+      bottomBar.appendChild(controls);
+
+      const playBtn = document.createElement("button");
+      playBtn.className = "play-btn";
+      playBtn.innerHTML = PLAY_ICON;
+      playBtn.addEventListener("click", () => {
+        if (isPlaying) {
+          replayer.pause();
+        } else {
+          replayer.play(replayer.getCurrentTime());
+        }
+        isPlaying = !isPlaying;
+        playBtn.innerHTML = isPlaying ? PAUSE_ICON : PLAY_ICON;
+      });
+      controls.appendChild(playBtn);
+
+      const playbackBar = document.createElement("div");
+      playbackBar.className = "playback-bar";
+      controls.appendChild(playbackBar);
+
+      const speedBtn = document.createElement("button");
+      speedBtn.className = "speed-btn";
+      speedBtn.textContent = "1x";
+      speedBtn.addEventListener("click", () => {
+        speedIdx = (speedIdx + 1) % SPEEDS.length;
+        const speed = SPEEDS[speedIdx];
+        replayer.setConfig({ speed });
+        speedBtn.textContent = `${speed}x`;
+      });
+      controls.appendChild(speedBtn);
+
+      const track = document.createElement("div");
+      track.className = "playback-track";
+      playbackBar.appendChild(track);
+
+      const progress = document.createElement("div");
+      progress.className = "playback-progress";
+      playbackBar.appendChild(progress);
+
+      // Step markers on playback bar
+      const markerEls = [];
+      for (const step of steps) {
+        const pct = duration > 0 ? (step.startTimeMs / duration) * 100 : 0;
+        const marker = document.createElement("div");
+        marker.className = "step-marker future";
+        marker.style.left = `${pct}%`;
+        marker.addEventListener("click", () => currentPlayer.goto(step.startTimeMs));
+
+        const num = document.createElement("span");
+        num.className = "step-marker-num";
+        num.textContent = step.step;
+        marker.appendChild(num);
+
+        playbackBar.appendChild(marker);
+        markerEls.push({ el: marker, step });
       }
 
-      // Highlight active action during playback
-      const replayer = currentPlayer.getReplayer();
-      let activeIdx = -1;
+      // Update loop
+      let activeStepIdx = -1;
+
       setInterval(() => {
-        const currentTime = replayer.getCurrentTime();
+        const t = replayer.getCurrentTime();
+        const pct = duration > 0 ? Math.min((t / duration) * 100, 100) : 0;
+        progress.style.width = `${pct}%`;
+
+        // Find active step
         let newIdx = -1;
-        for (let i = actionEls.length - 1; i >= 0; i--) {
-          if (actionEls[i].ms <= currentTime) { newIdx = i; break; }
+        for (let i = steps.length - 1; i >= 0; i--) {
+          if (steps[i].startTimeMs <= t) { newIdx = i; break; }
         }
-        if (newIdx !== activeIdx) {
-          if (activeIdx >= 0) actionEls[activeIdx].el.classList.remove("active");
+
+        if (newIdx !== activeStepIdx) {
+          activeStepIdx = newIdx;
+          const activeStep = newIdx >= 0 ? steps[newIdx] : null;
+
+          // Update sidebar
+          stepEls.forEach(({ el, step }, i) => {
+            el.className = "step-item " + (i < newIdx ? "passed" : i === newIdx ? "active" : "future");
+          });
           if (newIdx >= 0) {
-            actionEls[newIdx].el.classList.add("active");
-            actionEls[newIdx].el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            stepEls[newIdx].el.scrollIntoView({ block: "nearest", behavior: "smooth" });
           }
-          activeIdx = newIdx;
+
+          // Update markers
+          markerEls.forEach(({ el }, i) => {
+            el.className = "step-marker " + (i < newIdx ? "passed" : i === newIdx ? "active" : "future");
+          });
+
+          // Update bottom step info
+          if (activeStep) {
+            document.getElementById("stepInfoNum").textContent = `Step ${activeStep.step}`;
+            document.getElementById("stepInfoTitle").textContent = activeStep.title;
+            labelOverlay.textContent = `Step ${activeStep.step}: ${activeStep.title}`;
+            labelOverlay.style.opacity = "1";
+          } else {
+            document.getElementById("stepInfoNum").textContent = "";
+            document.getElementById("stepInfoTitle").textContent = "";
+            labelOverlay.style.opacity = "0";
+          }
         }
-      }, 200);
+
+        document.getElementById("stepInfoTime").textContent =
+          `${formatTime(t)} / ${formatTime(duration)}`;
+      }, 150);
     };
 
     // File input
@@ -333,19 +732,8 @@
 
     // Drag and drop
     let dragCount = 0;
-    document.addEventListener("dragenter", (e) => {
-      e.preventDefault();
-      dragCount++;
-      document.getElementById("dropOverlay").classList.add("visible");
-    });
-    document.addEventListener("dragleave", (e) => {
-      e.preventDefault();
-      dragCount--;
-      if (dragCount <= 0) {
-        dragCount = 0;
-        document.getElementById("dropOverlay").classList.remove("visible");
-      }
-    });
+    document.addEventListener("dragenter", (e) => { e.preventDefault(); dragCount++; document.getElementById("dropOverlay").classList.add("visible"); });
+    document.addEventListener("dragleave", (e) => { e.preventDefault(); dragCount--; if (dragCount <= 0) { dragCount = 0; document.getElementById("dropOverlay").classList.remove("visible"); } });
     document.addEventListener("dragover", (e) => e.preventDefault());
     document.addEventListener("drop", (e) => {
       e.preventDefault();
@@ -356,7 +744,7 @@
       file.text().then(text => loadEvents(parseEvents(text, file.name)));
     });
 
-    // Auto-load from query param: ?file=events.json
+    // Auto-load from query param
     const params = new URLSearchParams(location.search);
     const filePath = params.get("file");
     if (filePath) {
