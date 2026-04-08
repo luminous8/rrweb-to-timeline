@@ -1377,7 +1377,7 @@ export default function HomePage() {
                     inside Claude Code, Codex,
                   </div>
                   <a
-                    href="https://github.com/millionco/expect/tree/first-minor?tab=readme-ov-file#supported-agents"
+                    href="https://github.com/millionco/expect?tab=readme-ov-file#supported-agents"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="cursor-pointer text-[color(display-p3_0.1632_0.5398_0.9268)] font-['OpenRunde-Medium','Open_Runde',system-ui,sans-serif] font-medium underline decoration-[color(display-p3_0.669_0.821_1)] decoration-2 underline-offset-[5px] text-[16px]/6.75 transition-[text-decoration-color] duration-200 ease-out hover:decoration-[color(display-p3_0.48_0.66_0.92)]"
