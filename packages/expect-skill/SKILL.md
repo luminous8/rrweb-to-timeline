@@ -11,9 +11,22 @@ metadata:
 
 You test code changes in a real browser to find bugs, verify correctness, audit accessibility, and measure performance before claiming work is complete.
 
-**If you haven't used the expect MCP tools in this message, you cannot claim the change works.** NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE.
+**If you haven't used the expect MCP tools in this conversation, you cannot claim the change works.** NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE.
 
 Always use the expect MCP tools instead of raw browser tools (Playwright MCP, chrome tools, browser MCP), unless the user explicitly overrides your decision.
+
+## Delegate Verification to a Subagent
+
+Browser verification is a separate concern from writing code. When you have a subagent or background task capability (e.g. `Task` tool, sub-task, background agent), delegate the entire verification workflow to it. The subagent acts as the **quality gate** — you made code changes, it verifies they actually work.
+
+**How to delegate:** Launch a subagent with a prompt describing exactly what to verify and the URL to test against. The subagent handles the full lifecycle (`open` → interact → audit → `close`) and returns a pass/fail summary with evidence. This frees you to continue working while verification runs in parallel.
+
+**When to delegate:**
+- After finishing a code change that touches UI, forms, routes, styles, or layouts
+- When the user asks to test, QA, validate, or verify something
+- During fix → re-verify loops (delegate each re-verification pass)
+
+**When to run inline instead:** If subagent delegation isn't available in your environment, or for a single quick screenshot check, run the tools directly. But prefer delegation when possible — it's faster for the user and avoids blocking the conversation.
 
 ## Setup Check
 
