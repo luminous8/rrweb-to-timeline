@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>rrweb Timeline Player</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/rrweb-player@latest/dist/style.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header h1 { font-size: 16px; font-weight: 600; }
+    .header .meta { font-size: 13px; color: #888; }
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .player-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #111;
+      overflow: hidden;
+      min-width: 0;
+    }
+    .player-container .rr-player {
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    }
+    .timeline-panel {
+      width: 320px;
+      border-left: 1px solid #222;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .timeline-panel h2 {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 16px 16px 8px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      position: sticky;
+      top: 0;
+      background: #0a0a0a;
+      z-index: 1;
+    }
+    .action {
+      padding: 8px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: baseline;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: background 0.1s, border-color 0.1s;
+    }
+    .action:hover { background: #1a1a1a; }
+    .action.active {
+      background: #1a1a2a;
+      border-left-color: #5b8def;
+    }
+    .action .time {
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      color: #666;
+      min-width: 44px;
+      flex-shrink: 0;
+    }
+    .action .label {
+      font-size: 13px;
+      color: #ccc;
+    }
+    .action.active .time { color: #5b8def; }
+    .action.active .label { color: #fff; }
+    .action .icon {
+      font-size: 12px;
+      min-width: 18px;
+      text-align: center;
+    }
+    .drop-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 10, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .drop-overlay.visible {
+      opacity: 1;
+    }
+    .drop-overlay .inner {
+      border: 2px dashed #444;
+      border-radius: 16px;
+      padding: 48px 64px;
+      text-align: center;
+    }
+    .drop-overlay .inner p { font-size: 18px; color: #888; }
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: #666;
+    }
+    .empty-state p { font-size: 15px; }
+    .empty-state code {
+      background: #1a1a1a;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .file-input-label {
+      padding: 8px 16px;
+      background: #222;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #ccc;
+      transition: background 0.1s;
+    }
+    .file-input-label:hover { background: #333; }
+  </style>
+</head>
+<body>
+  <div class="drop-overlay" id="dropOverlay">
+    <div class="inner"><p>Drop rrweb JSON or JSONL file</p></div>
+  </div>
+
+  <div class="header">
+    <h1>rrweb Timeline Player</h1>
+    <span class="meta" id="headerMeta"></span>
+    <div style="flex:1"></div>
+    <label class="file-input-label">
+      Open file…
+      <input type="file" accept=".json,.jsonl" id="fileInput" style="display:none" />
+    </label>
+  </div>
+
+  <div class="main" id="mainArea">
+    <div class="empty-state" id="emptyState">
+      <p>Drop a <code>.json</code> or <code>.jsonl</code> rrweb recording here</p>
+      <p style="font-size:13px">or click "Open file…" above</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/rrweb-player@latest/dist/index.js"></script>
+  <script>
+    const RRWEB_EVENT_INCREMENTAL = 3;
+    const RRWEB_EVENT_META = 4;
+    const MOUSE_LABELS = { 2: "Clicked", 4: "Double-clicked", 8: "Right-clicked", 6: "Focused", 9: "Tapped" };
+    const INPUT_DEBOUNCE = 500;
+    const SCROLL_DEBOUNCE = 800;
+
+    const formatTime = (ms) => {
+      const s = Math.floor(ms / 1000);
+      return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
+    };
+
+    const iconFor = (label) => {
+      if (label.startsWith("Navigated")) return "🌐";
+      if (label.startsWith("Clicked") || label.startsWith("Double") || label.startsWith("Right")) return "👆";
+      if (label.startsWith("Typed")) return "⌨️";
+      if (label.startsWith("Scrolled")) return "↕️";
+      if (label.startsWith("Resized")) return "↔️";
+      if (label.startsWith("Focused")) return "◎";
+      if (label.startsWith("Tapped")) return "👆";
+      if (label.startsWith("Dragged")) return "✋";
+      if (label.includes("media")) return "▶️";
+      return "•";
+    };
+
+    const extractActions = (events) => {
+      if (events.length < 2) return [];
+      const startTs = events[0].timestamp;
+      const actions = [];
+      let lastInput = -Infinity, lastScroll = -Infinity;
+
+      for (const ev of events) {
+        const rel = ev.timestamp - startTs;
+        const d = ev.data;
+
+        if (ev.type === RRWEB_EVENT_META && typeof d.href === "string") {
+          try {
+            const u = new URL(d.href);
+            const path = u.pathname === "/" ? u.hostname : `${u.hostname}${u.pathname}`;
+            actions.push({ label: `Navigated to ${path}`, ms: rel });
+          } catch {}
+          continue;
+        }
+        if (ev.type !== RRWEB_EVENT_INCREMENTAL) continue;
+
+        if (d.source === 2) {
+          const l = MOUSE_LABELS[d.type];
+          if (l) actions.push({ label: l, ms: rel });
+        } else if (d.source === 5) {
+          if (ev.timestamp - lastInput > INPUT_DEBOUNCE) {
+            const t = typeof d.text === "string" ? d.text : "";
+            const disp = t.length > 30 ? t.slice(0, 30) + "…" : t;
+            actions.push({ label: disp ? `Typed "${disp}"` : "Typed input", ms: rel + 500 });
+          }
+          lastInput = ev.timestamp;
+        } else if (d.source === 3) {
+          if (ev.timestamp - lastScroll > SCROLL_DEBOUNCE) {
+            actions.push({ label: "Scrolled", ms: rel });
+          }
+          lastScroll = ev.timestamp;
+        } else if (d.source === 4) {
+          actions.push({ label: `Resized to ${d.width}×${d.height}`, ms: rel });
+        } else if (d.source === 7) {
+          const l = d.type === 0 ? "Played media" : d.type === 1 ? "Paused media" : null;
+          if (l) actions.push({ label: l, ms: rel });
+        } else if (d.source === 12) {
+          actions.push({ label: "Dragged", ms: rel });
+        }
+      }
+      return actions;
+    };
+
+    const parseEvents = (text, filename) => {
+      if (filename.endsWith(".jsonl")) {
+        return text.split("\n").filter(l => l.trim()).map(l => JSON.parse(l));
+      }
+      const parsed = JSON.parse(text);
+      return Array.isArray(parsed) ? parsed : parsed.events;
+    };
+
+    let currentPlayer = null;
+
+    const loadEvents = (events) => {
+      if (events.length < 2) return;
+
+      const mainArea = document.getElementById("mainArea");
+      const emptyState = document.getElementById("emptyState");
+      if (emptyState) emptyState.remove();
+      mainArea.innerHTML = "";
+
+      const duration = events[events.length - 1].timestamp - events[0].timestamp;
+      const actions = extractActions(events);
+
+      document.getElementById("headerMeta").textContent =
+        `${formatTime(duration)} · ${actions.length} actions · ${events.length.toLocaleString()} raw events`;
+
+      // Player
+      const playerContainer = document.createElement("div");
+      playerContainer.className = "player-container";
+      mainArea.appendChild(playerContainer);
+
+      currentPlayer = new rrwebPlayer({
+        target: playerContainer,
+        props: {
+          events,
+          width: 900,
+          height: 560,
+          autoPlay: false,
+          showController: true,
+          speedOption: [1, 2, 4, 8],
+        },
+      });
+
+      // Timeline
+      const panel = document.createElement("div");
+      panel.className = "timeline-panel";
+      panel.innerHTML = `<h2>Timeline (${actions.length})</h2>`;
+      mainArea.appendChild(panel);
+
+      const actionEls = [];
+      for (const action of actions) {
+        const el = document.createElement("div");
+        el.className = "action";
+        el.innerHTML = `
+          <span class="icon">${iconFor(action.label)}</span>
+          <span class="time">${formatTime(action.ms)}</span>
+          <span class="label">${action.label}</span>
+        `;
+        el.addEventListener("click", () => {
+          currentPlayer.goto(action.ms);
+        });
+        panel.appendChild(el);
+        actionEls.push({ el, ms: action.ms });
+      }
+
+      // Highlight active action during playback
+      const replayer = currentPlayer.getReplayer();
+      let activeIdx = -1;
+      setInterval(() => {
+        const currentTime = replayer.getCurrentTime();
+        let newIdx = -1;
+        for (let i = actionEls.length - 1; i >= 0; i--) {
+          if (actionEls[i].ms <= currentTime) { newIdx = i; break; }
+        }
+        if (newIdx !== activeIdx) {
+          if (activeIdx >= 0) actionEls[activeIdx].el.classList.remove("active");
+          if (newIdx >= 0) {
+            actionEls[newIdx].el.classList.add("active");
+            actionEls[newIdx].el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }
+          activeIdx = newIdx;
+        }
+      }, 200);
+    };
+
+    // File input
+    document.getElementById("fileInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      file.text().then(text => loadEvents(parseEvents(text, file.name)));
+    });
+
+    // Drag and drop
+    let dragCount = 0;
+    document.addEventListener("dragenter", (e) => {
+      e.preventDefault();
+      dragCount++;
+      document.getElementById("dropOverlay").classList.add("visible");
+    });
+    document.addEventListener("dragleave", (e) => {
+      e.preventDefault();
+      dragCount--;
+      if (dragCount <= 0) {
+        dragCount = 0;
+        document.getElementById("dropOverlay").classList.remove("visible");
+      }
+    });
+    document.addEventListener("dragover", (e) => e.preventDefault());
+    document.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dragCount = 0;
+      document.getElementById("dropOverlay").classList.remove("visible");
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      file.text().then(text => loadEvents(parseEvents(text, file.name)));
+    });
+
+    // Auto-load from query param: ?file=events.json
+    const params = new URLSearchParams(location.search);
+    const filePath = params.get("file");
+    if (filePath) {
+      fetch(filePath)
+        .then(r => r.text())
+        .then(text => loadEvents(parseEvents(text, filePath)))
+        .catch(err => console.error("Failed to load:", err));
+    }
+  </script>
+</body>
+</html>
